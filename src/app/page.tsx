@@ -358,74 +358,137 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
   );
 }
 
-/* ── Floating Card Shell (glassmorphic) ── */
-function FloatingCard({ children, rotate = 0, glass = false }: { children: React.ReactNode; rotate?: number; glass?: boolean }) {
+/* ══════════════════════════════════════════════════════════
+   Animated Story Cards — "Your finances, coming alive"
+   5-scene loop: Paid → Bills Confirmed → Split → Pay Forward → Budget
+   Desktop: 2 cards visible  |  Mobile: 1 card visible
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Glassmorphic Card Shell ── */
+function StoryCard({ children, side, visible }: { children: React.ReactNode; side: 'left' | 'right' | 'center'; visible: boolean }) {
+  const rotate = side === 'left' ? -3 : side === 'right' ? 3 : 0;
   return (
     <div style={{
-      background: glass ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.95)',
-      borderRadius: '18px',
-      padding: '20px 24px',
-      boxShadow: glass
-        ? '0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)'
-        : '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)',
-      border: `1px solid ${glass ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.6)'}`,
-      transform: `rotate(${rotate}deg)`,
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      minWidth: '160px',
+      background: 'rgba(255,255,255,0.10)',
+      borderRadius: '20px',
+      padding: '24px 28px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+      border: '1px solid rgba(255,255,255,0.15)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      minWidth: '200px',
+      maxWidth: '300px',
+      transform: `rotate(${rotate}deg) scale(${visible ? 1 : 0.92})`,
+      opacity: visible ? 1 : 0,
+      transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)',
+      pointerEvents: visible ? 'auto' as const : 'none' as const,
     }}>
       {children}
     </div>
   );
 }
 
-/* ── Label helpers ── */
-const cardLabel: React.CSSProperties = { fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' };
-const glassLabel = { ...cardLabel, color: 'rgba(255,255,255,0.55)' };
-const solidLabel = { ...cardLabel, color: 'rgba(12,30,44,0.45)' };
+/* ── Animated counting number ── */
+function AnimatedNumber({ target, prefix = '$', duration = 1200, active }: { target: number; prefix?: string; duration?: number; active: boolean }) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!active) { setValue(0); return; }
+    const start = performance.now();
+    let raf: number;
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(target * eased));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [active, target, duration]);
+  return <>{prefix}{value.toLocaleString()}</>;
+}
 
-/* ── Mini Bar Chart ── */
-function MiniBarChart({ bars, glass = false }: { bars: { label: string; value: number; max: number; color: string }[]; glass?: boolean }) {
+/* ── Progress bar that fills ── */
+function AnimatedBar({ pct, color, delay = 0, active }: { pct: number; color: string; delay?: number; active: boolean }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    if (!active) { setWidth(0); return; }
+    const t = setTimeout(() => setWidth(pct), delay + 100);
+    return () => clearTimeout(t);
+  }, [active, pct, delay]);
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '56px' }}>
-      {bars.map((bar) => (
-        <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-          <div style={{
-            width: '22px',
-            height: `${(bar.value / bar.max) * 48}px`,
-            background: bar.color,
-            borderRadius: '4px 4px 0 0',
-            minHeight: '4px',
-          }} />
-          <span style={{ fontSize: '0.55rem', color: glass ? 'rgba(255,255,255,0.45)' : 'rgba(12,30,44,0.4)' }}>{bar.label}</span>
-        </div>
-      ))}
+    <div style={{ width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+      <div style={{ width: `${width}%`, height: '100%', borderRadius: '3px', background: color, transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)' }} />
     </div>
   );
 }
 
-/* ── Mini Donut (SVG) ── */
-function MiniDonut({ segments, size = 72 }: { segments: { pct: number; color: string; label: string }[]; size?: number }) {
-  const r = 26; const circ = 2 * Math.PI * r;
-  let offset = 0;
+/* ── Check item that appears with delay ── */
+function CheckItem({ label, amount, delay, active }: { label: string; amount: string; delay: number; active: boolean }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (!active) { setShow(false); return; }
+    const t = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(t);
+  }, [active, delay]);
   return (
-    <svg width={size} height={size} viewBox="0 0 72 72">
-      <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0',
+      opacity: show ? 1 : 0, transform: show ? 'translateX(0)' : 'translateX(-8px)',
+      transition: 'opacity 0.4s, transform 0.4s',
+    }}>
+      <div style={{
+        width: '20px', height: '20px', borderRadius: '50%',
+        background: show ? '#16A34A' : 'rgba(255,255,255,0.1)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.3s', flexShrink: 0,
+      }}>
+        <span style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>{show ? '\u2713' : ''}</span>
+      </div>
+      <span style={{ fontSize: '0.85rem', color: '#F5F3EF', flex: 1 }}>{label}</span>
+      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>{amount}</span>
+    </div>
+  );
+}
+
+/* ── Mini Donut (SVG) with animated segments ── */
+function StoryDonut({ segments, active, size = 80 }: { segments: { pct: number; color: string; label: string }[]; active: boolean; size?: number }) {
+  const r = 28; const circ = 2 * Math.PI * r;
+  let offset = 0;
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    if (!active) { setProgress(0); return; }
+    const t = setTimeout(() => setProgress(1), 200);
+    return () => clearTimeout(t);
+  }, [active]);
+  return (
+    <svg width={size} height={size} viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
       {segments.map((seg) => {
-        const dash = (seg.pct / 100) * circ;
+        const dash = (seg.pct / 100) * circ * progress;
         const gap = circ - dash;
-        const el = <circle key={seg.label} cx="36" cy="36" r={r} fill="none" stroke={seg.color} strokeWidth="9" strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset} strokeLinecap="round" transform="rotate(-90 36 36)" />;
-        offset += dash;
+        const el = (
+          <circle key={seg.label} cx="40" cy="40" r={r} fill="none" stroke={seg.color} strokeWidth="10"
+            strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset * progress}
+            strokeLinecap="round" transform="rotate(-90 40 40)"
+            style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1), stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1)' }}
+          />
+        );
+        offset += (seg.pct / 100) * circ;
         return el;
       })}
-      <text x="36" y="34" textAnchor="middle" fill="#F5F3EF" fontSize="9" fontWeight="700">$2,495</text>
-      <text x="36" y="44" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="6">Total</text>
+      <text x="40" y="38" textAnchor="middle" fill="#F5F3EF" fontSize="10" fontWeight="700" style={{ opacity: progress, transition: 'opacity 0.6s' }}>
+        $2,495
+      </text>
+      <text x="40" y="49" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="7" style={{ opacity: progress, transition: 'opacity 0.6s 0.3s' }}>
+        Total
+      </text>
     </svg>
   );
 }
 
-/* ── Spending Chart Card ── */
-function SpendingChartCard({ glass = false }: { glass?: boolean }) {
+/* ── Mini Bar Chart with growing bars ── */
+function StoryBarChart({ active }: { active: boolean }) {
   const bars = [
     { label: 'Jan', value: 2100, max: 2600, color: '#38BDF8' },
     { label: 'Feb', value: 2400, max: 2600, color: '#38BDF8' },
@@ -434,20 +497,220 @@ function SpendingChartCard({ glass = false }: { glass?: boolean }) {
     { label: 'May', value: 2200, max: 2600, color: 'rgba(56,189,248,0.35)' },
     { label: 'Jun', value: 2300, max: 2600, color: 'rgba(56,189,248,0.35)' },
   ];
+  const [grow, setGrow] = useState(false);
+  useEffect(() => {
+    if (!active) { setGrow(false); return; }
+    const t = setTimeout(() => setGrow(true), 300);
+    return () => clearTimeout(t);
+  }, [active]);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '7px', height: '60px' }}>
+      {bars.map((bar, i) => (
+        <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+          <div style={{
+            width: '24px',
+            height: grow ? `${(bar.value / bar.max) * 50}px` : '0px',
+            background: bar.color,
+            borderRadius: '4px 4px 0 0',
+            transition: `height 0.6s cubic-bezier(0.4,0,0.2,1) ${i * 80}ms`,
+          }} />
+          <span style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)' }}>{bar.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Scene label chip ── */
+const sceneLabel: React.CSSProperties = { fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: '10px' };
+
+/* ── SCENE CONTENT DEFINITIONS ── */
+
+/* Scene 0: You Got Paid! */
+function SceneGotPaidA({ active }: { active: boolean }) {
   return (
     <>
-      <div style={glass ? glassLabel : solidLabel}>Monthly Spending</div>
-      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: glass ? '#F5F3EF' : '#0C1E2C', marginBottom: '4px' }}>$2,495</div>
-      <div style={{ fontSize: '0.7rem', color: '#16A34A', marginBottom: '10px' }}>
-        <span style={{ marginRight: '4px' }}>&#8599;</span>$105 less than last month
+      <div style={sceneLabel}>Deposit Received</div>
+      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Paycheck 1 &middot; Apr 10</div>
+      <div style={{ fontSize: '2rem', fontWeight: 700, color: '#4ADE80' }}>
+        +<AnimatedNumber target={2847} prefix="$" active={active} />
       </div>
-      <MiniBarChart bars={bars} glass={glass} />
+      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '6px' }}>Direct deposit from Acme Corp</div>
+      <div style={{ marginTop: '12px', padding: '8px 14px', borderRadius: '12px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.2)' }}>
+        <div style={{ fontSize: '0.7rem', color: '#4ADE80', fontWeight: 600 }}>Balance updated</div>
+      </div>
+    </>
+  );
+}
+function SceneGotPaidB({ active }: { active: boolean }) {
+  return (
+    <>
+      <div style={sceneLabel}>Paycheck Breakdown</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>Income</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F5F3EF' }}><AnimatedNumber target={2847} active={active} /></span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>Bills Due</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F87171' }}>-<AnimatedNumber target={1205} active={active} /></span>
+      </div>
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '6px 0' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Remaining</span>
+        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ADE80' }}><AnimatedNumber target={1642} active={active} /></span>
+      </div>
     </>
   );
 }
 
-/* ── Category Donut Card ── */
-function CategoryDonutCard() {
+/* Scene 1: Bills Confirmed */
+function SceneBillsA({ active }: { active: boolean }) {
+  return (
+    <>
+      <div style={sceneLabel}>Bills This Paycheck</div>
+      <CheckItem label="Rent" amount="$850" delay={300} active={active} />
+      <CheckItem label="Electric" amount="$145" delay={700} active={active} />
+      <CheckItem label="Internet" amount="$89" delay={1100} active={active} />
+      <CheckItem label="Insurance" amount="$121" delay={1500} active={active} />
+    </>
+  );
+}
+function SceneBillsB({ active }: { active: boolean }) {
+  return (
+    <>
+      <div style={sceneLabel}>Payment Progress</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '14px' }}>
+        <span style={{ fontSize: '2rem', fontWeight: 700, color: '#38BDF8' }}>
+          <AnimatedNumber target={4} prefix="" active={active} duration={2000} />
+        </span>
+        <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>of 4 confirmed</span>
+      </div>
+      <AnimatedBar pct={100} color="#38BDF8" delay={1600} active={active} />
+      <div style={{ fontSize: '0.7rem', color: '#4ADE80', marginTop: '8px', opacity: active ? 1 : 0, transition: 'opacity 0.4s 2s' }}>
+        All bills accounted for this period
+      </div>
+    </>
+  );
+}
+
+/* Scene 2: Split Bill */
+function SceneSplitA({ active }: { active: boolean }) {
+  const [split, setSplit] = useState(false);
+  useEffect(() => {
+    if (!active) { setSplit(false); return; }
+    const t = setTimeout(() => setSplit(true), 600);
+    return () => clearTimeout(t);
+  }, [active]);
+  return (
+    <>
+      <div style={sceneLabel}>Splitting Mortgage</div>
+      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '12px' }}>$2,000</div>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{
+          flex: 1, background: 'rgba(74,222,128,0.12)', borderRadius: '12px', padding: '10px 14px',
+          textAlign: 'center' as const, border: '1px solid rgba(74,222,128,0.2)',
+          transform: split ? 'translateX(0)' : 'translateX(30px)', opacity: split ? 1 : 0,
+          transition: 'all 0.5s cubic-bezier(0.4,0,0.2,1)',
+        }}>
+          <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 1</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#4ADE80' }}>$1,200</div>
+        </div>
+        <div style={{
+          flex: 1, background: 'rgba(251,191,36,0.12)', borderRadius: '12px', padding: '10px 14px',
+          textAlign: 'center' as const, border: '1px solid rgba(251,191,36,0.2)',
+          transform: split ? 'translateX(0)' : 'translateX(-30px)', opacity: split ? 1 : 0,
+          transition: 'all 0.5s cubic-bezier(0.4,0,0.2,1) 0.15s',
+        }}>
+          <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 2</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#FBBF24' }}>$800</div>
+        </div>
+      </div>
+    </>
+  );
+}
+function SceneSplitB({ active }: { active: boolean }) {
+  return (
+    <>
+      <div style={sceneLabel}>Per-Paycheck Impact</div>
+      <div style={{ marginBottom: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Check 1 load</span>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>42%</span>
+        </div>
+        <AnimatedBar pct={42} color="#38BDF8" delay={400} active={active} />
+      </div>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Check 2 load</span>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>28%</span>
+        </div>
+        <AnimatedBar pct={28} color="#FBBF24" delay={700} active={active} />
+      </div>
+      <div style={{ fontSize: '0.7rem', color: '#4ADE80', marginTop: '10px' }}>
+        Balanced — no paycheck over 50%
+      </div>
+    </>
+  );
+}
+
+/* Scene 3: Pay Forward */
+function SceneForwardA({ active }: { active: boolean }) {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    if (!active) { setPct(0); return; }
+    const t = setTimeout(() => setPct(75), 400);
+    return () => clearTimeout(t);
+  }, [active]);
+  return (
+    <>
+      <div style={sceneLabel}>Planning Ahead</div>
+      <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '4px' }}>May 2026</div>
+      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', marginBottom: '12px' }}>Already funded</div>
+      <div style={{ position: 'relative', width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+        <div style={{
+          width: `${pct}%`, height: '100%', borderRadius: '4px',
+          background: 'linear-gradient(90deg, #38BDF8, #0C4A6E)',
+          transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1)',
+        }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>$1,875 of $2,495</span>
+        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38BDF8' }}>75%</span>
+      </div>
+    </>
+  );
+}
+function SceneForwardB({ active }: { active: boolean }) {
+  return (
+    <>
+      <div style={sceneLabel}>You&apos;re Ahead</div>
+      <div style={{ fontSize: '2.2rem', fontWeight: 700, color: '#38BDF8', lineHeight: 1.1 }}>
+        <AnimatedNumber target={2} prefix="" active={active} duration={800} />
+      </div>
+      <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginBottom: '10px' }}>weeks ahead of schedule</div>
+      <div style={{ padding: '8px 14px', borderRadius: '12px', background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.18)' }}>
+        <div style={{ fontSize: '0.7rem', color: '#38BDF8', fontWeight: 600 }}>Next month is 75% covered</div>
+      </div>
+    </>
+  );
+}
+
+/* Scene 4: Budget Charts */
+function SceneBudgetA({ active }: { active: boolean }) {
+  return (
+    <>
+      <div style={sceneLabel}>Monthly Spending</div>
+      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '2px' }}>
+        <AnimatedNumber target={2495} active={active} />
+      </div>
+      <div style={{ fontSize: '0.7rem', color: '#16A34A', marginBottom: '10px' }}>
+        <span style={{ marginRight: '4px' }}>&#8599;</span>$105 less than last month
+      </div>
+      <StoryBarChart active={active} />
+    </>
+  );
+}
+function SceneBudgetB({ active }: { active: boolean }) {
   const segs = [
     { pct: 40, color: '#0C4A6E', label: 'Housing' },
     { pct: 22, color: '#38BDF8', label: 'Insurance' },
@@ -456,14 +719,14 @@ function CategoryDonutCard() {
   ];
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-      <MiniDonut segments={segs} />
+      <StoryDonut segments={segs} active={active} />
       <div>
-        <div style={glassLabel}>Bill Breakdown</div>
+        <div style={sceneLabel}>Breakdown</div>
         {segs.map((s) => (
-          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color }} />
-            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.65)' }}>{s.label}</span>
-            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginLeft: 'auto' }}>{s.pct}%</span>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>{s.label}</span>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -471,163 +734,98 @@ function CategoryDonutCard() {
   );
 }
 
-/* ── Paycheck Summary Card ── */
-function PaycheckCard({ glass = false }: { glass?: boolean }) {
-  const lbl = glass ? glassLabel : solidLabel;
-  const primary = glass ? '#38BDF8' : '#0C4A6E';
-  const text = glass ? '#F5F3EF' : '#0C1E2C';
-  const sub = glass ? 'rgba(255,255,255,0.45)' : 'rgba(12,30,44,0.5)';
-  return (
-    <>
-      <div style={lbl}>Next Paycheck</div>
-      <div style={{ fontSize: '1.8rem', fontWeight: 700, color: primary }}>$5,000</div>
-      <div style={{ fontSize: '0.75rem', color: sub, marginTop: '2px' }}>Paycheck 1 &middot; Apr 10 – Apr 23</div>
-      <div style={{ marginTop: '10px', display: 'flex', gap: '12px' }}>
-        <div>
-          <div style={{ fontSize: '0.6rem', color: sub }}>Bills</div>
-          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: text }}>$470</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.6rem', color: sub }}>Remaining</div>
-          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#16A34A' }}>$4,530</div>
-        </div>
-      </div>
-    </>
-  );
-}
+/* ── Scene config ── */
+const SCENES = [
+  { labelA: 'You got paid',       labelB: 'Paycheck breakdown',  A: SceneGotPaidA, B: SceneGotPaidB },
+  { labelA: 'Bills confirmed',    labelB: 'Payment progress',    A: SceneBillsA,   B: SceneBillsB },
+  { labelA: 'Split bill',         labelB: 'Per-paycheck impact', A: SceneSplitA,    B: SceneSplitB },
+  { labelA: 'Plan ahead',         labelB: 'You\'re ahead',       A: SceneForwardA,  B: SceneForwardB },
+  { labelA: 'Monthly spending',   labelB: 'Budget breakdown',    A: SceneBudgetA,   B: SceneBudgetB },
+];
+
+const SCENE_DURATION = 3500;
 
 /* ══════════════════════════════════════════════════════════
-   Hero with Floating Cards — Dark Background Edition
+   Hero with Animated Story Cards
    ══════════════════════════════════════════════════════════ */
 function HeroWithFloatingCards() {
-  const [mobileSlide, setMobileSlide] = useState(0);
-  const totalSlides = 4;
+  const [scene, setScene] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const totalScenes = SCENES.length;
 
   useEffect(() => {
-    const timer = setInterval(() => setMobileSlide((s) => (s + 1) % totalSlides), 4000);
+    if (paused) return;
+    const timer = setInterval(() => setScene((s) => (s + 1) % totalScenes), SCENE_DURATION);
     return () => clearInterval(timer);
-  }, []);
+  }, [paused, totalScenes]);
 
   return (
     <section className="relative overflow-hidden px-4 py-20 md:py-32 lg:py-40" style={{
       background: 'linear-gradient(160deg, #0B1120 0%, #0F172A 40%, #162032 100%)',
       minHeight: '640px',
     }}>
-      {/* Subtle radial glow behind center */}
+      {/* Subtle radial glow */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(56,189,248,0.06) 0%, transparent 70%)',
       }} />
 
-      {/* ── Desktop: 6 floating cards (lg+) ── */}
-      <div className="hidden lg:block">
-        {/* Top-left: Spending chart (glass) */}
-        <div className="absolute" style={{ top: '8%', left: '3%', animation: 'floatA 6s ease-in-out infinite' }}>
-          <FloatingCard rotate={-4} glass>
-            <SpendingChartCard glass />
-          </FloatingCard>
-        </div>
-
-        {/* Top-right: Category donut (glass) */}
-        <div className="absolute" style={{ top: '5%', right: '3%', animation: 'floatB 7s ease-in-out infinite' }}>
-          <FloatingCard rotate={3} glass>
-            <CategoryDonutCard />
-          </FloatingCard>
-        </div>
-
-        {/* Mid-left: Paycheck summary (solid white) */}
-        <div className="absolute" style={{ top: '50%', left: '2%', animation: 'floatC 5.5s ease-in-out infinite' }}>
-          <FloatingCard rotate={3}>
-            <PaycheckCard />
-          </FloatingCard>
-        </div>
-
-        {/* Mid-right: Split card (solid white) */}
-        <div className="absolute" style={{ top: '52%', right: '2%', animation: 'floatA 6.5s ease-in-out infinite' }}>
-          <FloatingCard rotate={-3}>
-            <div style={solidLabel}>Mortgage Split</div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ background: '#E6F7ED', borderRadius: '10px', padding: '8px 14px', textAlign: 'center' as const }}>
-                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
-              </div>
-              <div style={{ background: '#FEF3C7', borderRadius: '10px', padding: '8px 14px', textAlign: 'center' as const }}>
-                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#B45309' }}>$800</div>
-              </div>
-            </div>
-            <div style={{ fontSize: '0.65rem', color: '#16A34A', marginTop: '8px' }}>&#10003; Amounts add up to $2,000</div>
-          </FloatingCard>
-        </div>
-
-        {/* Bottom-left: Tracker (glass) */}
-        <div className="absolute" style={{ bottom: '6%', left: '12%', animation: 'floatB 5s ease-in-out infinite' }}>
-          <FloatingCard rotate={2} glass>
-            <div style={glassLabel}>Paid This Month</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(56,189,248,0.2)', border: '2px solid #38BDF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#38BDF8', fontSize: '0.95rem', fontWeight: 700 }}>2</span>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#F5F3EF' }}>of 4 bills</div>
-                <div style={{ width: '70px', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.1)', marginTop: '4px' }}>
-                  <div style={{ width: '50%', height: '100%', borderRadius: '3px', background: '#38BDF8' }} />
+      {/* ── Desktop: 2 cards, left + right (lg+) ── */}
+      <div className="hidden lg:block" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        {/* Left card slot */}
+        <div className="absolute" style={{ top: '15%', left: '3%' }}>
+          <div style={{ position: 'relative', minHeight: '220px', minWidth: '260px' }}>
+            {SCENES.map((s, i) => {
+              const CardA = s.A;
+              return (
+                <div key={`left-${i}`} style={{ position: i === 0 ? 'relative' : 'absolute', top: 0, left: 0 }}>
+                  <StoryCard side="left" visible={scene === i}><CardA active={scene === i} /></StoryCard>
                 </div>
-              </div>
-            </div>
-          </FloatingCard>
-        </div>
-
-        {/* Bottom-right: After Bills (glass) */}
-        <div className="absolute" style={{ bottom: '8%', right: '10%', animation: 'floatC 7.5s ease-in-out infinite' }}>
-          <FloatingCard rotate={-2} glass>
-            <div style={glassLabel}>After Bills</div>
-            <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#4ADE80' }}>$2,505</div>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>available for spending &amp; savings</div>
-          </FloatingCard>
-        </div>
-      </div>
-
-      {/* ── Mobile: Rotating card with cross-fade (below lg) ── */}
-      <div className="lg:hidden flex justify-center mb-8" style={{ minHeight: '150px', position: 'relative' }}>
-        {[0, 1, 2, 3].map((idx) => (
-          <div key={idx} style={{
-            position: idx === 0 ? 'relative' : 'absolute',
-            opacity: mobileSlide === idx ? 1 : 0,
-            transition: 'opacity 0.6s ease-in-out',
-            animation: mobileSlide === idx ? 'floatA 6s ease-in-out infinite' : 'none',
-            pointerEvents: mobileSlide === idx ? 'auto' : 'none',
-          }}>
-            {idx === 0 && <FloatingCard glass><SpendingChartCard glass /></FloatingCard>}
-            {idx === 1 && <FloatingCard glass><CategoryDonutCard /></FloatingCard>}
-            {idx === 2 && <FloatingCard glass><PaycheckCard glass /></FloatingCard>}
-            {idx === 3 && (
-              <FloatingCard glass>
-                <div style={glassLabel}>Mortgage Split</div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div style={{ background: 'rgba(22,163,74,0.15)', borderRadius: '10px', padding: '6px 12px', textAlign: 'center' as const }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 1</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ADE80' }}>$1,200</div>
-                  </div>
-                  <div style={{ background: 'rgba(245,158,11,0.15)', borderRadius: '10px', padding: '6px 12px', textAlign: 'center' as const }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 2</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FBBF24' }}>$800</div>
-                  </div>
-                </div>
-              </FloatingCard>
-            )}
+              );
+            })}
           </div>
-        ))}
+        </div>
+
+        {/* Right card slot */}
+        <div className="absolute" style={{ top: '12%', right: '3%' }}>
+          <div style={{ position: 'relative', minHeight: '220px', minWidth: '260px' }}>
+            {SCENES.map((s, i) => {
+              const CardB = s.B;
+              return (
+                <div key={`right-${i}`} style={{ position: i === 0 ? 'relative' : 'absolute', top: 0, right: 0 }}>
+                  <StoryCard side="right" visible={scene === i}><CardB active={scene === i} /></StoryCard>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Dot indicators (mobile) */}
-      <div className="lg:hidden flex justify-center gap-2 mb-8">
-        {Array.from({ length: totalSlides }).map((_, i) => (
-          <div key={i} style={{
-            width: i === mobileSlide ? '18px' : '6px',
-            height: '6px',
-            borderRadius: '3px',
-            background: i === mobileSlide ? '#38BDF8' : 'rgba(255,255,255,0.2)',
+      {/* ── Mobile: 1 card, centered (below lg) ── */}
+      <div className="lg:hidden flex justify-center mb-6" onTouchStart={() => setPaused(true)} onTouchEnd={() => { const t = setTimeout(() => setPaused(false), 2000); return () => clearTimeout(t); }}>
+        <div style={{ position: 'relative', minHeight: '180px', minWidth: '240px' }}>
+          {SCENES.map((s, i) => {
+            const CardA = s.A;
+            return (
+              <div key={`mob-${i}`} style={{ position: i === 0 ? 'relative' : 'absolute', top: 0, left: 0, width: '100%' }}>
+                <StoryCard side="center" visible={scene === i}><CardA active={scene === i} /></StoryCard>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Scene indicator dots */}
+      <div className="flex justify-center gap-2 mb-6 lg:mb-0 lg:absolute lg:bottom-8 lg:left-1/2 lg:-translate-x-1/2" style={{ position: 'relative', zIndex: 10 }}>
+        {SCENES.map((_, i) => (
+          <button key={i} onClick={() => setScene(i)} aria-label={`Scene ${i + 1}`} style={{
+            width: i === scene ? '24px' : '8px',
+            height: '8px',
+            borderRadius: '4px',
+            background: i === scene ? '#38BDF8' : 'rgba(255,255,255,0.2)',
+            border: 'none',
+            cursor: 'pointer',
             transition: 'all 0.4s',
+            padding: 0,
           }} />
         ))}
       </div>
@@ -657,22 +855,6 @@ function HeroWithFloatingCards() {
           </Link>
         </div>
       </div>
-
-      {/* Animations */}
-      <style>{`
-        @keyframes floatA {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-14px); }
-        }
-        @keyframes floatB {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-18px); }
-        }
-        @keyframes floatC {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-11px); }
-        }
-      `}</style>
     </section>
   );
 }
