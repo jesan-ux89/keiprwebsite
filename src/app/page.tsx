@@ -358,87 +358,96 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
   );
 }
 
-/* ── Floating Card Shell ── */
-function FloatingCard({ children, rotate = 0, dark = false }: { children: React.ReactNode; rotate?: number; dark?: boolean }) {
+/* ── Floating Card Shell (glassmorphic) ── */
+function FloatingCard({ children, rotate = 0, glass = false }: { children: React.ReactNode; rotate?: number; glass?: boolean }) {
   return (
     <div style={{
-      background: dark ? 'rgba(15,23,42,0.88)' : 'rgba(255,255,255,0.92)',
-      borderRadius: '16px',
-      padding: '16px 20px',
-      boxShadow: '0 8px 32px rgba(12,74,110,0.12), 0 2px 8px rgba(0,0,0,0.06)',
-      border: `1px solid ${dark ? 'rgba(255,255,255,0.1)' : 'rgba(12,74,110,0.08)'}`,
+      background: glass ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.95)',
+      borderRadius: '18px',
+      padding: '20px 24px',
+      boxShadow: glass
+        ? '0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)'
+        : '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)',
+      border: `1px solid ${glass ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.6)'}`,
       transform: `rotate(${rotate}deg)`,
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      minWidth: '140px',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      minWidth: '160px',
     }}>
       {children}
     </div>
   );
 }
 
-/* ── Label style helper ── */
-const cardLabel: React.CSSProperties = { fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' };
-const lightLabel = { ...cardLabel, color: 'rgba(12,30,44,0.4)' };
-const darkLabel = { ...cardLabel, color: 'rgba(255,255,255,0.5)' };
+/* ── Label helpers ── */
+const cardLabel: React.CSSProperties = { fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' };
+const glassLabel = { ...cardLabel, color: 'rgba(255,255,255,0.55)' };
+const solidLabel = { ...cardLabel, color: 'rgba(12,30,44,0.45)' };
 
-/* ── Mini Bar Chart (CSS-only) ── */
-function MiniBarChart({ bars, dark = false }: { bars: { label: string; value: number; max: number; color: string }[]; dark?: boolean }) {
+/* ── Mini Bar Chart ── */
+function MiniBarChart({ bars, glass = false }: { bars: { label: string; value: number; max: number; color: string }[]; glass?: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '48px' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '56px' }}>
       {bars.map((bar) => (
-        <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+        <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
           <div style={{
-            width: '18px',
-            height: `${(bar.value / bar.max) * 40}px`,
+            width: '22px',
+            height: `${(bar.value / bar.max) * 48}px`,
             background: bar.color,
-            borderRadius: '3px 3px 0 0',
+            borderRadius: '4px 4px 0 0',
             minHeight: '4px',
           }} />
-          <span style={{ fontSize: '0.5rem', color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(12,30,44,0.4)' }}>{bar.label}</span>
+          <span style={{ fontSize: '0.55rem', color: glass ? 'rgba(255,255,255,0.45)' : 'rgba(12,30,44,0.4)' }}>{bar.label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-/* ── Mini Donut Chart (SVG) ── */
-function MiniDonut({ segments, size = 60, dark = false }: { segments: { pct: number; color: string; label: string }[]; size?: number; dark?: boolean }) {
-  const r = 22; const circ = 2 * Math.PI * r;
+/* ── Mini Donut (SVG) ── */
+function MiniDonut({ segments, size = 72 }: { segments: { pct: number; color: string; label: string }[]; size?: number }) {
+  const r = 26; const circ = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <svg width={size} height={size} viewBox="0 0 60 60">
-      <circle cx="30" cy="30" r={r} fill="none" stroke={dark ? 'rgba(255,255,255,0.08)' : 'rgba(12,74,110,0.06)'} strokeWidth="8" />
+    <svg width={size} height={size} viewBox="0 0 72 72">
+      <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
       {segments.map((seg) => {
         const dash = (seg.pct / 100) * circ;
         const gap = circ - dash;
-        const el = <circle key={seg.label} cx="30" cy="30" r={r} fill="none" stroke={seg.color} strokeWidth="8" strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset} strokeLinecap="round" transform="rotate(-90 30 30)" />;
+        const el = <circle key={seg.label} cx="36" cy="36" r={r} fill="none" stroke={seg.color} strokeWidth="9" strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset} strokeLinecap="round" transform="rotate(-90 36 36)" />;
         offset += dash;
         return el;
       })}
+      <text x="36" y="34" textAnchor="middle" fill="#F5F3EF" fontSize="9" fontWeight="700">$2,495</text>
+      <text x="36" y="44" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="6">Total</text>
     </svg>
   );
 }
 
-/* ── Spending Bar Chart Card (Monarch-style) ── */
-function SpendingChartCard({ dark = false }: { dark?: boolean }) {
+/* ── Spending Chart Card ── */
+function SpendingChartCard({ glass = false }: { glass?: boolean }) {
   const bars = [
-    { label: 'Jan', value: 2100, max: 2500, color: '#38BDF8' },
-    { label: 'Feb', value: 2400, max: 2500, color: '#38BDF8' },
-    { label: 'Mar', value: 1900, max: 2500, color: '#38BDF8' },
-    { label: 'Apr', value: 2495, max: 2500, color: '#0C4A6E' },
+    { label: 'Jan', value: 2100, max: 2600, color: '#38BDF8' },
+    { label: 'Feb', value: 2400, max: 2600, color: '#38BDF8' },
+    { label: 'Mar', value: 1900, max: 2600, color: '#38BDF8' },
+    { label: 'Apr', value: 2495, max: 2600, color: '#0C4A6E' },
+    { label: 'May', value: 2200, max: 2600, color: 'rgba(56,189,248,0.35)' },
+    { label: 'Jun', value: 2300, max: 2600, color: 'rgba(56,189,248,0.35)' },
   ];
   return (
     <>
-      <div style={dark ? darkLabel : lightLabel}>Monthly Spending</div>
-      <div style={{ fontSize: '1.35rem', fontWeight: 700, color: dark ? '#F5F3EF' : '#0C1E2C', marginBottom: '8px' }}>$2,495</div>
-      <MiniBarChart bars={bars} dark={dark} />
+      <div style={glass ? glassLabel : solidLabel}>Monthly Spending</div>
+      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: glass ? '#F5F3EF' : '#0C1E2C', marginBottom: '4px' }}>$2,495</div>
+      <div style={{ fontSize: '0.7rem', color: '#16A34A', marginBottom: '10px' }}>
+        <span style={{ marginRight: '4px' }}>&#8599;</span>$105 less than last month
+      </div>
+      <MiniBarChart bars={bars} glass={glass} />
     </>
   );
 }
 
-/* ── Category Breakdown Card (Monarch-style donut) ── */
-function CategoryDonutCard({ dark = false }: { dark?: boolean }) {
+/* ── Category Donut Card ── */
+function CategoryDonutCard() {
   const segs = [
     { pct: 40, color: '#0C4A6E', label: 'Housing' },
     { pct: 22, color: '#38BDF8', label: 'Insurance' },
@@ -446,14 +455,15 @@ function CategoryDonutCard({ dark = false }: { dark?: boolean }) {
     { pct: 20, color: '#F59E0B', label: 'Other' },
   ];
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <MiniDonut segments={segs} dark={dark} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <MiniDonut segments={segs} />
       <div>
-        <div style={dark ? darkLabel : lightLabel}>Bill Breakdown</div>
+        <div style={glassLabel}>Bill Breakdown</div>
         {segs.map((s) => (
-          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color }} />
-            <span style={{ fontSize: '0.65rem', color: dark ? 'rgba(255,255,255,0.6)' : 'rgba(12,30,44,0.55)' }}>{s.label} {s.pct}%</span>
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color }} />
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.65)' }}>{s.label}</span>
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginLeft: 'auto' }}>{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -461,178 +471,206 @@ function CategoryDonutCard({ dark = false }: { dark?: boolean }) {
   );
 }
 
-/* ── Hero with Floating Cards ── */
+/* ── Paycheck Summary Card ── */
+function PaycheckCard({ glass = false }: { glass?: boolean }) {
+  const lbl = glass ? glassLabel : solidLabel;
+  const primary = glass ? '#38BDF8' : '#0C4A6E';
+  const text = glass ? '#F5F3EF' : '#0C1E2C';
+  const sub = glass ? 'rgba(255,255,255,0.45)' : 'rgba(12,30,44,0.5)';
+  return (
+    <>
+      <div style={lbl}>Next Paycheck</div>
+      <div style={{ fontSize: '1.8rem', fontWeight: 700, color: primary }}>$5,000</div>
+      <div style={{ fontSize: '0.75rem', color: sub, marginTop: '2px' }}>Paycheck 1 &middot; Apr 10 – Apr 23</div>
+      <div style={{ marginTop: '10px', display: 'flex', gap: '12px' }}>
+        <div>
+          <div style={{ fontSize: '0.6rem', color: sub }}>Bills</div>
+          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: text }}>$470</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.6rem', color: sub }}>Remaining</div>
+          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#16A34A' }}>$4,530</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   Hero with Floating Cards — Dark Background Edition
+   ══════════════════════════════════════════════════════════ */
 function HeroWithFloatingCards() {
   const [mobileSlide, setMobileSlide] = useState(0);
-  const mobileCards = 4;
+  const totalSlides = 4;
 
   useEffect(() => {
-    const timer = setInterval(() => setMobileSlide((s) => (s + 1) % mobileCards), 3500);
+    const timer = setInterval(() => setMobileSlide((s) => (s + 1) % totalSlides), 4000);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <section className="relative overflow-hidden px-4 py-24 md:py-36" style={{ backgroundColor: '#EDF6FC', minHeight: '600px' }}>
+    <section className="relative overflow-hidden px-4 py-20 md:py-32 lg:py-40" style={{
+      background: 'linear-gradient(160deg, #0B1120 0%, #0F172A 40%, #162032 100%)',
+      minHeight: '640px',
+    }}>
+      {/* Subtle radial glow behind center */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(56,189,248,0.06) 0%, transparent 70%)',
+      }} />
 
       {/* ── Desktop: 6 floating cards (lg+) ── */}
       <div className="hidden lg:block">
-        {/* Top-left: Spending chart */}
-        <div className="absolute" style={{ top: '10%', left: '4%', animation: 'floatA 6s ease-in-out infinite' }}>
-          <FloatingCard rotate={-5}>
-            <SpendingChartCard />
+        {/* Top-left: Spending chart (glass) */}
+        <div className="absolute" style={{ top: '8%', left: '3%', animation: 'floatA 6s ease-in-out infinite' }}>
+          <FloatingCard rotate={-4} glass>
+            <SpendingChartCard glass />
           </FloatingCard>
         </div>
 
-        {/* Top-right: Category donut */}
-        <div className="absolute" style={{ top: '6%', right: '4%', animation: 'floatB 7s ease-in-out infinite' }}>
-          <FloatingCard rotate={4} dark>
-            <CategoryDonutCard dark />
+        {/* Top-right: Category donut (glass) */}
+        <div className="absolute" style={{ top: '5%', right: '3%', animation: 'floatB 7s ease-in-out infinite' }}>
+          <FloatingCard rotate={3} glass>
+            <CategoryDonutCard />
           </FloatingCard>
         </div>
 
-        {/* Mid-left: Tracker */}
-        <div className="absolute" style={{ top: '52%', left: '3%', animation: 'floatC 5.5s ease-in-out infinite' }}>
+        {/* Mid-left: Paycheck summary (solid white) */}
+        <div className="absolute" style={{ top: '50%', left: '2%', animation: 'floatC 5.5s ease-in-out infinite' }}>
           <FloatingCard rotate={3}>
-            <div style={lightLabel}>Paid This Month</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#0C4A6E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#38BDF8', fontSize: '0.85rem', fontWeight: 700 }}>2</span>
+            <PaycheckCard />
+          </FloatingCard>
+        </div>
+
+        {/* Mid-right: Split card (solid white) */}
+        <div className="absolute" style={{ top: '52%', right: '2%', animation: 'floatA 6.5s ease-in-out infinite' }}>
+          <FloatingCard rotate={-3}>
+            <div style={solidLabel}>Mortgage Split</div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ background: '#E6F7ED', borderRadius: '10px', padding: '8px 14px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
+              </div>
+              <div style={{ background: '#FEF3C7', borderRadius: '10px', padding: '8px 14px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#B45309' }}>$800</div>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.65rem', color: '#16A34A', marginTop: '8px' }}>&#10003; Amounts add up to $2,000</div>
+          </FloatingCard>
+        </div>
+
+        {/* Bottom-left: Tracker (glass) */}
+        <div className="absolute" style={{ bottom: '6%', left: '12%', animation: 'floatB 5s ease-in-out infinite' }}>
+          <FloatingCard rotate={2} glass>
+            <div style={glassLabel}>Paid This Month</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(56,189,248,0.2)', border: '2px solid #38BDF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#38BDF8', fontSize: '0.95rem', fontWeight: 700 }}>2</span>
               </div>
               <div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0C1E2C' }}>of 4 bills</div>
-                <div style={{ width: '60px', height: '4px', borderRadius: '2px', background: 'rgba(12,74,110,0.1)', marginTop: '3px' }}>
-                  <div style={{ width: '50%', height: '100%', borderRadius: '2px', background: '#38BDF8' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#F5F3EF' }}>of 4 bills</div>
+                <div style={{ width: '70px', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.1)', marginTop: '4px' }}>
+                  <div style={{ width: '50%', height: '100%', borderRadius: '3px', background: '#38BDF8' }} />
                 </div>
               </div>
             </div>
           </FloatingCard>
         </div>
 
-        {/* Mid-right: Split card */}
-        <div className="absolute" style={{ top: '55%', right: '3%', animation: 'floatA 6.5s ease-in-out infinite' }}>
-          <FloatingCard rotate={-4}>
-            <div style={lightLabel}>Mortgage Split</div>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <div style={{ background: '#E6F7ED', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
-                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
-              </div>
-              <div style={{ background: '#FEF3C7', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
-                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#B45309' }}>$800</div>
-              </div>
-            </div>
-          </FloatingCard>
-        </div>
-
-        {/* Bottom-left: After Bills */}
-        <div className="absolute" style={{ bottom: '8%', left: '14%', animation: 'floatB 5s ease-in-out infinite' }}>
-          <FloatingCard rotate={2}>
-            <div style={lightLabel}>After Bills</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16A34A' }}>$2,505</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(12,30,44,0.5)' }}>available to spend</div>
-          </FloatingCard>
-        </div>
-
-        {/* Bottom-right: Paycheck */}
-        <div className="absolute" style={{ bottom: '6%', right: '12%', animation: 'floatC 7.5s ease-in-out infinite' }}>
-          <FloatingCard rotate={-3} dark>
-            <div style={darkLabel}>Next Paycheck</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>$5,000</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>Apr 10 – Apr 23</div>
+        {/* Bottom-right: After Bills (glass) */}
+        <div className="absolute" style={{ bottom: '8%', right: '10%', animation: 'floatC 7.5s ease-in-out infinite' }}>
+          <FloatingCard rotate={-2} glass>
+            <div style={glassLabel}>After Bills</div>
+            <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#4ADE80' }}>$2,505</div>
+            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>available for spending &amp; savings</div>
           </FloatingCard>
         </div>
       </div>
 
-      {/* ── Mobile: Single rotating card (below lg) ── */}
-      <div className="lg:hidden flex justify-center mb-6" style={{ minHeight: '120px' }}>
-        <div style={{ animation: 'floatA 6s ease-in-out infinite', transition: 'opacity 0.4s' }}>
-          {mobileSlide === 0 && (
-            <FloatingCard dark>
-              <SpendingChartCard dark />
-            </FloatingCard>
-          )}
-          {mobileSlide === 1 && (
-            <FloatingCard dark>
-              <CategoryDonutCard dark />
-            </FloatingCard>
-          )}
-          {mobileSlide === 2 && (
-            <FloatingCard>
-              <div style={lightLabel}>Mortgage Split</div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <div style={{ background: '#E6F7ED', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
+      {/* ── Mobile: Rotating card with cross-fade (below lg) ── */}
+      <div className="lg:hidden flex justify-center mb-8" style={{ minHeight: '150px', position: 'relative' }}>
+        {[0, 1, 2, 3].map((idx) => (
+          <div key={idx} style={{
+            position: idx === 0 ? 'relative' : 'absolute',
+            opacity: mobileSlide === idx ? 1 : 0,
+            transition: 'opacity 0.6s ease-in-out',
+            animation: mobileSlide === idx ? 'floatA 6s ease-in-out infinite' : 'none',
+            pointerEvents: mobileSlide === idx ? 'auto' : 'none',
+          }}>
+            {idx === 0 && <FloatingCard glass><SpendingChartCard glass /></FloatingCard>}
+            {idx === 1 && <FloatingCard glass><CategoryDonutCard /></FloatingCard>}
+            {idx === 2 && <FloatingCard glass><PaycheckCard glass /></FloatingCard>}
+            {idx === 3 && (
+              <FloatingCard glass>
+                <div style={glassLabel}>Mortgage Split</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ background: 'rgba(22,163,74,0.15)', borderRadius: '10px', padding: '6px 12px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 1</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ADE80' }}>$1,200</div>
+                  </div>
+                  <div style={{ background: 'rgba(245,158,11,0.15)', borderRadius: '10px', padding: '6px 12px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 2</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FBBF24' }}>$800</div>
+                  </div>
                 </div>
-                <div style={{ background: '#FEF3C7', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#B45309' }}>$800</div>
-                </div>
-              </div>
-            </FloatingCard>
-          )}
-          {mobileSlide === 3 && (
-            <FloatingCard dark>
-              <div style={darkLabel}>Next Paycheck</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>$5,000</div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>Apr 10 – Apr 23</div>
-            </FloatingCard>
-          )}
-        </div>
-        {/* Dot indicators */}
-        <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px' }} className="lg:hidden">
-          {Array.from({ length: mobileCards }).map((_, i) => (
-            <div key={i} style={{
-              width: i === mobileSlide ? '16px' : '6px',
-              height: '6px',
-              borderRadius: '3px',
-              background: i === mobileSlide ? '#0C4A6E' : 'rgba(12,74,110,0.2)',
-              transition: 'all 0.3s',
-            }} />
-          ))}
-        </div>
+              </FloatingCard>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Center content */}
-      <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#0C1E2C' }}>
-          Budget Around Your Paychecks, <span style={{ color: '#0C4A6E' }}>Not the Calendar</span>
+      {/* Dot indicators (mobile) */}
+      <div className="lg:hidden flex justify-center gap-2 mb-8">
+        {Array.from({ length: totalSlides }).map((_, i) => (
+          <div key={i} style={{
+            width: i === mobileSlide ? '18px' : '6px',
+            height: '6px',
+            borderRadius: '3px',
+            background: i === mobileSlide ? '#38BDF8' : 'rgba(255,255,255,0.2)',
+            transition: 'all 0.4s',
+          }} />
+        ))}
+      </div>
+
+      {/* ── Center content ── */}
+      <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6 md:space-y-8">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#F5F3EF' }}>
+          Budget Around Your Paychecks, <span style={{ color: '#38BDF8' }}>Not the Calendar</span>
         </h1>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>
+        <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(245,243,239,0.55)' }}>
           Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles, split large bills across paychecks, and track every dollar with confidence.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
           <Link
             href="/auth/signup"
             className="px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition transform hover:scale-105 inline-block text-center"
-            style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}
+            style={{ backgroundColor: '#38BDF8', color: '#0B1120', boxShadow: '0 4px 20px rgba(56,189,248,0.3)' }}
           >
             Get Started Free
           </Link>
           <Link
             href="/app"
             className="px-8 py-3 rounded-lg border font-semibold hover:opacity-75 transition inline-block text-center"
-            style={{ borderColor: 'rgba(12,74,110,0.2)', color: '#0C1E2C' }}
+            style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#F5F3EF' }}
           >
             Open Web App
           </Link>
         </div>
       </div>
 
-      {/* Float animations */}
+      {/* Animations */}
       <style>{`
         @keyframes floatA {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-12px); }
+          50% { transform: translateY(-14px); }
         }
         @keyframes floatB {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-16px); }
+          50% { transform: translateY(-18px); }
         }
         @keyframes floatC {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+          50% { transform: translateY(-11px); }
         }
       `}</style>
     </section>
