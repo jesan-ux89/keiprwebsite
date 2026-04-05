@@ -35,15 +35,15 @@ export default function Home() {
 
       {/* ── BAR 2: Main Navigation (Black) ── */}
       <nav className="sticky top-0 z-50" style={{ backgroundColor: '#1A1814' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
           {/* Left: Logo */}
           <Link href="/" className="flex items-baseline gap-[2px] shrink-0">
             <span style={{ fontFamily: 'Georgia, serif' }} className="text-[26px] font-bold text-[#38BDF8]">k</span>
             <span className="text-[21px] font-light text-white tracking-[2px]">eipr</span>
           </Link>
 
-          {/* Center: Nav Links (desktop) */}
-          <div className="hidden md:flex items-center gap-10">
+          {/* Center: Nav Links + Sign In (desktop) — absolute so store badges don't shift it */}
+          <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
             <a href="#features" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               How It Works
             </a>
@@ -53,14 +53,13 @@ export default function Home() {
             <a href="#pricing" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               Pricing
             </a>
-          </div>
-
-          {/* Right: Actions + Store Buttons (desktop) */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-white/80 transition">
+            <Link href="/auth/login" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               Sign In
             </Link>
+          </div>
 
+          {/* Right: Store Buttons (desktop) */}
+          <div className="hidden md:flex items-center gap-3">
             {/* App Store Button */}
             <Link href="/coming-soon?platform=ios" className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition" style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
