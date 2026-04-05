@@ -19,6 +19,7 @@ export function Button({
   loading = false,
   disabled = false,
   children,
+  style: externalStyle,
   ...props
 }: ButtonProps) {
   const { colors } = useTheme();
@@ -28,7 +29,7 @@ export function Button({
       case 'primary':
         return {
           backgroundColor: colors.electric,
-          color: colors.midnight,
+          color: '#FFFFFF',
           border: 'none',
         };
       case 'secondary':
@@ -89,6 +90,7 @@ export function Button({
     gap: '0.5rem',
     ...getVariantStyles(),
     ...getSizeStyles(),
+    ...externalStyle,
   };
 
   return (

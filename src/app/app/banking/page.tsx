@@ -242,7 +242,7 @@ export default function BankingPage() {
                       {account.account_name} • {account.account_mask}
                     </p>
                     <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: 0 }}>
-                      Last synced: {new Date(account.last_sync).toLocaleDateString()}
+                      Last synced: {account.last_sync && !isNaN(new Date(account.last_sync).getTime()) ? new Date(account.last_sync).toLocaleDateString() : 'Never'}
                     </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
