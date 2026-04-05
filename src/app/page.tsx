@@ -364,24 +364,30 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
    Desktop: 2 cards visible  |  Mobile: 1 card visible
    ══════════════════════════════════════════════════════════ */
 
-/* ── Glassmorphic Card Shell ── */
+/* ── Glassmorphic Card Shell — taller, with slide direction + glow pulse ── */
 function StoryCard({ children, side, visible }: { children: React.ReactNode; side: 'left' | 'right' | 'center'; visible: boolean }) {
   const rotate = side === 'left' ? -3 : side === 'right' ? 3 : 0;
+  const slideX = side === 'left' ? -24 : side === 'right' ? 24 : 0;
   return (
     <div style={{
       background: 'rgba(255,255,255,0.10)',
-      borderRadius: '20px',
-      padding: '24px 28px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
-      border: '1px solid rgba(255,255,255,0.15)',
+      borderRadius: '22px',
+      padding: '30px 30px 34px',
+      boxShadow: visible
+        ? '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 20px rgba(56,189,248,0.08)'
+        : '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+      border: visible ? '1px solid rgba(56,189,248,0.25)' : '1px solid rgba(255,255,255,0.15)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      minWidth: '200px',
-      maxWidth: '300px',
-      transform: `rotate(${rotate}deg) scale(${visible ? 1 : 0.92})`,
+      minWidth: '220px',
+      maxWidth: '320px',
+      transform: visible
+        ? `rotate(${rotate}deg) scale(1) translateX(0px)`
+        : `rotate(${rotate}deg) scale(0.92) translateX(${slideX}px)`,
       opacity: visible ? 1 : 0,
-      transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)',
+      transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1), border-color 0.7s, box-shadow 0.7s',
       pointerEvents: visible ? 'auto' as const : 'none' as const,
+      animation: visible ? 'storyFloat 5s ease-in-out infinite' : 'none',
     }}>
       {children}
     </div>
@@ -504,12 +510,12 @@ function StoryBarChart({ active }: { active: boolean }) {
     return () => clearTimeout(t);
   }, [active]);
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '7px', height: '60px' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '72px' }}>
       {bars.map((bar, i) => (
         <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
           <div style={{
-            width: '24px',
-            height: grow ? `${(bar.value / bar.max) * 50}px` : '0px',
+            width: '26px',
+            height: grow ? `${(bar.value / bar.max) * 60}px` : '0px',
             background: bar.color,
             borderRadius: '4px 4px 0 0',
             transition: `height 0.6s cubic-bezier(0.4,0,0.2,1) ${i * 80}ms`,
@@ -530,7 +536,7 @@ const sceneLabel: React.CSSProperties = { fontSize: '0.6rem', fontWeight: 700, l
 function SceneGotPaidA({ active }: { active: boolean }) {
   return (
     <>
-      <div style={sceneLabel}>Deposit Received</div>
+      <div style={{ ...sceneLabel, color: '#4ADE80', fontSize: '0.7rem' }}>You Got Paid!</div>
       <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Paycheck 1 &middot; Apr 10</div>
       <div style={{ fontSize: '2rem', fontWeight: 700, color: '#4ADE80' }}>
         +<AnimatedNumber target={2847} prefix="$" active={active} />
@@ -736,14 +742,14 @@ function SceneBudgetB({ active }: { active: boolean }) {
 
 /* ── Scene config ── */
 const SCENES = [
-  { labelA: 'You got paid',       labelB: 'Paycheck breakdown',  A: SceneGotPaidA, B: SceneGotPaidB },
-  { labelA: 'Bills confirmed',    labelB: 'Payment progress',    A: SceneBillsA,   B: SceneBillsB },
-  { labelA: 'Split bill',         labelB: 'Per-paycheck impact', A: SceneSplitA,    B: SceneSplitB },
-  { labelA: 'Plan ahead',         labelB: 'You\'re ahead',       A: SceneForwardA,  B: SceneForwardB },
-  { labelA: 'Monthly spending',   labelB: 'Budget breakdown',    A: SceneBudgetA,   B: SceneBudgetB },
+  { title: 'You Got Paid!',      A: SceneGotPaidA, B: SceneGotPaidB },
+  { title: 'Bills Confirmed',    A: SceneBillsA,   B: SceneBillsB },
+  { title: 'Split Bill',         A: SceneSplitA,    B: SceneSplitB },
+  { title: 'Pay Forward',        A: SceneForwardA,  B: SceneForwardB },
+  { title: 'Budget Overview',    A: SceneBudgetA,   B: SceneBudgetB },
 ];
 
-const SCENE_DURATION = 3500;
+const SCENE_DURATION = 4000;
 
 /* ══════════════════════════════════════════════════════════
    Hero with Animated Story Cards
@@ -769,11 +775,28 @@ function HeroWithFloatingCards() {
         background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(56,189,248,0.06) 0%, transparent 70%)',
       }} />
 
+      {/* ── Scene title badge (centered, glowing) ── */}
+      <div className="flex justify-center mb-6 lg:mb-0 lg:absolute lg:top-6 lg:left-1/2 lg:-translate-x-1/2" style={{ position: 'relative', zIndex: 10 }}>
+        <div style={{
+          padding: '6px 20px',
+          borderRadius: '20px',
+          background: 'rgba(56,189,248,0.1)',
+          border: '1px solid rgba(56,189,248,0.25)',
+          boxShadow: '0 0 16px rgba(56,189,248,0.15)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#38BDF8' }}>
+            {SCENES[scene].title}
+          </span>
+        </div>
+      </div>
+
       {/* ── Desktop: 2 cards, left + right (lg+) ── */}
       <div className="hidden lg:block" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
         {/* Left card slot */}
         <div className="absolute" style={{ top: '15%', left: '3%' }}>
-          <div style={{ position: 'relative', minHeight: '220px', minWidth: '260px' }}>
+          <div style={{ position: 'relative', minHeight: '260px', minWidth: '280px' }}>
             {SCENES.map((s, i) => {
               const CardA = s.A;
               return (
@@ -787,7 +810,7 @@ function HeroWithFloatingCards() {
 
         {/* Right card slot */}
         <div className="absolute" style={{ top: '12%', right: '3%' }}>
-          <div style={{ position: 'relative', minHeight: '220px', minWidth: '260px' }}>
+          <div style={{ position: 'relative', minHeight: '260px', minWidth: '280px' }}>
             {SCENES.map((s, i) => {
               const CardB = s.B;
               return (
@@ -802,7 +825,7 @@ function HeroWithFloatingCards() {
 
       {/* ── Mobile: 1 card, centered (below lg) ── */}
       <div className="lg:hidden flex justify-center mb-6" onTouchStart={() => setPaused(true)} onTouchEnd={() => { const t = setTimeout(() => setPaused(false), 2000); return () => clearTimeout(t); }}>
-        <div style={{ position: 'relative', minHeight: '180px', minWidth: '240px' }}>
+        <div style={{ position: 'relative', minHeight: '220px', minWidth: '260px' }}>
           {SCENES.map((s, i) => {
             const CardA = s.A;
             return (
@@ -855,6 +878,14 @@ function HeroWithFloatingCards() {
           </Link>
         </div>
       </div>
+
+      {/* Animations */}
+      <style>{`
+        @keyframes storyFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
     </section>
   );
 }
