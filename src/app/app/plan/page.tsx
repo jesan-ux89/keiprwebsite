@@ -95,7 +95,7 @@ export default function PlanPage() {
     try {
       const selectedMonth = months[selectedMonthIndex];
       await planAPI.updatePlanBill(selectedMonth.year, selectedMonth.month, planBillId, {
-        planned_amount: newAmount,
+        amount: newAmount,
       });
       // Refresh plan
       const res = await planAPI.get(selectedMonth.year, selectedMonth.month);

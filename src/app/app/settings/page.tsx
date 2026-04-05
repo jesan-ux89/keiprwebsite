@@ -114,7 +114,7 @@ export default function SettingsPage() {
         name: incomeForm.name,
         typicalAmount: parseFloat(incomeForm.amount),
         frequency: incomeForm.frequency,
-        next_pay_date: incomeForm.nextPayDate,
+        nextPayDate: incomeForm.nextPayDate,
       });
       setIncomeForm({ name: '', amount: '', frequency: 'biweekly', nextPayDate: '' });
       setShowIncomeModal(false);
@@ -149,7 +149,7 @@ export default function SettingsPage() {
         name: incomeForm.name,
         typicalAmount: parseFloat(incomeForm.amount),
         frequency: incomeForm.frequency,
-        next_pay_date: incomeForm.nextPayDate,
+        nextPayDate: incomeForm.nextPayDate,
       });
       setIncomeForm({ name: '', amount: '', frequency: 'biweekly', nextPayDate: '' });
       setShowIncomeModal(false);

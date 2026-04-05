@@ -466,7 +466,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const splits = [];
       for (let i = 1; i <= 4; i++) {
         const amt = data[`p${i}`] as number || 0;
-        if (amt > 0) splits.push({ paycheck_num: i, amount: amt, sort_order: i });
+        if (amt > 0) splits.push({ amount: amt, sortOrder: i });
       }
       if (splits.length > 0) {
         try {
@@ -508,7 +508,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const splits = [];
       for (let i = 1; i <= 4; i++) {
         const amt = data[`p${i}`] as number || 0;
-        if (amt > 0) splits.push({ paycheck_num: i, amount: amt, sort_order: i });
+        if (amt > 0) splits.push({ amount: amt, sortOrder: i });
       }
       if (splits.length > 0) {
         try {
