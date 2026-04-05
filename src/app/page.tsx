@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Calendar,
   Zap,
@@ -18,6 +18,17 @@ import {
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  const closeLightbox = useCallback(() => setLightboxSrc(null), []);
+
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeLightbox(); };
+    document.addEventListener('keydown', handleKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = ''; };
+  }, [lightboxSrc, closeLightbox]);
 
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#EDF6FC', color: '#0C1E2C' }}>
@@ -167,22 +178,22 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screenshots/Paycheck-Forward-Budgeting.jpg" />
+            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screenshots/Paycheck-Forward-Budgeting.jpg" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 2 */}
-            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screenshots/Split-Bills.jpg" />
+            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screenshots/Split-Bills.jpg" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 3 */}
-            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screenshots/Bill-Tracker.jpg" />
+            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screenshots/Bill-Tracker.jpg" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 4 */}
-            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screenshots/Forward-Planning.jpg" />
+            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screenshots/Forward-Planning.jpg" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 5 */}
-            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screenshots/Connected-Banking.jpg" />
+            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screenshots/Connected-Banking.jpg" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 6 */}
-            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshots/Currency.jpg" />
+            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshots/Currency.jpg" onScreenshotClick={setLightboxSrc} />
           </div>
         </div>
       </section>
@@ -214,6 +225,51 @@ export default function Home() {
           <p>2026 Keipr. Paycheck-forward budgeting for everyone.</p>
         </div>
       </footer>
+
+      {/* Lightbox Modal */}
+      {lightboxSrc && (
+        <div
+          onClick={closeLightbox}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'zoom-out',
+            padding: '40px',
+          }}
+        >
+          <button
+            onClick={closeLightbox}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '24px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            aria-label="Close lightbox"
+          >
+            <X size={32} color="#fff" />
+          </button>
+          <img
+            src={lightboxSrc}
+            alt="Full resolution screenshot"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxHeight: '90vh',
+              maxWidth: '90vw',
+              borderRadius: '16px',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
+              cursor: 'default',
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -223,32 +279,40 @@ interface FeatureCardProps {
   title: string;
   description: string;
   screenshot?: string;
+  onScreenshotClick?: (src: string) => void;
 }
 
-function FeatureCard({ icon: Icon, title, description, screenshot }: FeatureCardProps) {
+function FeatureCard({ icon: Icon, title, description, screenshot, onScreenshotClick }: FeatureCardProps) {
   return (
-    <div className="rounded-xl border transition group hover:shadow-lg overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(12,74,110,0.1)' }}>
+    <div className="rounded-xl border transition group hover:shadow-lg overflow-hidden" style={{ backgroundColor: '#222019', borderColor: 'rgba(255,255,255,0.08)' }}>
       {/* Text content on top */}
       <div className="p-7 pb-5">
-        <div className="w-11 h-11 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(12,74,110,0.08)' }}>
-          <Icon size={22} color="#0C4A6E" />
+        <div className="w-11 h-11 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(56,189,248,0.12)', border: '1px solid rgba(56,189,248,0.2)' }}>
+          <Icon size={22} color="#38BDF8" />
         </div>
-        <h3 className="text-lg font-semibold mb-2" style={{ color: '#0C1E2C' }}>{title}</h3>
-        <p className="text-sm leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>
+        <h3 className="text-lg font-semibold mb-2" style={{ color: '#F5F3EF' }}>{title}</h3>
+        <p className="text-sm leading-relaxed" style={{ color: 'rgba(245,243,239,0.55)' }}>
           {description}
         </p>
       </div>
-      {/* Screenshot below */}
+      {/* Screenshot below — clickable for full-res */}
       {screenshot && (
         <div className="px-7 pb-6 flex justify-center">
-          <div style={{
-            width: '200px',
-            borderRadius: '18px',
-            overflow: 'hidden',
-            border: '3px solid #2A2A2A',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            background: '#1A1814',
-          }}>
+          <div
+            onClick={() => onScreenshotClick?.(screenshot)}
+            style={{
+              width: '200px',
+              borderRadius: '18px',
+              overflow: 'hidden',
+              border: '3px solid #3A3832',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+              background: '#1A1814',
+              cursor: 'zoom-in',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
+          >
             <img
               src={screenshot}
               alt={`${title} screenshot`}
