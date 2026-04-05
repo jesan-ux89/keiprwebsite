@@ -269,7 +269,15 @@ export default function SettingsPage() {
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => setDisplayNameEdit(false)}
+                    onClick={async () => {
+                      try {
+                        await usersAPI.updateProfile({ fullName: displayName.trim() });
+                        setDisplayNameEdit(false);
+                      } catch (err) {
+                        console.error('Failed to save display name:', err);
+                        alert('Failed to save display name');
+                      }
+                    }}
                   >
                     Save
                   </Button>

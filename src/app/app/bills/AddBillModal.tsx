@@ -42,7 +42,7 @@ interface AddBillModalProps {
 
 export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillModalProps) {
   const { colors } = useTheme();
-  const { addBill, updateBill } = useApp();
+  const { addBill, updateBill, fmt } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -414,7 +414,7 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
                   color: colors.amber,
                 }}
               >
-                Remaining to allocate: ${Math.abs(splitRemaining).toFixed(2)}
+                Remaining to allocate: {fmt(Math.abs(splitRemaining))}
               </p>
             )}
           </div>

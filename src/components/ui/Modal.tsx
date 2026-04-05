@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { X } from 'lucide-react';
 
@@ -13,6 +13,16 @@ interface ModalProps {
 
 export function Modal({ title, children, onClose, isOpen }: ModalProps) {
   const { colors } = useTheme();
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

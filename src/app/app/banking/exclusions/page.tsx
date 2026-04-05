@@ -192,7 +192,7 @@ export default function ExclusionsPage() {
                     {rule.merchant_pattern}
                   </p>
                   <p style={{ color: colors.textMuted, fontSize: '0.825rem', margin: '0.25rem 0 0 0' }}>
-                    Added {new Date(rule.created_at).toLocaleDateString()}
+                    Added {rule.created_at && !isNaN(new Date(rule.created_at).getTime()) ? new Date(rule.created_at).toLocaleDateString() : 'Unknown'}
                   </p>
                 </div>
 

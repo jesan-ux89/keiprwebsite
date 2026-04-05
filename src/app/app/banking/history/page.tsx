@@ -22,7 +22,7 @@ interface Match {
 
 export default function HistoryPage() {
   const { colors } = useTheme();
-  const { bills } = useApp();
+  const { bills, fmt } = useApp();
 
   const [matches, setMatches] = useState<Match[]>([]);
   const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
@@ -186,12 +186,12 @@ export default function HistoryPage() {
                           {match.transaction_name}
                         </p>
                         <p style={{ color: colors.textMuted, fontSize: '0.825rem', margin: 0 }}>
-                          {new Date(match.transaction_date).toLocaleDateString()}
+                          {match.transaction_date && !isNaN(new Date(match.transaction_date).getTime()) ? new Date(match.transaction_date).toLocaleDateString() : 'Unknown date'}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: '1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                          ${(match.transaction_amount ?? 0).toFixed(2)}
+                          {fmt(match.transaction_amount ?? 0)}
                         </p>
                       </div>
                     </div>
@@ -212,12 +212,12 @@ export default function HistoryPage() {
                           {match.bill_name}
                         </p>
                         <p style={{ color: colors.textMuted, fontSize: '0.825rem', margin: 0 }}>
-                          Matched {new Date(match.matched_at).toLocaleDateString()}
+                          Matched {match.matched_at && !isNaN(new Date(match.matched_at).getTime()) ? new Date(match.matched_at).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: '1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                          ${(match.bill_amount ?? 0).toFixed(2)}
+                          {fmt(match.bill_amount ?? 0)}
                         </p>
                       </div>
                     </div>

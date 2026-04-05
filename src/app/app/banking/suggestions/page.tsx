@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
+import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +20,7 @@ interface Suggestion {
 
 export default function SuggestionsPage() {
   const { colors } = useTheme();
+  const { fmt } = useApp();
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -157,7 +159,7 @@ export default function SuggestionsPage() {
                       Typical Amount
                     </p>
                     <p style={{ color: colors.text, fontWeight: 600, margin: 0 }}>
-                      ${(suggestion.amount ?? 0).toFixed(2)}
+                      {fmt(suggestion.amount ?? 0)}
                     </p>
                   </div>
                   <div>

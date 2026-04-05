@@ -14,6 +14,7 @@ export function Card({ children, onClick, className, style, ...props }: CardProp
   return (
     <div
       {...props}
+      className={className}
       onClick={onClick}
       style={{
         backgroundColor: colors.card,

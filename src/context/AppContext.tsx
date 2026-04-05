@@ -312,7 +312,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     : user?.email ? user.email[0].toUpperCase() : '?';
 
   // Format money — matches mobile fmt()
-  const fmt = (amount: number): string => {
+  const fmt = (amount: number | null | undefined): string => {
+    if (amount == null || isNaN(amount)) return `${currency.symbol}0`;
     if (currency.code === 'JPY') {
       return `${currency.symbol}${Math.round(amount).toLocaleString()}`;
     }
@@ -519,6 +520,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleSplitPaid = async (billId: string, paycheckNum: number) => {
+    if (paycheckNum < 1 || paycheckNum > 4) return;
     const bill = bills.find(b => b.id === billId);
     if (!bill || !bill.isSplit) {
       // Non-split: toggle global paid state

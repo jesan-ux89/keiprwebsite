@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
+import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +21,7 @@ interface Confirmation {
 
 export default function ConfirmationsPage() {
   const { colors } = useTheme();
+  const { fmt } = useApp();
 
   const [confirmations, setConfirmations] = useState<Confirmation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -149,11 +151,11 @@ export default function ConfirmationsPage() {
                       {confirmation.transaction_name}
                     </p>
                     <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
-                      {new Date(confirmation.transaction_date).toLocaleDateString()}
+                      {confirmation.transaction_date && !isNaN(new Date(confirmation.transaction_date).getTime()) ? new Date(confirmation.transaction_date).toLocaleDateString() : 'Unknown date'}
                     </p>
                   </div>
                   <p style={{ fontSize: '1.125rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                    ${(confirmation.transaction_amount ?? 0).toFixed(2)}
+                    {fmt(confirmation.transaction_amount ?? 0)}
                   </p>
                 </div>
               </div>
@@ -167,7 +169,7 @@ export default function ConfirmationsPage() {
                     {confirmation.bill_name}
                   </p>
                   <p style={{ fontSize: '1.125rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                    ${(confirmation.bill_amount ?? 0).toFixed(2)}
+                    {fmt(confirmation.bill_amount ?? 0)}
                   </p>
                 </div>
               </div>
