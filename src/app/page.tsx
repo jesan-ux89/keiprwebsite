@@ -20,7 +20,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#FFFFFF', color: '#1A1814' }}>
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#EDF6FC', color: '#0C1E2C' }}>
       {/* ── BAR 1: Top Utility / Announcement Bar ── */}
       <div style={{ backgroundColor: '#0C4A6E' }} className="w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-center gap-2">
@@ -131,26 +131,26 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center px-4 py-20 md:py-32" style={{ backgroundColor: '#FFFFFF' }}>
+      <section className="flex-1 flex items-center justify-center px-4 py-20 md:py-32" style={{ backgroundColor: '#EDF6FC' }}>
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#1A1814' }}>
-            Budget Around Your Paychecks, <span style={{ color: '#38BDF8' }}>Not the Calendar</span>
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#0C1E2C' }}>
+            Budget Around Your Paychecks, <span style={{ color: '#0C4A6E' }}>Not the Calendar</span>
           </h1>
-          <p className="text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(26,24,20,0.55)' }}>
+          <p className="text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>
             Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles, split large bills across paychecks, and track every dollar with confidence.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link
               href="/auth/signup"
               className="px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition transform hover:scale-105 inline-block text-center"
-              style={{ backgroundColor: '#38BDF8', color: '#0C4A6E' }}
+              style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}
             >
               Get Started Free
             </Link>
             <Link
               href="/app"
               className="px-8 py-3 rounded-lg border font-semibold hover:opacity-75 transition inline-block text-center"
-              style={{ borderColor: 'rgba(26,24,20,0.15)', color: '#1A1814' }}
+              style={{ borderColor: 'rgba(12,74,110,0.2)', color: '#0C1E2C' }}
             >
               Open Web App
             </Link>
@@ -159,11 +159,11 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(26,24,20,0.06)', backgroundColor: '#F8F8F6' }}>
+      <section id="features" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#1A1814' }}>Powerful Features Built for Paycheck Planning</h2>
-            <p className="text-xl" style={{ color: 'rgba(26,24,20,0.55)' }}>Everything you need to master your finances around your pay cycles</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Powerful Features Built for Paycheck Planning</h2>
+            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.6)' }}>Everything you need to master your finances around your pay cycles</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -189,11 +189,11 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(26,24,20,0.06)', backgroundColor: '#FFFFFF' }}>
+      <section id="pricing" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#EDF6FC' }}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#1A1814' }}>Simple, Transparent Pricing</h2>
-            <p className="text-xl" style={{ color: 'rgba(26,24,20,0.55)' }}>Choose the plan that fits your needs</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Simple, Transparent Pricing</h2>
+            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.6)' }}>Choose the plan that fits your needs</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -210,8 +210,8 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 px-4 mt-auto" style={{ borderColor: 'rgba(26,24,20,0.06)', backgroundColor: '#F8F8F6' }}>
-        <div className="max-w-7xl mx-auto text-center" style={{ color: 'rgba(26,24,20,0.45)' }}>
+      <footer className="border-t py-8 px-4 mt-auto" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
+        <div className="max-w-7xl mx-auto text-center" style={{ color: 'rgba(12,30,44,0.45)' }}>
           <p>2026 Keipr. Paycheck-forward budgeting for everyone.</p>
         </div>
       </footer>
@@ -227,12 +227,12 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   return (
-    <div className="p-8 rounded-xl border transition group hover:shadow-md" style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(26,24,20,0.08)' }}>
-      <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition" style={{ backgroundColor: 'rgba(56,189,248,0.1)' }}>
+    <div className="p-8 rounded-xl border transition group hover:shadow-md" style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(12,74,110,0.1)' }}>
+      <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition" style={{ backgroundColor: 'rgba(12,74,110,0.08)' }}>
         <Icon size={24} color="#0C4A6E" />
       </div>
-      <h3 className="text-xl font-semibold mb-3" style={{ color: '#1A1814' }}>{title}</h3>
-      <p style={{ color: 'rgba(26,24,20,0.55)' }}>
+      <h3 className="text-xl font-semibold mb-3" style={{ color: '#0C1E2C' }}>{title}</h3>
+      <p style={{ color: 'rgba(12,30,44,0.6)' }}>
         {description}
       </p>
     </div>
@@ -254,25 +254,25 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
       className="p-8 flex flex-col rounded-xl border"
       style={{
         backgroundColor: '#FFFFFF',
-        borderColor: highlighted ? '#38BDF8' : 'rgba(26,24,20,0.08)',
+        borderColor: highlighted ? '#0C4A6E' : 'rgba(12,74,110,0.1)',
         borderWidth: highlighted ? '2px' : '1px',
       }}
     >
       {highlighted && (
-        <div className="inline-block text-sm font-semibold px-3 py-1 rounded-full mb-4 w-fit" style={{ backgroundColor: '#38BDF8', color: '#0C4A6E' }}>
+        <div className="inline-block text-sm font-semibold px-3 py-1 rounded-full mb-4 w-fit" style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}>
           Popular
         </div>
       )}
-      <h3 className="text-2xl font-bold mb-2" style={{ color: '#1A1814' }}>{name}</h3>
-      <p className="mb-6" style={{ color: 'rgba(26,24,20,0.55)' }}>{subtitle}</p>
+      <h3 className="text-2xl font-bold mb-2" style={{ color: '#0C1E2C' }}>{name}</h3>
+      <p className="mb-6" style={{ color: 'rgba(12,30,44,0.6)' }}>{subtitle}</p>
       <div className="mb-6">
-        <span className="text-4xl font-bold" style={{ color: '#1A1814' }}>{price}</span>
-        <span style={{ color: 'rgba(26,24,20,0.45)' }}>/month</span>
+        <span className="text-4xl font-bold" style={{ color: '#0C1E2C' }}>{price}</span>
+        <span style={{ color: 'rgba(12,30,44,0.45)' }}>/month</span>
       </div>
       <ul className="space-y-3 mb-8 flex-1">
         {features.map((feature) => (
-          <li key={feature} className="flex items-start gap-3" style={{ color: 'rgba(26,24,20,0.55)' }}>
-            <span style={{ color: '#38BDF8' }} className="mt-1">•</span>
+          <li key={feature} className="flex items-start gap-3" style={{ color: 'rgba(12,30,44,0.6)' }}>
+            <span style={{ color: '#0C4A6E' }} className="mt-1">•</span>
             <span>{feature}</span>
           </li>
         ))}
@@ -282,8 +282,8 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
         className="w-full py-2 rounded-lg font-semibold transition text-center inline-block hover:opacity-90"
         style={
           highlighted
-            ? { backgroundColor: '#38BDF8', color: '#0C4A6E' }
-            : { border: '1px solid rgba(26,24,20,0.15)', color: '#1A1814' }
+            ? { backgroundColor: '#0C4A6E', color: '#E8E5DC' }
+            : { border: '1px solid rgba(12,74,110,0.2)', color: '#0C1E2C' }
         }
       >
         Get Started
