@@ -121,6 +121,54 @@ function snakeToCamel(obj: Record<string, unknown>): Record<string, unknown> {
   return camelObj;
 }
 
+// Map API bill response to our Bill interface
+function mapBill(raw: Record<string, unknown>): Bill {
+  const splits = Array.isArray(raw.bill_splits) ? raw.bill_splits as Record<string, unknown>[] : [];
+  const categoryObj = raw.budget_categories as Record<string, unknown> | null;
+
+  // Sort splits by paycheck_num (or split order)
+  const sortedSplits = [...splits].sort((a, b) =>
+    (Number(a.paycheck_num) || Number(a.split_order) || 0) - (Number(b.paycheck_num) || Number(b.split_order) || 0)
+  );
+
+  const totalAmount = Number(raw.total_amount) || 0;
+  const funded = sortedSplits.reduce((sum, s) =>
+    (s.is_saved_to_savings ? sum + (Number(s.amount) || 0) : sum), 0
+  );
+
+  return {
+    id: String(raw.id || ''),
+    name: String(raw.name || ''),
+    category: String(categoryObj?.name || raw.category_name || 'Uncategorized'),
+    dueDay: Number(raw.due_day_of_month) || 1,
+    total: totalAmount,
+    isSplit: Boolean(raw.is_split),
+    isRecurring: Boolean(raw.is_recurring),
+    isAutoPay: Boolean(raw.is_auto_pay),
+    funded,
+    p1: Number(sortedSplits[0]?.amount) || 0,
+    p2: Number(sortedSplits[1]?.amount) || 0,
+    p3: Number(sortedSplits[2]?.amount) || 0,
+    p4: Number(sortedSplits[3]?.amount) || 0,
+    p1done: Boolean(sortedSplits[0]?.is_saved_to_savings),
+    p2done: Boolean(sortedSplits[1]?.is_saved_to_savings),
+    p3done: Boolean(sortedSplits[2]?.is_saved_to_savings),
+    p4done: Boolean(sortedSplits[3]?.is_saved_to_savings),
+    splitIds: sortedSplits.map((s) => String(s.id || '')),
+  };
+}
+
+// Map API income source to our IncomeSource interface
+function mapIncomeSource(raw: Record<string, unknown>): IncomeSource {
+  return {
+    id: String(raw.id || ''),
+    name: String(raw.name || 'Main job'),
+    amount: Number(raw.typical_amount || raw.typicalAmount || raw.amount || 0),
+    frequency: (raw.frequency as IncomeSource['frequency']) || 'biweekly',
+    nextPayDate: String(raw.next_pay_date || raw.nextPayDate || ''),
+  };
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
 
@@ -148,7 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await billsAPI.getAll();
       const billsArray = Array.isArray(res.data?.bills) ? res.data.bills : [];
-      setBills(billsArray.map((b: Record<string, unknown>) => snakeToCamel(b) as unknown as Bill));
+      setBills(billsArray.map((b: Record<string, unknown>) => mapBill(b)));
     } catch (error) {
       console.error('Failed to fetch bills:', error);
     } finally {
@@ -162,8 +210,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIncomeLoading(true);
     try {
       const res = await usersAPI.getIncomeSources();
-      const sourcesArray = Array.isArray(res.data?.income_sources) ? res.data.income_sources : [];
-      setIncomeSources(sourcesArray.map((s: Record<string, unknown>) => snakeToCamel(s) as unknown as IncomeSource));
+      const sourcesArray = Array.isArray(res.data?.incomeSources) ? res.data.incomeSources : (Array.isArray(res.data?.income_sources) ? res.data.income_sources : []);
+      setIncomeSources(sourcesArray.map((s: Record<string, unknown>) => mapIncomeSource(s)));
     } catch (error) {
       console.error('Failed to fetch income sources:', error);
     } finally {
@@ -199,14 +247,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Bill operations
   const addBill = async (data: Record<string, unknown>): Promise<Bill> => {
     const res = await billsAPI.create(data);
-    const bill = snakeToCamel(res.data?.bill || res.data) as unknown as Bill;
+    const bill = mapBill(res.data?.bill || res.data);
     setBills([...bills, bill]);
     return bill;
   };
 
   const updateBill = async (id: string, data: Record<string, unknown>): Promise<Bill> => {
     const res = await billsAPI.update(id, data);
-    const bill = snakeToCamel(res.data?.bill || res.data) as unknown as Bill;
+    const bill = mapBill(res.data?.bill || res.data);
     setBills(bills.map((b) => (b.id === id ? bill : b)));
     return bill;
   };
@@ -237,14 +285,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Income source operations
   const addIncomeSource = async (data: Record<string, unknown>): Promise<IncomeSource> => {
     const res = await usersAPI.addIncomeSource(data);
-    const source = snakeToCamel(res.data?.income_source || res.data) as unknown as IncomeSource;
+    const source = mapIncomeSource(res.data?.incomeSource || res.data?.income_source || res.data);
     setIncomeSources([...incomeSources, source]);
     return source;
   };
 
   const updateIncomeSource = async (id: string, data: Record<string, unknown>): Promise<IncomeSource> => {
     const res = await usersAPI.updateIncomeSource(id, data);
-    const source = snakeToCamel(res.data?.income_source || res.data) as unknown as IncomeSource;
+    const source = mapIncomeSource(res.data?.incomeSource || res.data?.income_source || res.data);
     setIncomeSources(incomeSources.map((s) => (s.id === id ? source : s)));
     return source;
   };

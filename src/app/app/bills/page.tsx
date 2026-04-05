@@ -320,7 +320,7 @@ export default function BillsPage() {
                               margin: '0.25rem 0 0 0',
                             }}
                           >
-                            {bill.funded}/{fmt(bill.total)}
+                            {fmt(bill.funded)}/{fmt(bill.total)}
                           </p>
                         </div>
 
@@ -519,7 +519,7 @@ export default function BillsPage() {
                                 Progress
                               </span>
                               <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>
-                                {Math.round((bill.funded / bill.total) * 100)}%
+                                {bill.total > 0 ? Math.round((bill.funded / bill.total) * 100) : 0}%
                               </span>
                             </div>
                             <div
@@ -534,7 +534,7 @@ export default function BillsPage() {
                               <div
                                 style={{
                                   height: '100%',
-                                  width: `${Math.min((bill.funded / bill.total) * 100, 100)}%`,
+                                  width: `${bill.total > 0 ? Math.min((bill.funded / bill.total) * 100, 100) : 0}%`,
                                   backgroundColor: colors.electric,
                                   transition: 'width 0.3s ease',
                                 }}

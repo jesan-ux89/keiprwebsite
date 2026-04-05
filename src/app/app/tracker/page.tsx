@@ -57,10 +57,12 @@ export default function TrackerPage() {
 
     if (incomeSources.length > 0) {
       loadPaychecks();
+    } else {
+      setLoading(false);
     }
   }, [incomeSources]);
 
-  if (loading || periods.length === 0) {
+  if (loading) {
     return (
       <div
         style={{
@@ -72,6 +74,19 @@ export default function TrackerPage() {
         }}
       >
         <Loader size={32} />
+      </div>
+    );
+  }
+
+  if (periods.length === 0) {
+    return (
+      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Payment Tracker</h1>
+        <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '24px' }}>Track which bills you've paid this paycheck period</p>
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted, backgroundColor: colors.card, borderRadius: '12px', border: `1px solid ${colors.cardBorder}` }}>
+          <p style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '8px' }}>No pay schedule found</p>
+          <p style={{ fontSize: '13px' }}>Add an income source in Settings to start tracking your bills by paycheck.</p>
+        </div>
       </div>
     );
   }
