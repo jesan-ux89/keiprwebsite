@@ -33,45 +33,63 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── BAR 2: Main Navigation ── */}
-      <nav className="sticky top-0 z-50 bg-[#1A1814] border-b border-white/[0.06]">
+      {/* ── BAR 2: Main Navigation (White / Clean) ── */}
+      <nav className="sticky top-0 z-50 bg-white border-b border-black/[0.08]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Left: Logo */}
           <Link href="/" className="flex items-baseline gap-[2px] shrink-0">
             <span style={{ fontFamily: 'Georgia, serif' }} className="text-[26px] font-bold text-[#38BDF8]">k</span>
-            <span className="text-[21px] font-light text-[#E8E5DC] tracking-[2px]">eipr</span>
+            <span className="text-[21px] font-light text-[#1A1814] tracking-[2px]">eipr</span>
           </Link>
 
           {/* Center: Nav Links (desktop) */}
           <div className="hidden md:flex items-center gap-10">
-            <a href="#features" className="text-sm font-medium text-[#E8E5DC]/60 hover:text-[#E8E5DC] tracking-wide transition">
+            <a href="#features" className="text-sm font-medium text-[#1A1814]/55 hover:text-[#1A1814] tracking-wide transition">
+              How It Works
+            </a>
+            <a href="#features" className="text-sm font-medium text-[#1A1814]/55 hover:text-[#1A1814] tracking-wide transition">
               Features
             </a>
-            <a href="#pricing" className="text-sm font-medium text-[#E8E5DC]/60 hover:text-[#E8E5DC] tracking-wide transition">
+            <a href="#pricing" className="text-sm font-medium text-[#1A1814]/55 hover:text-[#1A1814] tracking-wide transition">
               Pricing
-            </a>
-            <a href="#" className="text-sm font-medium text-[#E8E5DC]/60 hover:text-[#E8E5DC] tracking-wide transition">
-              How It Works
             </a>
           </div>
 
-          {/* Right: Actions (desktop) */}
+          {/* Right: Actions + Store Buttons (desktop) */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="p-2 rounded-full hover:bg-white/[0.05] transition" aria-label="Search">
-              <Search size={18} className="text-[#E8E5DC]/60" />
-            </button>
-            <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#E8E5DC]/80 hover:text-[#E8E5DC] transition">
-              <User size={16} />
+            <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#1A1814]/70 hover:text-[#1A1814] transition">
               Sign In
             </Link>
-            <Link href="/auth/signup" className="px-5 py-2 rounded-full bg-[#38BDF8] text-[#0C4A6E] text-sm font-semibold hover:opacity-90 transition">
-              Join Free
+
+            {/* App Store Button */}
+            <Link href="/coming-soon?platform=ios" className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1814] rounded-lg hover:bg-[#2A2724] transition">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+              <div className="flex flex-col">
+                <span className="text-[8px] text-white/70 leading-none">Download on the</span>
+                <span className="text-[12px] font-semibold text-white leading-tight">App Store</span>
+              </div>
+            </Link>
+
+            {/* Google Play Button */}
+            <Link href="/coming-soon?platform=android" className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1814] rounded-lg hover:bg-[#2A2724] transition">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/>
+                <path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/>
+                <path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/>
+                <path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/>
+              </svg>
+              <div className="flex flex-col">
+                <span className="text-[8px] text-white/70 leading-none">Get it on</span>
+                <span className="text-[12px] font-semibold text-white leading-tight">Google Play</span>
+              </div>
             </Link>
           </div>
 
           {/* Mobile: Hamburger */}
           <button
-            className="md:hidden p-2 text-[#E8E5DC]/60"
+            className="md:hidden p-2 text-[#1A1814]/60"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -81,24 +99,31 @@ export default function Home() {
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/[0.06] bg-[#1A1814] px-4 pb-4">
+          <div className="md:hidden border-t border-black/[0.08] bg-white px-4 pb-4">
             <div className="flex flex-col gap-1 pt-2">
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#E8E5DC]/70 hover:text-[#E8E5DC] hover:bg-white/[0.05] rounded-lg transition">
-                Features
-              </a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#E8E5DC]/70 hover:text-[#E8E5DC] hover:bg-white/[0.05] rounded-lg transition">
-                Pricing
-              </a>
-              <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#E8E5DC]/70 hover:text-[#E8E5DC] hover:bg-white/[0.05] rounded-lg transition">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#1A1814]/70 hover:text-[#1A1814] hover:bg-black/[0.03] rounded-lg transition">
                 How It Works
               </a>
-              <div className="border-t border-white/[0.06] mt-2 pt-3 flex flex-col gap-2">
-                <Link href="/auth/login" className="px-4 py-3 text-sm text-[#E8E5DC]/80 hover:text-[#E8E5DC] rounded-lg transition text-center">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#1A1814]/70 hover:text-[#1A1814] hover:bg-black/[0.03] rounded-lg transition">
+                Features
+              </a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#1A1814]/70 hover:text-[#1A1814] hover:bg-black/[0.03] rounded-lg transition">
+                Pricing
+              </a>
+              <div className="border-t border-black/[0.06] mt-2 pt-3 flex flex-col gap-2">
+                <Link href="/auth/login" className="px-4 py-3 text-sm text-[#1A1814]/80 hover:text-[#1A1814] rounded-lg transition text-center">
                   Sign In
                 </Link>
-                <Link href="/auth/signup" className="px-4 py-3 text-sm font-semibold bg-[#38BDF8] text-[#0C4A6E] rounded-full transition text-center hover:opacity-90">
-                  Join Free
-                </Link>
+                <div className="flex gap-2 justify-center pt-1">
+                  <Link href="/coming-soon?platform=ios" className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1814] rounded-lg">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    <div className="flex flex-col"><span className="text-[7px] text-white/70 leading-none">Download on the</span><span className="text-[11px] font-semibold text-white leading-tight">App Store</span></div>
+                  </Link>
+                  <Link href="/coming-soon?platform=android" className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1814] rounded-lg">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg>
+                    <div className="flex flex-col"><span className="text-[7px] text-white/70 leading-none">Get it on</span><span className="text-[11px] font-semibold text-white leading-tight">Google Play</span></div>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
