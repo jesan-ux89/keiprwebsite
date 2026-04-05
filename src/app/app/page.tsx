@@ -85,8 +85,19 @@ export default function DashboardPage() {
     }
   };
 
+  // Calculate monthly income based on pay frequency (matches mobile app logic)
+  const getMonthlyIncome = (source: { amount: number; frequency: string }) => {
+    switch (source.frequency) {
+      case 'weekly': return source.amount * 4;
+      case 'biweekly': return source.amount * 2;
+      case 'twicemonthly': return source.amount * 2;
+      case 'monthly': return source.amount;
+      default: return source.amount;
+    }
+  };
+
   // Calculate totals
-  const totalIncome = incomeSources.reduce((sum, source) => sum + source.amount, 0);
+  const totalIncome = incomeSources.reduce((sum, source) => sum + getMonthlyIncome(source), 0);
   const totalBills = bills.reduce((sum, bill) => sum + bill.total, 0);
   const remaining = totalIncome - totalBills;
   const billsPaid = bills.filter((bill) => {
