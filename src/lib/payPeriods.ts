@@ -377,6 +377,29 @@ export function getPaycheckCount(frequency: string): number {
 
 // ── Helpers ──────────────────────────────────────────────────
 
+/**
+ * Get an array of months for the plan view (current + next 3).
+ * Matches the old getPlanMonths() used by PlanScreen.
+ */
+export function getPlanMonths(): { year: number; month: number; label: string }[] {
+  const today = new Date();
+  const months = [];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  for (let i = 0; i < 4; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    months.push({
+      year: d.getFullYear(),
+      month: d.getMonth() + 1, // 1-indexed for API
+      label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
+    });
+  }
+
+  return months;
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
 function formatRange(start: Date, end: Date): string {
   const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   const startStr = start.toLocaleDateString('en-US', opts);
