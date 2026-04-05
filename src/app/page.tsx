@@ -140,9 +140,109 @@ export default function Home() {
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center px-4 py-20 md:py-32" style={{ backgroundColor: '#EDF6FC' }}>
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      {/* Hero Section with Floating Cards */}
+      <section className="relative overflow-hidden px-4 py-24 md:py-36" style={{ backgroundColor: '#EDF6FC' }}>
+        {/* Floating stat cards — hidden on mobile, visible on lg+ */}
+        <div className="hidden lg:block">
+          {/* Top-left: Paycheck card */}
+          <div className="absolute" style={{
+            top: '12%', left: '5%',
+            animation: 'floatA 6s ease-in-out infinite',
+          }}>
+            <FloatingCard rotate={-6}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '4px' }}>Next Paycheck</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0C1E2C' }}>$5,000</div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(12,30,44,0.5)', marginTop: '2px' }}>Apr 10 – Apr 23</div>
+            </FloatingCard>
+          </div>
+
+          {/* Top-right: Bills Due card */}
+          <div className="absolute" style={{
+            top: '8%', right: '6%',
+            animation: 'floatB 7s ease-in-out infinite',
+          }}>
+            <FloatingCard rotate={5}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '4px' }}>Bills This Check</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C05621' }}>$2,495</div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(12,30,44,0.5)', marginTop: '2px' }}>4 bills due</div>
+            </FloatingCard>
+          </div>
+
+          {/* Mid-left: Tracker card */}
+          <div className="absolute" style={{
+            top: '52%', left: '3%',
+            animation: 'floatC 5.5s ease-in-out infinite',
+          }}>
+            <FloatingCard rotate={4}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Paid This Month</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0C4A6E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: '#38BDF8', fontSize: '0.8rem', fontWeight: 700 }}>2</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0C1E2C' }}>of 4 bills</div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(12,30,44,0.45)' }}>50% complete</div>
+                </div>
+              </div>
+            </FloatingCard>
+          </div>
+
+          {/* Mid-right: Split card */}
+          <div className="absolute" style={{
+            top: '55%', right: '4%',
+            animation: 'floatA 6.5s ease-in-out infinite',
+          }}>
+            <FloatingCard rotate={-4}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Mortgage Split</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ background: '#E6F7ED', borderRadius: '8px', padding: '4px 10px', textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
+                </div>
+                <div style={{ background: '#FEF3C7', borderRadius: '8px', padding: '4px 10px', textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#B45309' }}>$800</div>
+                </div>
+              </div>
+            </FloatingCard>
+          </div>
+
+          {/* Bottom-center-left: After Bills card */}
+          <div className="absolute" style={{
+            bottom: '8%', left: '15%',
+            animation: 'floatB 5s ease-in-out infinite',
+          }}>
+            <FloatingCard rotate={3}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '4px' }}>After Bills</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16A34A' }}>$2,505</div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(12,30,44,0.5)', marginTop: '2px' }}>available to spend</div>
+            </FloatingCard>
+          </div>
+
+          {/* Bottom-center-right: Currency card */}
+          <div className="absolute" style={{
+            bottom: '10%', right: '14%',
+            animation: 'floatC 7.5s ease-in-out infinite',
+          }}>
+            <FloatingCard rotate={-3}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                {['$', '\u20AC', '\u00A3', '\u00A5'].map((sym) => (
+                  <div key={sym} style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    background: sym === '$' ? '#0C4A6E' : 'rgba(12,74,110,0.08)',
+                    color: sym === '$' ? '#38BDF8' : '#0C4A6E',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.85rem', fontWeight: 600,
+                  }}>{sym}</div>
+                ))}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(12,30,44,0.45)', marginTop: '6px' }}>7 currencies supported</div>
+            </FloatingCard>
+          </div>
+        </div>
+
+        {/* Center content */}
+        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#0C1E2C' }}>
             Budget Around Your Paychecks, <span style={{ color: '#0C4A6E' }}>Not the Calendar</span>
           </h1>
@@ -166,6 +266,22 @@ export default function Home() {
             </Link>
           </div>
         </div>
+
+        {/* Float animations */}
+        <style>{`
+          @keyframes floatA {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+          }
+          @keyframes floatB {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-16px); }
+          }
+          @keyframes floatC {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+          }
+        `}</style>
       </section>
 
       {/* Features Section */}
@@ -378,6 +494,23 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
       >
         Get Started
       </Link>
+    </div>
+  );
+}
+
+function FloatingCard({ children, rotate = 0 }: { children: React.ReactNode; rotate?: number }) {
+  return (
+    <div style={{
+      background: '#FFFFFF',
+      borderRadius: '14px',
+      padding: '14px 18px',
+      boxShadow: '0 8px 32px rgba(12,74,110,0.1), 0 2px 8px rgba(0,0,0,0.04)',
+      border: '1px solid rgba(12,74,110,0.08)',
+      transform: `rotate(${rotate}deg)`,
+      backdropFilter: 'blur(8px)',
+      minWidth: '140px',
+    }}>
+      {children}
     </div>
   );
 }
