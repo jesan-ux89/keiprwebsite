@@ -26,7 +26,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Savings: '#888780', Other: '#6B7280',
 };
 
-type ViewMode = 'paycheck' | 'cycles' | 'monthly';
+type ViewMode = 'paycheck' | 'nextcheck' | 'cycles' | 'monthly';
 
 export default function DashboardPage() {
   const { colors } = useTheme();
@@ -296,7 +296,7 @@ export default function DashboardPage() {
           borderBottom: `1px solid ${colors.divider}`,
         }}
       >
-        {(['paycheck', 'cycles', 'monthly'] as const).map((mode) => (
+        {(['paycheck', 'nextcheck', 'monthly', 'cycles'] as const).map((mode) => (
           <button
             key={mode}
             onClick={() => setViewMode(mode)}
@@ -312,7 +312,7 @@ export default function DashboardPage() {
               transition: 'all 0.2s ease',
             }}
           >
-            {mode === 'paycheck' ? 'This Check' : mode === 'cycles' ? 'Cycles' : 'Monthly'}
+            {mode === 'paycheck' ? 'This Check' : mode === 'nextcheck' ? 'Next Check' : mode === 'cycles' ? 'Cycles' : 'Monthly'}
           </button>
         ))}
       </div>
@@ -434,6 +434,144 @@ export default function DashboardPage() {
                 })}
               </div>
             </Card>
+          )}
+        </div>
+      ) : viewMode === 'nextcheck' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {isTwiceMonthly ? (
+            <>
+              {/* Next paycheck header */}
+              <Card>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                      Paycheck {nextPaycheckNum} · {nextPeriod?.label ?? ''}
+                    </p>
+                  </div>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.green, margin: 0 }}>
+                    {fmt(totalPaycheck)}
+                  </p>
+                </div>
+              </Card>
+
+              {nextPaycheckBills.length === 0 ? (
+                <Card style={{ textAlign: 'center', padding: '2rem' }}>
+                  <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>&#10024;</p>
+                  <p style={{ color: colors.textMuted, margin: 0 }}>
+                    No bills due before your next paycheck. Extra breathing room!
+                  </p>
+                </Card>
+              ) : (
+                <Card>
+                  <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Bills due next period
+                  </h2>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {nextPaycheckBills.map((bill) => {
+                      const amt = billAmountForPaycheck(bill, nextPaycheckNum);
+                      const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                      return (
+                        <div
+                          key={bill.id}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            backgroundColor: colors.background,
+                            borderRadius: '0.5rem',
+                            borderLeft: `4px solid ${CATEGORY_COLORS[bill.category] || '#6B7280'}`,
+                          }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>
+                                {bill.name}
+                              </p>
+                              {bill.isSplit && (
+                                <span style={{
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  color: colors.electric,
+                                  backgroundColor: `${colors.electric}15`,
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  textTransform: 'uppercase',
+                                }}>
+                                  SPLIT
+                                </span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                              Due the {bill.dueDay || 1}{suffix(bill.dueDay || 1)} · {bill.category}
+                            </p>
+                          </div>
+                          <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                            {fmt(amt)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
+
+              {/* After bills summary */}
+              <Card style={{ backgroundColor: 'rgba(56,189,248,0.06)', border: `1px solid rgba(56,189,248,0.15)` }}>
+                <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                  <span style={{ fontWeight: 700, color: colors.midnight }}>After bills: {fmt(nextRemaining)} </span>
+                  <span style={{ color: colors.midnight }}>available for spending &amp; savings</span>
+                </p>
+              </Card>
+            </>
+          ) : (
+            <>
+              {/* Monthly pay — show next month's projected bills */}
+              <Card style={{ padding: '1.5rem' }}>
+                <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>&#128197;</p>
+                <p style={{ color: colors.textMuted, margin: 0, fontSize: '0.95rem' }}>
+                  <span style={{ fontWeight: 700 }}>You&apos;re paid monthly. </span>
+                  All your bills come from one paycheck each month. Check the Monthly tab for the full breakdown.
+                </p>
+              </Card>
+
+              <Card>
+                <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Next month&apos;s projected bills
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {bills.filter(b => b.isRecurring).sort((a, b) => (a.dueDay || 1) - (b.dueDay || 1)).map((bill) => {
+                    const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                    return (
+                      <div
+                        key={bill.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '1rem',
+                          backgroundColor: colors.background,
+                          borderRadius: '0.5rem',
+                          borderLeft: `4px solid ${CATEGORY_COLORS[bill.category] || '#6B7280'}`,
+                        }}
+                      >
+                        <div>
+                          <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>
+                            {bill.name}
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                            Due the {bill.dueDay || 1}{suffix(bill.dueDay || 1)} · {bill.category}
+                          </p>
+                        </div>
+                        <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                          {fmt(bill.total)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            </>
           )}
         </div>
       ) : viewMode === 'cycles' ? (
