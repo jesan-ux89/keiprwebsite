@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { paychecksAPI } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { getPayPeriods, isBillInPeriod, getCurrentPeriod } from '@/lib/payPeriods';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import {
@@ -17,76 +18,24 @@ import {
 
 type ViewMode = 'paycheck' | 'cycles' | 'monthly';
 
-interface PaycheckData {
-  id: string;
-  amount: number;
-  startDate: string;
-  endDate: string;
-  payDate: string;
-  frequency: string;
-  incomeName: string;
-}
-
 export default function DashboardPage() {
   const { colors } = useTheme();
+  const { user } = useAuth();
   const { bills, billsLoading, refreshBills, incomeSources, fmt, isBillPaid, markBillPaid } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('paycheck');
-  const [currentPaycheck, setCurrentPaycheck] = useState<PaycheckData | null>(null);
-  const [paycheckLoading, setPaycheckLoading] = useState(false);
-  const [currentPaycheckBills, setCurrentPaycheckBills] = useState<typeof bills>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch current paycheck
-  useEffect(() => {
-    const fetchCurrentPaycheck = async () => {
-      setPaycheckLoading(true);
-      try {
-        const res = await paychecksAPI.getCurrent();
-        const raw = res.data?.paycheck;
-        if (raw) {
-          setCurrentPaycheck({
-            id: raw.id,
-            amount: Number(raw.amount) || 0,
-            startDate: raw.period_start || raw.pay_date,
-            endDate: raw.period_end || raw.pay_date,
-            payDate: raw.pay_date,
-            frequency: raw.income_sources?.frequency || incomeSources[0]?.frequency || 'biweekly',
-            incomeName: raw.income_sources?.name || 'Paycheck',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch current paycheck:', error);
-      } finally {
-        setPaycheckLoading(false);
-      }
-    };
+  // Calculate pay periods from income source (same as mobile app)
+  const primaryIncome = incomeSources[0] || null;
+  const periods = primaryIncome?.nextPayDate
+    ? getPayPeriods(primaryIncome.nextPayDate, primaryIncome.frequency as 'weekly' | 'biweekly' | 'twicemonthly' | 'monthly')
+    : [];
+  const currentPeriod = getCurrentPeriod(periods) || periods[0] || null;
 
-    fetchCurrentPaycheck();
-  }, [incomeSources]);
-
-  // Filter bills for current paycheck
-  useEffect(() => {
-    if (!currentPaycheck || !bills.length) {
-      setCurrentPaycheckBills([]);
-      return;
-    }
-
-    const start = new Date(currentPaycheck.startDate);
-    const end = new Date(currentPaycheck.endDate);
-
-    const filtered = bills.filter((bill) => {
-      const billDueDate = new Date();
-      billDueDate.setDate(bill.dueDay);
-
-      if (bill.isSplit) {
-        return true; // Split bills appear in every paycheck
-      }
-
-      return billDueDate >= start && billDueDate <= end;
-    });
-
-    setCurrentPaycheckBills(filtered);
-  }, [currentPaycheck, bills]);
+  // Filter bills for current pay period
+  const currentPaycheckBills = currentPeriod
+    ? bills.filter((bill) => isBillInPeriod(bill, currentPeriod))
+    : [];
 
   // Refresh all data
   const handleRefresh = async () => {
@@ -123,7 +72,7 @@ export default function DashboardPage() {
 
   // Calculate progress for current paycheck
   const currentPaycheckTotal = currentPaycheckBills.reduce((sum, bill) => sum + bill.total, 0);
-  const currentPaycheckIncome = currentPaycheck ? currentPaycheck.amount : 0;
+  const currentPaycheckIncome = primaryIncome ? primaryIncome.amount : 0;
   const progressPercent = currentPaycheckTotal > 0 ? (currentPaycheckIncome / currentPaycheckTotal) * 100 : 0;
 
   // Group bills by category
@@ -146,7 +95,7 @@ export default function DashboardPage() {
     return sum;
   }, 0);
 
-  const isLoading = billsLoading || paycheckLoading;
+  const isLoading = billsLoading;
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -356,7 +305,7 @@ export default function DashboardPage() {
       ) : viewMode === 'paycheck' ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
           {/* Current Paycheck Section */}
-          {!currentPaycheck ? (
+          {!currentPeriod ? (
             <Card style={{ padding: '2rem', textAlign: 'center' }}>
               <p style={{ color: colors.text, fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>No paycheck data yet</p>
               <p style={{ color: colors.textMuted, fontSize: '0.95rem' }}>
@@ -374,7 +323,7 @@ export default function DashboardPage() {
                     margin: '0 0 0.5rem 0',
                   }}
                 >
-                  Current Paycheck
+                  Current Paycheck — {currentPeriod.label}
                 </h2>
                 <p
                   style={{
@@ -383,8 +332,8 @@ export default function DashboardPage() {
                     margin: 0,
                   }}
                 >
-                  {new Date(currentPaycheck.startDate).toLocaleDateString()} -{' '}
-                  {new Date(currentPaycheck.endDate).toLocaleDateString()}
+                  {currentPeriod.start.toLocaleDateString()} -{' '}
+                  {currentPeriod.end.toLocaleDateString()}
                 </p>
               </div>
 
