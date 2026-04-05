@@ -606,8 +606,9 @@ export default function SettingsPage() {
                     variant="primary"
                     size="md"
                     style={{ width: '100%', marginTop: '1rem' }}
+                    onClick={() => alert(`Upgrade to ${tier.name} coming soon! We're working on integrating payments.`)}
                   >
-                    Upgrade
+                    Upgrade to {tier.name}
                   </Button>
                 )}
               </div>
@@ -650,10 +651,29 @@ export default function SettingsPage() {
 
         {expandedSection === 'security' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <Button variant="secondary" size="md">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={async () => {
+                try {
+                  const { sendPasswordResetEmail } = await import('firebase/auth');
+                  const { auth } = await import('@/lib/firebase');
+                  if (user?.email) {
+                    await sendPasswordResetEmail(auth, user.email);
+                    alert('Password reset email sent! Check your inbox.');
+                  }
+                } catch (err) {
+                  alert('Failed to send password reset email. Please try again.');
+                }
+              }}
+            >
               Change Password
             </Button>
-            <Button variant="secondary" size="md">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => alert('Two-factor authentication coming soon!')}
+            >
               Enable Two-Factor Authentication
             </Button>
           </div>

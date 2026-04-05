@@ -44,6 +44,11 @@ export function AppLayout({ children }: AppLayoutProps) {
     }
   }, [user, loading, router]);
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
@@ -60,49 +65,48 @@ export function AppLayout({ children }: AppLayoutProps) {
   if (!user) return null;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        backgroundColor: colors.background,
-      }}
-    >
+    <div className="app-layout">
       {/* Mobile menu button */}
       <button
-        data-menu-toggle
+        className="mobile-menu-toggle"
         onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
         style={{
-          display: 'none',
           position: 'fixed',
           top: '1rem',
           left: '1rem',
           zIndex: 1001,
-          background: 'none',
-          border: 'none',
+          background: colors.card,
+          border: `1px solid ${colors.divider}`,
+          borderRadius: '8px',
           cursor: 'pointer',
           color: colors.text,
           padding: '0.5rem',
-        } as React.CSSProperties}
+          display: 'none', // overridden by CSS media query below
+        }}
       >
         {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       {/* Sidebar overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 999,
-            display: 'none',
-          } as React.CSSProperties}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <div
+        className="sidebar-overlay"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 999,
+          opacity: sidebarOpen ? 1 : 0,
+          pointerEvents: sidebarOpen ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease',
+          display: 'none', // overridden by CSS media query below
+        }}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       {/* Sidebar */}
       <nav
+        className="app-sidebar"
         style={{
           width: '280px',
           backgroundColor: colors.navBg,
@@ -116,7 +120,8 @@ export function AppLayout({ children }: AppLayoutProps) {
           height: '100vh',
           overflowY: 'auto',
           zIndex: 1000,
-        } as React.CSSProperties}
+          transition: 'transform 0.3s ease',
+        }}
       >
         <div style={{ flex: 1 }}>
           {/* Logo/Brand */}
@@ -227,28 +232,42 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main content */}
       <main
+        className="app-main"
         style={{
           flex: 1,
           marginLeft: '280px',
           padding: '2rem',
           overflowY: 'auto',
-        } as React.CSSProperties}
+        }}
       >
         {children}
       </main>
 
       <style>{`
+        .app-layout {
+          display: flex;
+          min-height: 100vh;
+          background-color: ${colors.background};
+        }
+
         @media (max-width: 768px) {
-          nav {
-            transform: ${sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'};
-            transition: transform 0.3s ease;
+          .mobile-menu-toggle {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
           }
-          main {
-            margin-left: 0;
-            padding-top: 4rem;
-          }
-          button[data-menu-toggle] {
+
+          .sidebar-overlay {
             display: block !important;
+          }
+
+          .app-sidebar {
+            transform: ${sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'};
+          }
+
+          .app-main {
+            margin-left: 0 !important;
+            padding-top: 4rem !important;
           }
         }
       `}</style>
