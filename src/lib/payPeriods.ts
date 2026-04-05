@@ -1,204 +1,385 @@
 /**
- * Pay period calculation utilities
- * Supports: weekly, biweekly, twicemonthly, monthly
+ * Pay Period Calculation Utilities
+ *
+ * PORTED FROM MOBILE APP (src/utils/payPeriods.ts) — must stay in sync.
+ *
+ * Given a "next pay date" anchor and frequency, calculates:
+ * - Which paycheck we're currently in (this paycheck)
+ * - The date range for this paycheck and the next one
+ * - Which bills fall into each paycheck window
+ *
+ * Supported frequencies:
+ *   biweekly     — 14-day windows from anchor date
+ *   semimonthly  — fixed 1st-15th / 16th-end split
+ *   weekly       — 7-day windows from anchor date
+ *   monthly      — full month as one period
  */
 
 export interface PayPeriod {
-  start: Date;
-  end: Date;
-  label: string;
-  paycheckNum: number;
+  start: Date;       // First day of this pay period
+  end: Date;         // Last day of this pay period (inclusive)
+  label: string;     // e.g. "Apr 3 – Apr 16"
+  paycheckNumber: number; // 1-based within the month
 }
 
-export interface BillLike {
-  dueDay: number;
-  isSplit: boolean;
+export interface PayPeriodInfo {
+  current: PayPeriod;
+  next: PayPeriod;
+  isTwiceMonthly: boolean;     // true when there are 2+ pay periods per month
+  hasMultiplePeriods: boolean;  // alias — true for weekly, biweekly, semimonthly
+  periodsPerMonth: number;     // 1, 2, or 4
+  frequency: string;
 }
+
+/** Pay period boundaries for a whole planned month (used by Forward Planner). */
+export interface MonthPayPeriod {
+  label: string;
+  startDay: number;
+  endDay: number;
+  paycheckNumber: number;
+}
+
+// ── Normalise frequency string ──────────────────────────────
+
+function normaliseFreq(frequency: string): string {
+  return (frequency || '').toLowerCase().replace(/[\s\-_]/g, '');
+}
+
+function isTwiceMonthlyFreq(freq: string): boolean {
+  return ['biweekly', 'twicemonthly', 'semimonthly', 'twiceamonth', 'bimonthly'].includes(freq);
+}
+
+// ── Main entry point ────────────────────────────────────────
 
 /**
- * Get pay periods from anchor date with specified frequency
- * Generates periods for current month +/- 2 months
+ * Calculate current and next pay periods based on anchor date and frequency.
  */
 export function getPayPeriods(
-  anchorDateStr: string,
-  frequency: 'weekly' | 'biweekly' | 'twicemonthly' | 'monthly'
-): PayPeriod[] {
-  const anchorDate = new Date(anchorDateStr);
-  const today = new Date();
-  const periods: PayPeriod[] = [];
+  nextPayDateStr: string | undefined,
+  frequency: string,
+  today: Date = new Date()
+): PayPeriodInfo {
+  const freqLower = normaliseFreq(frequency);
 
-  // Generate periods covering approximately 6 months (current -2, +3 from anchor)
-  const startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-  const endDate = new Date(today.getFullYear(), today.getMonth() + 4, 0);
-
-  if (frequency === 'weekly') {
-    let current = new Date(anchorDate);
-    // Back up to start range
-    while (current > startDate) {
-      current.setDate(current.getDate() - 7);
+  // Weekly
+  if (freqLower === 'weekly') {
+    if (nextPayDateStr) {
+      return getWeeklyPeriods(nextPayDateStr, today);
     }
-    let paycheckNum = 0;
-    while (current <= endDate) {
-      const periodEnd = new Date(current);
-      periodEnd.setDate(periodEnd.getDate() + 6);
-      periods.push({
-        start: new Date(current),
-        end: periodEnd,
-        label: formatPeriodLabel(new Date(current), periodEnd),
-        paycheckNum: paycheckNum++,
-      });
-      current.setDate(current.getDate() + 7);
-    }
-  } else if (frequency === 'biweekly') {
-    let current = new Date(anchorDate);
-    // Back up to start range
-    while (current > startDate) {
-      current.setDate(current.getDate() - 14);
-    }
-    let paycheckNum = 0;
-    while (current <= endDate) {
-      const periodEnd = new Date(current);
-      periodEnd.setDate(periodEnd.getDate() + 13);
-      periods.push({
-        start: new Date(current),
-        end: periodEnd,
-        label: formatPeriodLabel(new Date(current), periodEnd),
-        paycheckNum: paycheckNum++,
-      });
-      current.setDate(current.getDate() + 14);
-    }
-  } else if (frequency === 'twicemonthly') {
-    // 1st-15th and 16th-end of month
-    let currentMonth = startDate.getMonth();
-    let currentYear = startDate.getFullYear();
-    let paycheckNum = 0;
-
-    while (currentYear < endDate.getFullYear() || (currentYear === endDate.getFullYear() && currentMonth <= endDate.getMonth())) {
-      // First period: 1st-15th
-      const first = new Date(currentYear, currentMonth, 1);
-      const fifteenth = new Date(currentYear, currentMonth, 15);
-      if (first >= startDate && first <= endDate) {
-        periods.push({
-          start: new Date(first),
-          end: new Date(fifteenth),
-          label: formatPeriodLabel(new Date(first), new Date(fifteenth)),
-          paycheckNum: paycheckNum++,
-        });
-      }
-
-      // Second period: 16th-end of month
-      const sixteenth = new Date(currentYear, currentMonth, 16);
-      const lastDay = new Date(currentYear, currentMonth + 1, 0);
-      if (sixteenth >= startDate && sixteenth <= endDate) {
-        periods.push({
-          start: new Date(sixteenth),
-          end: new Date(lastDay),
-          label: formatPeriodLabel(new Date(sixteenth), new Date(lastDay)),
-          paycheckNum: paycheckNum++,
-        });
-      }
-
-      // Move to next month
-      currentMonth++;
-      if (currentMonth === 12) {
-        currentMonth = 0;
-        currentYear++;
-      }
-    }
-  } else if (frequency === 'monthly') {
-    // 1st-end of month
-    let currentMonth = startDate.getMonth();
-    let currentYear = startDate.getFullYear();
-    let paycheckNum = 0;
-
-    while (currentYear < endDate.getFullYear() || (currentYear === endDate.getFullYear() && currentMonth <= endDate.getMonth())) {
-      const first = new Date(currentYear, currentMonth, 1);
-      const lastDay = new Date(currentYear, currentMonth + 1, 0);
-
-      if (first >= startDate && first <= endDate) {
-        periods.push({
-          start: new Date(first),
-          end: new Date(lastDay),
-          label: formatPeriodLabel(new Date(first), new Date(lastDay)),
-          paycheckNum: paycheckNum++,
-        });
-      }
-
-      // Move to next month
-      currentMonth++;
-      if (currentMonth === 12) {
-        currentMonth = 0;
-        currentYear++;
-      }
-    }
+    return getWeeklyFallback(today);
   }
 
-  return periods;
-}
-
-/**
- * Check if a bill's due day falls within a pay period
- * Handles split bills (always included) and normal bills
- */
-export function isBillInPeriod(bill: BillLike, period: PayPeriod): boolean {
-  if (bill.isSplit) {
-    return true; // Split bills appear in every period
+  // Bi-weekly (with anchor)
+  if (freqLower === 'biweekly' && nextPayDateStr) {
+    return getBiweeklyPeriods(nextPayDateStr, today);
   }
 
-  const dueDay = bill.dueDay;
-  const year = period.start.getFullYear();
-  const month = period.start.getMonth();
+  // Semi-monthly / twice-monthly
+  if (isTwiceMonthlyFreq(freqLower)) {
+    return getSemiMonthlyPeriods(today);
+  }
 
-  // Create date for bill due day in this period's month
-  const billDueDate = new Date(year, month, dueDay);
-
-  // Check if bill due date falls within the period
-  return billDueDate >= period.start && billDueDate <= period.end;
+  // Monthly / irregular / unknown — one period = full month
+  return getMonthlyPeriods(today, freqLower);
 }
 
-/**
- * Find the current pay period from a list of periods
- */
-export function getCurrentPeriod(periods: PayPeriod[]): PayPeriod | undefined {
-  const today = new Date();
-  return periods.find((p) => today >= p.start && today <= p.end);
+// ── Weekly: 7-day windows from anchor ───────────────────────
+
+function getWeeklyPeriods(anchorStr: string, today: Date): PayPeriodInfo {
+  const anchor = new Date(anchorStr.includes('T') ? anchorStr : anchorStr + 'T00:00:00');
+  if (isNaN(anchor.getTime())) {
+    console.warn('[getWeeklyPeriods] Invalid anchor date:', anchorStr, '— using fallback');
+    return getWeeklyFallback(today);
+  }
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const diffMs = todayStart.getTime() - anchor.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const periodsBehind = Math.floor(diffDays / 7);
+
+  const currentStart = new Date(anchor);
+  currentStart.setDate(currentStart.getDate() + periodsBehind * 7);
+  if (currentStart > todayStart) {
+    currentStart.setDate(currentStart.getDate() - 7);
+  }
+
+  const currentEnd = new Date(currentStart);
+  currentEnd.setDate(currentEnd.getDate() + 6);
+
+  const nextStart = new Date(currentEnd);
+  nextStart.setDate(nextStart.getDate() + 1);
+  const nextEnd = new Date(nextStart);
+  nextEnd.setDate(nextEnd.getDate() + 6);
+
+  const currentPaycheckNum = Math.min(4, Math.ceil(currentStart.getDate() / 7));
+  const nextPaycheckNum = Math.min(4, Math.ceil(nextStart.getDate() / 7));
+
+  return {
+    current: {
+      start: currentStart,
+      end: currentEnd,
+      label: formatRange(currentStart, currentEnd),
+      paycheckNumber: currentPaycheckNum,
+    },
+    next: {
+      start: nextStart,
+      end: nextEnd,
+      label: formatRange(nextStart, nextEnd),
+      paycheckNumber: nextPaycheckNum,
+    },
+    isTwiceMonthly: true,
+    hasMultiplePeriods: true,
+    periodsPerMonth: 4,
+    frequency: 'weekly',
+  };
 }
 
-/**
- * Format a period as "Jan 1 - 14" or "Jan 1 - Feb 3"
- */
-function formatPeriodLabel(start: Date, end: Date): string {
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function getWeeklyFallback(today: Date): PayPeriodInfo {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const day = today.getDate();
 
-  const startMonth = monthNames[start.getMonth()];
-  const startDay = start.getDate();
+  const weekBounds: [number, number][] = [
+    [1, 7],
+    [8, 14],
+    [15, 21],
+    [22, new Date(year, month + 1, 0).getDate()],
+  ];
 
-  const endMonth = monthNames[end.getMonth()];
-  const endDay = end.getDate();
+  let currentIdx = weekBounds.findIndex(([s, e]) => day >= s && day <= e);
+  if (currentIdx === -1) currentIdx = 3;
+  const nextIdx = Math.min(currentIdx + 1, 3);
 
-  if (start.getMonth() === end.getMonth()) {
-    return `${startMonth} ${startDay} - ${endDay}`;
+  const currentStart = new Date(year, month, weekBounds[currentIdx][0]);
+  const currentEnd = new Date(year, month, weekBounds[currentIdx][1]);
+
+  let nextStart: Date, nextEnd: Date;
+  if (currentIdx < 3) {
+    nextStart = new Date(year, month, weekBounds[nextIdx][0]);
+    nextEnd = new Date(year, month, weekBounds[nextIdx][1]);
   } else {
-    return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+    const nm = month + 1;
+    const ny = nm > 11 ? year + 1 : year;
+    const nmi = nm > 11 ? 0 : nm;
+    nextStart = new Date(ny, nmi, 1);
+    nextEnd = new Date(ny, nmi, 7);
+  }
+
+  return {
+    current: {
+      start: currentStart,
+      end: currentEnd,
+      label: formatRange(currentStart, currentEnd),
+      paycheckNumber: currentIdx + 1,
+    },
+    next: {
+      start: nextStart,
+      end: nextEnd,
+      label: formatRange(nextStart, nextEnd),
+      paycheckNumber: currentIdx < 3 ? nextIdx + 1 : 1,
+    },
+    isTwiceMonthly: true,
+    hasMultiplePeriods: true,
+    periodsPerMonth: 4,
+    frequency: 'weekly',
+  };
+}
+
+// ── Bi-weekly: 14-day windows from anchor ───────────────────
+
+function getBiweeklyPeriods(anchorStr: string, today: Date): PayPeriodInfo {
+  const anchor = new Date(anchorStr.includes('T') ? anchorStr : anchorStr + 'T00:00:00');
+  if (isNaN(anchor.getTime())) {
+    console.warn('[getBiweeklyPeriods] Invalid anchor date:', anchorStr, '— using semi-monthly fallback');
+    return getSemiMonthlyPeriods(today);
+  }
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const diffMs = todayStart.getTime() - anchor.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const periodsBehind = Math.floor(diffDays / 14);
+
+  const currentStart = new Date(anchor);
+  currentStart.setDate(currentStart.getDate() + periodsBehind * 14);
+  if (currentStart > todayStart) {
+    currentStart.setDate(currentStart.getDate() - 14);
+  }
+
+  const currentEnd = new Date(currentStart);
+  currentEnd.setDate(currentEnd.getDate() + 13);
+
+  const nextStart = new Date(currentEnd);
+  nextStart.setDate(nextStart.getDate() + 1);
+  const nextEnd = new Date(nextStart);
+  nextEnd.setDate(nextEnd.getDate() + 13);
+
+  const currentPaycheckNum = currentStart.getDate() <= 15 ? 1 : 2;
+  const nextPaycheckNum = nextStart.getDate() <= 15 ? 1 : 2;
+
+  return {
+    current: {
+      start: currentStart,
+      end: currentEnd,
+      label: formatRange(currentStart, currentEnd),
+      paycheckNumber: currentPaycheckNum,
+    },
+    next: {
+      start: nextStart,
+      end: nextEnd,
+      label: formatRange(nextStart, nextEnd),
+      paycheckNumber: nextPaycheckNum,
+    },
+    isTwiceMonthly: true,
+    hasMultiplePeriods: true,
+    periodsPerMonth: 2,
+    frequency: 'biweekly',
+  };
+}
+
+// ── Semi-monthly: fixed 1st-15th / 16th-end ─────────────────
+
+function getSemiMonthlyPeriods(today: Date): PayPeriodInfo {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const day = today.getDate();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  if (day <= 15) {
+    const currentStart = new Date(year, month, 1);
+    const currentEnd = new Date(year, month, 15);
+    const nextStart = new Date(year, month, 16);
+    const nextEnd = new Date(year, month, lastDay);
+
+    return {
+      current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: 1 },
+      next: { start: nextStart, end: nextEnd, label: formatRange(nextStart, nextEnd), paycheckNumber: 2 },
+      isTwiceMonthly: true,
+      hasMultiplePeriods: true,
+      periodsPerMonth: 2,
+      frequency: 'semimonthly',
+    };
+  } else {
+    const currentStart = new Date(year, month, 16);
+    const currentEnd = new Date(year, month, lastDay);
+    const nextMonth = month + 1;
+    const nextYear = nextMonth > 11 ? year + 1 : year;
+    const nextMonthIdx = nextMonth > 11 ? 0 : nextMonth;
+    const nextStart = new Date(nextYear, nextMonthIdx, 1);
+    const nextEnd = new Date(nextYear, nextMonthIdx, 15);
+
+    return {
+      current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: 2 },
+      next: { start: nextStart, end: nextEnd, label: formatRange(nextStart, nextEnd), paycheckNumber: 1 },
+      isTwiceMonthly: true,
+      hasMultiplePeriods: true,
+      periodsPerMonth: 2,
+      frequency: 'semimonthly',
+    };
   }
 }
 
-/**
- * Get an array of months for the plan view (current + next 3)
- */
-export function getPlanMonths(): { year: number; month: number; label: string }[] {
-  const today = new Date();
-  const months = [];
+// ── Monthly: full month as one period ────────────────────────
 
-  for (let i = 0; i < 4; i++) {
-    const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    months.push({
-      year: d.getFullYear(),
-      month: d.getMonth() + 1, // 1-indexed for API
-      label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
-    });
+function getMonthlyPeriods(today: Date, freqLower: string): PayPeriodInfo {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month, lastDay);
+
+  const nextMonthStart = new Date(year, month + 1, 1);
+  const nextMonthEnd = new Date(year, month + 2, 0);
+
+  return {
+    current: { start, end, label: formatRange(start, end), paycheckNumber: 1 },
+    next: { start: nextMonthStart, end: nextMonthEnd, label: formatRange(nextMonthStart, nextMonthEnd), paycheckNumber: 1 },
+    isTwiceMonthly: false,
+    hasMultiplePeriods: false,
+    periodsPerMonth: 1,
+    frequency: freqLower || 'monthly',
+  };
+}
+
+// ── Bill-in-period check ─────────────────────────────────────
+
+/**
+ * Check if a bill's due day falls within a pay period.
+ * Handles periods that cross month boundaries (e.g. Apr 25 – May 8).
+ *
+ * NOTE: This takes a raw dueDay number, NOT a bill object.
+ * Split bills should be checked separately (they always appear in every period).
+ */
+export function isBillInPeriod(billDueDay: number, period: PayPeriod): boolean {
+  const startDay = period.start.getDate();
+  const endDay = period.end.getDate();
+
+  // Same month
+  if (period.start.getMonth() === period.end.getMonth()) {
+    return billDueDay >= startDay && billDueDay <= endDay;
   }
 
-  return months;
+  // Crosses month boundary
+  return billDueDay >= startDay || billDueDay <= endDay;
+}
+
+// ── Month pay periods for Forward Planner ────────────────────
+
+/**
+ * Get all paycheck period boundaries for a planned month.
+ * Used by plan screens to split bills into sections.
+ *
+ * @param frequency - user's pay frequency
+ * @param year - plan year
+ * @param month - plan month (1-indexed: January=1)
+ */
+export function getMonthPayPeriods(frequency: string, year: number, month: number): MonthPayPeriod[] {
+  const freqLower = normaliseFreq(frequency);
+  const lastDay = new Date(year, month, 0).getDate();
+
+  const suffix = (d: number) =>
+    d === 1 || d === 21 || d === 31 ? 'st' :
+    d === 2 || d === 22 ? 'nd' :
+    d === 3 || d === 23 ? 'rd' : 'th';
+
+  if (freqLower === 'weekly') {
+    return [
+      { label: `1${suffix(1)}–7${suffix(7)}`, startDay: 1, endDay: 7, paycheckNumber: 1 },
+      { label: `8${suffix(8)}–14${suffix(14)}`, startDay: 8, endDay: 14, paycheckNumber: 2 },
+      { label: `15${suffix(15)}–21${suffix(21)}`, startDay: 15, endDay: 21, paycheckNumber: 3 },
+      { label: `22${suffix(22)}–${lastDay}${suffix(lastDay)}`, startDay: 22, endDay: lastDay, paycheckNumber: 4 },
+    ];
+  }
+
+  if (isTwiceMonthlyFreq(freqLower)) {
+    return [
+      { label: `1${suffix(1)}–15${suffix(15)}`, startDay: 1, endDay: 15, paycheckNumber: 1 },
+      { label: `16${suffix(16)}–${lastDay}${suffix(lastDay)}`, startDay: 16, endDay: lastDay, paycheckNumber: 2 },
+    ];
+  }
+
+  // Monthly / irregular — single period
+  return [
+    { label: `1${suffix(1)}–${lastDay}${suffix(lastDay)}`, startDay: 1, endDay: lastDay, paycheckNumber: 1 },
+  ];
+}
+
+// ── Paycheck count helper ─────────────────────────────────
+
+/**
+ * Get the number of paychecks per month for a given frequency.
+ */
+export function getPaycheckCount(frequency: string): number {
+  const f = normaliseFreq(frequency);
+  if (f === 'weekly') return 4;
+  if (isTwiceMonthlyFreq(f)) return 2;
+  return 1;
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function formatRange(start: Date, end: Date): string {
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const startStr = start.toLocaleDateString('en-US', opts);
+  const endStr = end.toLocaleDateString('en-US', opts);
+  return `${startStr} – ${endStr}`;
 }

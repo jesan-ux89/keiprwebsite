@@ -1,9 +1,28 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { billsAPI, usersAPI } from '../lib/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { billsAPI, usersAPI, authAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
 
+/**
+ * AppContext — PORTED FROM MOBILE APP (src/context/AppContext.tsx)
+ * Keep in sync with mobile: mapApiBill, mapIncomeSource, payment logic, etc.
+ */
+
+// ── Currency ────────────────────────────────────────────────
+export const CURRENCIES = [
+  { code: 'USD', symbol: '$',   name: 'US Dollar' },
+  { code: 'EUR', symbol: '€',   name: 'Euro' },
+  { code: 'GBP', symbol: '£',   name: 'British Pound' },
+  { code: 'CAD', symbol: 'C$',  name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$',  name: 'Australian Dollar' },
+  { code: 'MXN', symbol: 'MX$', name: 'Mexican Peso' },
+  { code: 'JPY', symbol: '¥',   name: 'Japanese Yen' },
+];
+
+type CurrencyInfo = typeof CURRENCIES[0];
+
+// ── Bill type (matches mobile exactly) ──────────────────────
 export interface Bill {
   id: string;
   name: string;
@@ -22,28 +41,38 @@ export interface Bill {
   p2done: boolean;
   p3done: boolean;
   p4done: boolean;
-  splitIds: string[];
+  splitIds: string[]; // IDs of bill_splits rows for API calls
 }
 
-export interface IncomeSource {
-  id: string;
-  name: string;
-  amount: number;
-  frequency: 'biweekly' | 'weekly' | 'twicemonthly' | 'monthly';
-  nextPayDate: string;
-}
-
+// ── Bill payment type (matches mobile: periodMonth/periodYear) ──
 export interface BillPayment {
   id: string;
   billId: string;
-  paycheckNum: number;
-  isPaid: boolean;
-  paidAt?: string;
+  periodMonth: number;
+  periodYear: number;
+  paidAt: string;
 }
 
-type Currency = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'MXN' | 'JPY';
+// ── Income source type (matches mobile: typicalAmount) ──────
+export interface IncomeSource {
+  id: string;
+  name: string;
+  frequency: string;
+  typicalAmount: number;
+  nextPayDate?: string;
+}
 
+// ── Category type ──────────────────────────────────────────
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+}
+
+// ── Context type ────────────────────────────────────────────
 interface AppContextType {
+  // Bills
   bills: Bill[];
   billsLoading: boolean;
   refreshBills: () => Promise<void>;
@@ -52,13 +81,17 @@ interface AppContextType {
   deleteBill: (id: string) => Promise<void>;
   getBill: (id: string) => Bill | undefined;
 
+  // Bill payments (tracker) — matches mobile API
   billPayments: BillPayment[];
   paymentsLoading: boolean;
-  markBillPaid: (billId: string, paycheckNum: number) => Promise<void>;
-  unmarkBillPaid: (paymentId: string) => Promise<void>;
-  isBillPaid: (billId: string, paycheckNum: number) => boolean;
+  markBillPaid: (billId: string) => Promise<void>;
+  unmarkBillPaid: (billId: string) => Promise<void>;
+  isBillPaid: (billId: string) => boolean;
+  toggleSplitPaid: (billId: string, paycheckNum: number) => Promise<void>;
+  isSplitPaid: (billId: string, paycheckNum: number) => boolean;
   refreshPayments: () => Promise<void>;
 
+  // Income sources
   incomeSources: IncomeSource[];
   incomeLoading: boolean;
   refreshIncomeSources: () => Promise<void>;
@@ -66,22 +99,27 @@ interface AppContextType {
   updateIncomeSource: (id: string, data: Record<string, unknown>) => Promise<IncomeSource>;
   deleteIncomeSource: (id: string) => Promise<void>;
 
-  currency: Currency;
-  setCurrency: (currency: Currency) => void;
+  // Categories
+  categories: Category[];
+  categoriesLoading: boolean;
+  refreshCategories: () => Promise<void>;
+
+  // Currency
+  currency: CurrencyInfo;
+  setCurrencyCode: (code: string) => void;
   fmt: (amount: number) => string;
+
+  // Subscription
+  tier: 'free' | 'pro' | 'ultra';
+  isPro: boolean;
+  isUltra: boolean;
+
+  // User info
+  userName: string;
+  userInitials: string;
 }
 
-const CURRENCIES: Currency[] = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'MXN', 'JPY'];
-
-const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-  CAD: 'C$',
-  AUD: 'A$',
-  MXN: 'Mex$',
-  JPY: '¥',
-};
+const defaultCurrency = CURRENCIES[0];
 
 const AppContext = createContext<AppContextType>({
   bills: [],
@@ -97,6 +135,8 @@ const AppContext = createContext<AppContextType>({
   markBillPaid: async () => {},
   unmarkBillPaid: async () => {},
   isBillPaid: () => false,
+  toggleSplitPaid: async () => {},
+  isSplitPaid: () => false,
   refreshPayments: async () => {},
 
   incomeSources: [],
@@ -106,69 +146,143 @@ const AppContext = createContext<AppContextType>({
   updateIncomeSource: async () => ({} as IncomeSource),
   deleteIncomeSource: async () => {},
 
-  currency: 'USD',
-  setCurrency: () => {},
-  fmt: () => '',
+  categories: [],
+  categoriesLoading: false,
+  refreshCategories: async () => {},
+
+  currency: defaultCurrency,
+  setCurrencyCode: () => {},
+  fmt: (n) => `$${n.toLocaleString()}`,
+
+  tier: 'free',
+  isPro: false,
+  isUltra: false,
+
+  userName: '',
+  userInitials: '',
 });
 
-// Convert snake_case from API to camelCase
-function snakeToCamel(obj: Record<string, unknown>): Record<string, unknown> {
-  const camelObj: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-    camelObj[camelKey] = value;
+// ── Map API response to app Bill type (MATCHES MOBILE mapApiBill) ──
+function mapApiBill(raw: Record<string, unknown>): Bill {
+  const total = parseFloat(String(raw.total_amount)) || 0;
+  const isSplit = raw.is_split || false;
+  const splits = isSplit ? (Array.isArray(raw.bill_splits) ? raw.bill_splits as Record<string, unknown>[] : []) : [];
+
+  let p1: number, p2: number, p3: number, p4: number;
+  let p1done: boolean, p2done: boolean, p3done: boolean, p4done: boolean;
+  let funded: number;
+  let splitIds: string[] = [];
+
+  if (isSplit && splits.length > 0) {
+    // Sort splits by sort_order to ensure correct mapping (matches mobile)
+    const sorted = [...splits].sort((a, b) =>
+      (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0)
+    );
+    p1 = parseFloat(String(sorted[0]?.amount)) || 0;
+    p2 = sorted.length > 1 ? (parseFloat(String(sorted[1]?.amount)) || 0) : 0;
+    p3 = sorted.length > 2 ? (parseFloat(String(sorted[2]?.amount)) || 0) : 0;
+    p4 = sorted.length > 3 ? (parseFloat(String(sorted[3]?.amount)) || 0) : 0;
+    p1done = Boolean(sorted[0]?.is_saved_to_savings);
+    p2done = sorted.length > 1 ? Boolean(sorted[1]?.is_saved_to_savings) : false;
+    p3done = sorted.length > 2 ? Boolean(sorted[2]?.is_saved_to_savings) : false;
+    p4done = sorted.length > 3 ? Boolean(sorted[3]?.is_saved_to_savings) : false;
+    splitIds = sorted.map((s) => String(s.id));
+    funded = sorted.reduce((sum: number, s) =>
+      sum + (s.is_saved_to_savings ? (parseFloat(String(s.amount)) || 0) : 0), 0
+    );
+  } else {
+    p1 = total;
+    p2 = 0;
+    p3 = 0;
+    p4 = 0;
+    p1done = false;
+    p2done = false;
+    p3done = false;
+    p4done = false;
+    funded = 0;
   }
-  return camelObj;
-}
 
-// Map API bill response to our Bill interface
-function mapBill(raw: Record<string, unknown>): Bill {
-  const splits = Array.isArray(raw.bill_splits) ? raw.bill_splits as Record<string, unknown>[] : [];
   const categoryObj = raw.budget_categories as Record<string, unknown> | null;
-
-  // Sort splits by paycheck_num (or split order)
-  const sortedSplits = [...splits].sort((a, b) =>
-    (Number(a.paycheck_num) || Number(a.split_order) || 0) - (Number(b.paycheck_num) || Number(b.split_order) || 0)
-  );
-
-  const totalAmount = Number(raw.total_amount) || 0;
-  const funded = sortedSplits.reduce((sum, s) =>
-    (s.is_saved_to_savings ? sum + (Number(s.amount) || 0) : sum), 0
-  );
 
   return {
     id: String(raw.id || ''),
     name: String(raw.name || ''),
-    category: String(categoryObj?.name || raw.category_name || 'Uncategorized'),
+    category: String(categoryObj?.name || raw.category_name || 'Other'),
     dueDay: Number(raw.due_day_of_month) || 1,
-    total: totalAmount,
-    isSplit: Boolean(raw.is_split),
-    isRecurring: Boolean(raw.is_recurring),
+    total,
+    isSplit: Boolean(isSplit),
+    isRecurring: raw.is_recurring !== false, // Default to true (matches mobile)
     isAutoPay: Boolean(raw.is_auto_pay),
     funded,
-    p1: Number(sortedSplits[0]?.amount) || 0,
-    p2: Number(sortedSplits[1]?.amount) || 0,
-    p3: Number(sortedSplits[2]?.amount) || 0,
-    p4: Number(sortedSplits[3]?.amount) || 0,
-    p1done: Boolean(sortedSplits[0]?.is_saved_to_savings),
-    p2done: Boolean(sortedSplits[1]?.is_saved_to_savings),
-    p3done: Boolean(sortedSplits[2]?.is_saved_to_savings),
-    p4done: Boolean(sortedSplits[3]?.is_saved_to_savings),
-    splitIds: sortedSplits.map((s) => String(s.id || '')),
+    p1, p2, p3, p4,
+    p1done, p2done, p3done, p4done,
+    splitIds,
   };
 }
 
-// Map API income source to our IncomeSource interface
+// ── Map API income source (MATCHES MOBILE) ──────────────────
 function mapIncomeSource(raw: Record<string, unknown>): IncomeSource {
   return {
     id: String(raw.id || ''),
-    name: String(raw.name || 'Main job'),
-    amount: Number(raw.typical_amount || raw.typicalAmount || raw.amount || 0),
-    frequency: (raw.frequency as IncomeSource['frequency']) || 'biweekly',
-    nextPayDate: String(raw.next_pay_date || raw.nextPayDate || ''),
+    name: String(raw.name || 'Income'),
+    frequency: String(raw.frequency || 'biweekly'),
+    typicalAmount: parseFloat(String(raw.typical_amount || raw.typicalAmount || 0)) || 0,
+    nextPayDate: raw.next_pay_date ? String(raw.next_pay_date) : (raw.nextPayDate ? String(raw.nextPayDate) : undefined),
   };
 }
 
+// ── Auto-advance nextPayDate if in the past (MATCHES MOBILE) ──
+function autoAdvancePayDates(sources: IncomeSource[]): IncomeSource[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const MAX_ADVANCES = 100;
+
+  return sources.map((src) => {
+    if (!src.nextPayDate) return src;
+    const payDate = new Date(src.nextPayDate + 'T00:00:00');
+    if (payDate >= today) return src;
+
+    const freq = src.frequency?.toLowerCase() || '';
+    let advancedDate = new Date(payDate);
+    let safetyCounter = 0;
+
+    if (freq === 'weekly') {
+      while (advancedDate < today && safetyCounter < MAX_ADVANCES) {
+        safetyCounter++;
+        advancedDate.setDate(advancedDate.getDate() + 7);
+      }
+    } else if (freq === 'biweekly' || freq === 'bi-weekly') {
+      while (advancedDate < today && safetyCounter < MAX_ADVANCES) {
+        safetyCounter++;
+        advancedDate.setDate(advancedDate.getDate() + 14);
+      }
+    } else if (freq === 'twicemonthly' || freq === 'twice a month' || freq === 'semimonthly') {
+      while (advancedDate < today && safetyCounter < MAX_ADVANCES) {
+        safetyCounter++;
+        if (advancedDate.getDate() < 16) {
+          advancedDate = new Date(advancedDate.getFullYear(), advancedDate.getMonth(), 16);
+        } else {
+          advancedDate = new Date(advancedDate.getFullYear(), advancedDate.getMonth() + 1, 1);
+        }
+      }
+    } else {
+      while (advancedDate < today && safetyCounter < MAX_ADVANCES) {
+        safetyCounter++;
+        advancedDate.setMonth(advancedDate.getMonth() + 1);
+      }
+    }
+
+    const newDateStr = advancedDate.toISOString().split('T')[0];
+    console.log(`[Auto-advance] ${src.name}: ${src.nextPayDate} → ${newDateStr}`);
+
+    // Persist to backend silently
+    usersAPI.updateIncomeSource(src.id, { nextPayDate: newDateStr }).catch(() => {});
+
+    return { ...src, nextPayDate: newDateStr };
+  });
+}
+
+// ── Provider ────────────────────────────────────────────────
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
 
@@ -181,125 +295,296 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
   const [incomeLoading, setIncomeLoading] = useState(false);
 
-  const [currency, setCurrency] = useState<Currency>('USD');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
-  // Format money with currency symbol
+  const [currencyCode, setCurrencyCodeState] = useState('USD');
+  const [tier, setTier] = useState<'free' | 'pro' | 'ultra'>('free');
+  const isPro = tier === 'pro' || tier === 'ultra';
+  const isUltra = tier === 'ultra';
+
+  const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
+
+  // User info from Firebase
+  const userName = user?.displayName || '';
+  const userInitials = userName
+    ? userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email ? user.email[0].toUpperCase() : '?';
+
+  // Format money — matches mobile fmt()
   const fmt = (amount: number): string => {
-    const symbol = CURRENCY_SYMBOLS[currency];
-    return `${symbol}${amount.toFixed(2)}`;
+    if (currency.code === 'JPY') {
+      return `${currency.symbol}${Math.round(amount).toLocaleString()}`;
+    }
+    return `${currency.symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   };
 
-  // Fetch bills
-  const refreshBills = async () => {
+  // ── Fetch bills ─────────────────────────────────────────
+  const fetchBills = useCallback(async () => {
     if (!user) return;
     setBillsLoading(true);
     try {
       const res = await billsAPI.getAll();
       const billsArray = Array.isArray(res.data?.bills) ? res.data.bills : [];
-      setBills(billsArray.map((b: Record<string, unknown>) => mapBill(b)));
+      setBills(billsArray.map((b: Record<string, unknown>) => mapApiBill(b)));
     } catch (error) {
       console.error('Failed to fetch bills:', error);
     } finally {
       setBillsLoading(false);
     }
-  };
+  }, [user]);
 
-  // Fetch income sources
-  const refreshIncomeSources = async () => {
+  // ── Fetch income sources ─────────────────────────────────
+  const fetchIncomeSources = useCallback(async () => {
     if (!user) return;
     setIncomeLoading(true);
     try {
       const res = await usersAPI.getIncomeSources();
-      const sourcesArray = Array.isArray(res.data?.incomeSources) ? res.data.incomeSources : (Array.isArray(res.data?.income_sources) ? res.data.income_sources : []);
-      setIncomeSources(sourcesArray.map((s: Record<string, unknown>) => mapIncomeSource(s)));
+      const sourcesArray = Array.isArray(res.data?.incomeSources)
+        ? res.data.incomeSources
+        : (Array.isArray(res.data?.income_sources) ? res.data.income_sources : []);
+      const mapped = sourcesArray.map((s: Record<string, unknown>) => mapIncomeSource(s));
+      const advanced = autoAdvancePayDates(mapped);
+      setIncomeSources(advanced);
     } catch (error) {
       console.error('Failed to fetch income sources:', error);
     } finally {
       setIncomeLoading(false);
     }
-  };
+  }, [user]);
 
-  // Fetch payments (for current month)
-  const refreshPayments = async () => {
+  // ── Fetch categories ─────────────────────────────────────
+  const fetchCategories = useCallback(async () => {
+    if (!user) return;
+    setCategoriesLoading(true);
+    try {
+      const res = await usersAPI.getCategories();
+      const cats = (res.data?.categories || []).map((c: Record<string, unknown>) => ({
+        id: String(c.id),
+        name: String(c.name),
+        color: String(c.color || '#0C4A6E'),
+        icon: c.icon ? String(c.icon) : undefined,
+      }));
+      setCategories(cats);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, [user]);
+
+  // ── Fetch payments for current month (MATCHES MOBILE) ────
+  const fetchPayments = useCallback(async () => {
     if (!user) return;
     setPaymentsLoading(true);
     try {
       const now = new Date();
       const res = await billsAPI.getPayments(now.getFullYear(), now.getMonth() + 1);
       const paymentsArray = Array.isArray(res.data?.payments) ? res.data.payments : [];
-      setBillPayments(paymentsArray.map((p: Record<string, unknown>) => snakeToCamel(p) as unknown as BillPayment));
+      setBillPayments(paymentsArray.map((p: Record<string, unknown>) => ({
+        id: String(p.id),
+        billId: String(p.bill_id),
+        periodMonth: Number(p.period_month),
+        periodYear: Number(p.period_year),
+        paidAt: String(p.paid_at || ''),
+      })));
     } catch (error) {
       console.error('Failed to fetch payments:', error);
     } finally {
       setPaymentsLoading(false);
     }
-  };
-
-  // Initial fetch on mount
-  useEffect(() => {
-    if (user) {
-      refreshBills();
-      refreshIncomeSources();
-      refreshPayments();
-    }
   }, [user]);
 
-  // Bill operations
+  // ── Initial fetch + sync user profile ─────────────────────
+  useEffect(() => {
+    if (!user) return;
+
+    async function syncAndFetch() {
+      // Sync user profile (currency, tier, etc.)
+      try {
+        const token = await user!.getIdToken();
+        let userData = null;
+        try {
+          const loginRes = await authAPI.login(token);
+          userData = loginRes.data?.user;
+        } catch (loginErr: unknown) {
+          const err = loginErr as { response?: { status?: number; data?: { code?: string } } };
+          if (err?.response?.status === 404 || err?.response?.data?.code === 'USER_NOT_FOUND') {
+            try {
+              const registerRes = await authAPI.register(
+                token,
+                user!.displayName || user!.email?.split('@')[0] || 'Keipr User'
+              );
+              userData = registerRes.data?.user;
+            } catch (regErr) {
+              console.log('Auto-registration failed:', regErr);
+            }
+          }
+        }
+
+        if (userData) {
+          if (userData.currency) setCurrencyCodeState(userData.currency);
+          const dbPlan = userData.plan || 'free';
+          if (dbPlan === 'pro' || dbPlan === 'ultra') setTier(dbPlan);
+          else setTier('free');
+        }
+      } catch (err) {
+        console.log('Login sync unavailable:', err);
+      }
+
+      // Fetch data
+      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments()]);
+    }
+
+    syncAndFetch();
+  }, [user, fetchBills, fetchIncomeSources, fetchCategories, fetchPayments]);
+
+  // ── Bill CRUD ─────────────────────────────────────────────
   const addBill = async (data: Record<string, unknown>): Promise<Bill> => {
     const res = await billsAPI.create(data);
-    const bill = mapBill(res.data?.bill || res.data);
-    setBills([...bills, bill]);
+    const bill = mapApiBill(res.data?.bill || res.data);
+    setBills(prev => [...prev, bill]);
     return bill;
   };
 
   const updateBill = async (id: string, data: Record<string, unknown>): Promise<Bill> => {
     const res = await billsAPI.update(id, data);
-    const bill = mapBill(res.data?.bill || res.data);
-    setBills(bills.map((b) => (b.id === id ? bill : b)));
+    const bill = mapApiBill(res.data?.bill || res.data);
+    setBills(prev => prev.map((b) => (b.id === id ? bill : b)));
     return bill;
   };
 
   const deleteBill = async (id: string) => {
     await billsAPI.delete(id);
-    setBills(bills.filter((b) => b.id !== id));
+    setBills(prev => prev.filter((b) => b.id !== id));
   };
 
   const getBill = (id: string) => bills.find((b) => b.id === id);
 
-  // Payment operations
-  const isBillPaid = (billId: string, paycheckNum: number): boolean => {
-    return billPayments.some((p) => p.billId === billId && p.paycheckNum === paycheckNum && p.isPaid);
+  // ── Payment operations (MATCHES MOBILE) ──────────────────
+  const isBillPaid = (billId: string): boolean => {
+    return billPayments.some((p) => p.billId === billId);
   };
 
-  const markBillPaid = async (billId: string, paycheckNum: number) => {
-    const res = await billsAPI.markPaid({ billId, paycheckNum });
-    const payment = snakeToCamel(res.data?.payment || res.data) as unknown as BillPayment;
-    setBillPayments([...billPayments, payment]);
+  const markBillPaid = async (billId: string) => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    // Optimistic
+    const tempPayment: BillPayment = {
+      id: Date.now().toString(),
+      billId,
+      periodMonth: month,
+      periodYear: year,
+      paidAt: now.toISOString(),
+    };
+    setBillPayments(prev => [...prev, tempPayment]);
+    try {
+      const response = await billsAPI.markPaid({ billId, periodMonth: month, periodYear: year });
+      const created = response.data?.payment;
+      if (created) {
+        setBillPayments(prev =>
+          prev.map(p => p.id === tempPayment.id ? { ...tempPayment, id: created.id } : p)
+        );
+      }
+    } catch (err) {
+      console.log('markBillPaid API failed:', err);
+    }
   };
 
-  const unmarkBillPaid = async (paymentId: string) => {
-    await billsAPI.unmarkPaid(paymentId);
-    setBillPayments(billPayments.filter((p) => p.id !== paymentId));
+  const unmarkBillPaid = async (billId: string) => {
+    const payments = billPayments.filter(p => p.billId === billId);
+    if (payments.length === 0) return;
+    // Optimistic: remove all payments for this bill
+    setBillPayments(prev => prev.filter(p => p.billId !== billId));
+    try {
+      for (const payment of payments) {
+        await billsAPI.unmarkPaid(payment.id);
+      }
+    } catch (err) {
+      console.log('unmarkBillPaid API failed:', err);
+      setBillPayments(prev => [...prev, ...payments]); // rollback
+    }
   };
 
-  // Income source operations
+  // Per-split paid tracking (MATCHES MOBILE)
+  const isSplitPaid = (billId: string, paycheckNum: number): boolean => {
+    const bill = bills.find(b => b.id === billId);
+    if (!bill || !bill.isSplit) return isBillPaid(billId);
+    if (paycheckNum === 1) return bill.p1done;
+    if (paycheckNum === 2) return bill.p2done;
+    if (paycheckNum === 3) return bill.p3done;
+    if (paycheckNum === 4) return bill.p4done;
+    return false;
+  };
+
+  const toggleSplitPaid = async (billId: string, paycheckNum: number) => {
+    const bill = bills.find(b => b.id === billId);
+    if (!bill || !bill.isSplit) {
+      // Non-split: toggle global paid state
+      if (isBillPaid(billId)) await unmarkBillPaid(billId);
+      else await markBillPaid(billId);
+      return;
+    }
+
+    // Split bill: toggle the specific paycheck's done state
+    const splitIndex = paycheckNum - 1;
+    const splitId = bill.splitIds[splitIndex];
+    if (!splitId) {
+      console.log(`[toggleSplitPaid] No splitId for bill ${billId} paycheck ${paycheckNum}`);
+      return;
+    }
+
+    const doneKey = `p${paycheckNum}done` as keyof Bill;
+    const currentlyDone = bill[doneKey] as boolean;
+
+    // Optimistic update
+    setBills(prev => prev.map(b =>
+      b.id === billId ? { ...b, [doneKey]: !currentlyDone } : b
+    ));
+
+    try {
+      if (currentlyDone) {
+        await billsAPI.unmarkSaved(splitId);
+      } else {
+        await billsAPI.markSaved(splitId);
+      }
+    } catch (err) {
+      console.log('toggleSplitPaid API failed:', err);
+      // Rollback
+      setBills(prev => prev.map(b =>
+        b.id === billId ? { ...b, [doneKey]: currentlyDone } : b
+      ));
+    }
+  };
+
+  const refreshPayments = async () => { await fetchPayments(); };
+  const refreshBills = async () => { await fetchBills(); };
+  const refreshIncomeSources = async () => { await fetchIncomeSources(); };
+  const refreshCategories = async () => { await fetchCategories(); };
+
+  // ── Income source CRUD ────────────────────────────────────
   const addIncomeSource = async (data: Record<string, unknown>): Promise<IncomeSource> => {
     const res = await usersAPI.addIncomeSource(data);
     const source = mapIncomeSource(res.data?.incomeSource || res.data?.income_source || res.data);
-    setIncomeSources([...incomeSources, source]);
+    setIncomeSources(prev => [...prev, source]);
     return source;
   };
 
   const updateIncomeSource = async (id: string, data: Record<string, unknown>): Promise<IncomeSource> => {
     const res = await usersAPI.updateIncomeSource(id, data);
     const source = mapIncomeSource(res.data?.incomeSource || res.data?.income_source || res.data);
-    setIncomeSources(incomeSources.map((s) => (s.id === id ? source : s)));
+    setIncomeSources(prev => prev.map((s) => (s.id === id ? source : s)));
     return source;
   };
 
   const deleteIncomeSource = async (id: string) => {
     await usersAPI.deleteIncomeSource(id);
-    setIncomeSources(incomeSources.filter((s) => s.id !== id));
+    setIncomeSources(prev => prev.filter((s) => s.id !== id));
+  };
+
+  const setCurrencyCode = (code: string) => {
+    setCurrencyCodeState(code);
   };
 
   return (
@@ -318,6 +603,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         markBillPaid,
         unmarkBillPaid,
         isBillPaid,
+        toggleSplitPaid,
+        isSplitPaid,
         refreshPayments,
 
         incomeSources,
@@ -327,9 +614,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateIncomeSource,
         deleteIncomeSource,
 
+        categories,
+        categoriesLoading,
+        refreshCategories,
+
         currency,
-        setCurrency,
+        setCurrencyCode,
         fmt,
+
+        tier,
+        isPro,
+        isUltra,
+
+        userName,
+        userInitials,
       }}
     >
       {children}

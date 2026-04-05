@@ -72,7 +72,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, currency, setCurrency, addIncomeSource, updateIncomeSource, deleteIncomeSource, refreshIncomeSources } = useApp();
+  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, refreshIncomeSources } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -112,7 +112,7 @@ export default function SettingsPage() {
     try {
       await addIncomeSource({
         name: incomeForm.name,
-        amount: parseFloat(incomeForm.amount),
+        typicalAmount: parseFloat(incomeForm.amount),
         frequency: incomeForm.frequency,
         next_pay_date: incomeForm.nextPayDate,
       });
@@ -130,9 +130,9 @@ export default function SettingsPage() {
     setIncomeForm({
       id: source.id,
       name: source.name,
-      amount: source.amount.toString(),
-      frequency: source.frequency,
-      nextPayDate: source.nextPayDate,
+      amount: source.typicalAmount.toString(),
+      frequency: source.frequency as IncomeSourceForm['frequency'],
+      nextPayDate: source.nextPayDate || '',
     });
     setShowIncomeModal(true);
   };
@@ -147,7 +147,7 @@ export default function SettingsPage() {
     try {
       await updateIncomeSource(incomeForm.id, {
         name: incomeForm.name,
-        amount: parseFloat(incomeForm.amount),
+        typicalAmount: parseFloat(incomeForm.amount),
         frequency: incomeForm.frequency,
         next_pay_date: incomeForm.nextPayDate,
       });
@@ -395,8 +395,8 @@ export default function SettingsPage() {
 
         {expandedSection === 'currency' && (
           <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as any)}
+            value={currency.code}
+            onChange={(e) => setCurrencyCode(e.target.value)}
             style={{
               width: '100%',
               padding: '0.75rem',
@@ -474,12 +474,12 @@ export default function SettingsPage() {
                         {source.name}
                       </p>
                       <p style={{ color: colors.textMuted, margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>
-                        {FREQUENCIES.find((f) => f.value === source.frequency)?.label} • Next: {new Date(source.nextPayDate).toLocaleDateString()}
+                        {FREQUENCIES.find((f) => f.value === source.frequency)?.label} • Next: {source.nextPayDate ? new Date(source.nextPayDate + 'T00:00:00').toLocaleDateString() : 'Not set'}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right', marginRight: '1rem' }}>
                       <p style={{ color: colors.text, fontWeight: 600, margin: 0 }}>
-                        ${source.amount.toFixed(2)}
+                        ${source.typicalAmount.toFixed(2)}
                       </p>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
