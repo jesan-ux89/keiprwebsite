@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  /* Keipr Brand Colors */
+  --midnight: #0C4A6E;
+  --electric: #38BDF8;
+  --parchment: #D6D1C7;
+
+  /* Dark Theme */
+  --bg-dark: #1A1814;
+  --bg-card-dark: #2A2724;
+  --text-primary-dark: #E8E5DC;
+  --text-secondary-dark: rgba(232, 229, 220, 0.85);
+  --text-muted-dark: rgba(232, 229, 220, 0.6);
+  --text-faint-dark: rgba(232, 229, 220, 0.4);
+  --border-dark: rgba(232, 229, 220, 0.1);
+
+  /* Light Theme */
+  --bg-light: #F5F3EF;
+  --bg-card-light: #FFFFFF;
+  --text-primary-light: #1A1814;
+  --text-secondary-light: rgba(26, 24, 20, 0.75);
+  --text-muted-light: rgba(26, 24, 20, 0.55);
+  --text-faint-light: rgba(26, 24, 20, 0.35);
+  --border-light: rgba(26, 24, 20, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary-dark);
+  transition: background-color 0.3s, color 0.3s;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary-light);
+  }
+}
+
+/* Custom Utility Classes */
+@layer utilities {
+  .brand-midnight {
+    color: var(--midnight);
+  }
+
+  .brand-electric {
+    color: var(--electric);
+  }
+
+  .bg-brand-midnight {
+    background-color: var(--midnight);
+  }
+
+  .bg-brand-electric {
+    background-color: var(--electric);
+  }
+
+  .border-brand-midnight {
+    border-color: var(--midnight);
+  }
+
+  .border-brand-electric {
+    border-color: var(--electric);
+  }
+
+  .card-base {
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-dark);
+    transition: all 0.3s;
+  }
+
+  @media (prefers-color-scheme: light) {
+    .card-base {
+      background-color: var(--bg-card-light);
+      border-color: var(--border-light);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .card-base {
+      background-color: var(--bg-card-dark);
+      border-color: var(--border-dark);
+    }
+  }
+
+  .text-primary {
+    color: var(--text-primary-dark);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .text-primary {
+      color: var(--text-primary-light);
+    }
+  }
+
+  .text-muted {
+    color: var(--text-muted-dark);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .text-muted {
+      color: var(--text-muted-light);
+    }
+  }
+}
