@@ -38,8 +38,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
           {/* Left: Logo */}
           <Link href="/" className="flex items-baseline gap-[2px] shrink-0">
-            <span style={{ fontFamily: 'Georgia, serif' }} className="text-[26px] font-bold text-[#38BDF8]">k</span>
-            <span className="text-[21px] font-light text-white tracking-[2px]">eipr</span>
+            <span style={{ fontFamily: 'Georgia, serif' }} className="text-[36px] font-bold text-[#38BDF8]">k</span>
+            <span className="text-[28px] font-light text-white tracking-[2px]">eipr</span>
           </Link>
 
           {/* Center: Nav Links + Sign In (desktop) — absolute so store badges don't shift it */}
