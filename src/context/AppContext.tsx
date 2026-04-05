@@ -442,16 +442,83 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Bill CRUD ─────────────────────────────────────────────
   const addBill = async (data: Record<string, unknown>): Promise<Bill> => {
-    const res = await billsAPI.create(data);
+    // Map app field names → backend field names (mirrors mobile AppContext)
+    const matchedCat = categories.find(c => c.name.toLowerCase() === ((data.category as string) || '').toLowerCase());
+    const apiData = {
+      name: data.name,
+      totalAmount: data.total,
+      dueDayOfMonth: data.dueDay,
+      isRecurring: data.isRecurring,
+      isSplit: data.isSplit,
+      splitCount: data.isSplit
+        ? ([data.p1, data.p2, data.p3, data.p4].filter(v => (v as number || 0) > 0).length || 2)
+        : 1,
+      categoryId: matchedCat?.id || null,
+      categoryName: (data.category as string) || null,
+      isAutoPay: data.isAutoPay || false,
+    };
+    const res = await billsAPI.create(apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
     setBills(prev => [...prev, bill]);
+
+    // If split, set split allocations
+    if (data.isSplit && bill.id) {
+      const splits = [];
+      for (let i = 1; i <= 4; i++) {
+        const amt = data[`p${i}`] as number || 0;
+        if (amt > 0) splits.push({ paycheck_num: i, amount: amt, sort_order: i });
+      }
+      if (splits.length > 0) {
+        try {
+          await billsAPI.setSplits(bill.id, splits);
+        } catch (e) {
+          console.warn('Failed to set splits:', e);
+        }
+      }
+    }
+
     return bill;
   };
 
   const updateBill = async (id: string, data: Record<string, unknown>): Promise<Bill> => {
-    const res = await billsAPI.update(id, data);
+    // Map app field names → backend field names (mirrors mobile AppContext)
+    const apiData: Record<string, unknown> = {};
+    if (data.name !== undefined) apiData.name = data.name;
+    if (data.total !== undefined) apiData.totalAmount = data.total;
+    if (data.dueDay !== undefined) apiData.dueDayOfMonth = data.dueDay;
+    if (data.isRecurring !== undefined) apiData.isRecurring = data.isRecurring;
+    if (data.isAutoPay !== undefined) apiData.isAutoPay = data.isAutoPay;
+    if (data.isSplit !== undefined) {
+      apiData.isSplit = data.isSplit;
+      apiData.splitCount = data.isSplit
+        ? ([data.p1, data.p2, data.p3, data.p4].filter(v => (v as number || 0) > 0).length || 2)
+        : 1;
+    }
+    if (data.category !== undefined) {
+      const matchedCat = categories.find(c => c.name.toLowerCase() === ((data.category as string) || '').toLowerCase());
+      apiData.categoryId = matchedCat?.id || null;
+      apiData.categoryName = (data.category as string) || null;
+    }
+    const res = await billsAPI.update(id, apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
     setBills(prev => prev.map((b) => (b.id === id ? bill : b)));
+
+    // If split, update split allocations
+    if (data.isSplit) {
+      const splits = [];
+      for (let i = 1; i <= 4; i++) {
+        const amt = data[`p${i}`] as number || 0;
+        if (amt > 0) splits.push({ paycheck_num: i, amount: amt, sort_order: i });
+      }
+      if (splits.length > 0) {
+        try {
+          await billsAPI.setSplits(id, splits);
+        } catch (e) {
+          console.warn('Failed to set splits:', e);
+        }
+      }
+    }
+
     return bill;
   };
 
