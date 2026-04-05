@@ -37,14 +37,9 @@ export default function Home() {
       <nav className="sticky top-0 z-50" style={{ backgroundColor: '#1A1814' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0">
-            <span className="flex items-baseline gap-[2px]">
-              <span style={{ fontFamily: 'Georgia, serif' }} className="text-[36px] font-bold text-[#38BDF8]">k</span>
-              <span className="text-[28px] font-light text-white tracking-[2px]">eipr</span>
-            </span>
-            <span className="hidden md:inline-block text-[13px] font-medium text-white/50 tracking-wide border-l border-white/20 pl-3">
-              Track Every Paycheck
-            </span>
+          <Link href="/" className="flex items-baseline gap-[2px] shrink-0">
+            <span style={{ fontFamily: 'Georgia, serif' }} className="text-[36px] font-bold text-[#38BDF8]">k</span>
+            <span className="text-[28px] font-light text-white tracking-[2px]">eipr</span>
           </Link>
 
           {/* Center: Nav Links + Sign In (desktop) — absolute so store badges don't shift it */}
