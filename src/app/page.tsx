@@ -141,148 +141,8 @@ export default function Home() {
       </nav>
 
       {/* Hero Section with Floating Cards */}
-      <section className="relative overflow-hidden px-4 py-24 md:py-36" style={{ backgroundColor: '#EDF6FC' }}>
-        {/* Floating stat cards — hidden on mobile, visible on lg+ */}
-        <div className="hidden lg:block">
-          {/* Top-left: Paycheck card */}
-          <div className="absolute" style={{
-            top: '12%', left: '5%',
-            animation: 'floatA 6s ease-in-out infinite',
-          }}>
-            <FloatingCard rotate={-6}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '4px' }}>Next Paycheck</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0C1E2C' }}>$5,000</div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(12,30,44,0.5)', marginTop: '2px' }}>Apr 10 – Apr 23</div>
-            </FloatingCard>
-          </div>
+      <HeroWithFloatingCards />
 
-          {/* Top-right: Bills Due card */}
-          <div className="absolute" style={{
-            top: '8%', right: '6%',
-            animation: 'floatB 7s ease-in-out infinite',
-          }}>
-            <FloatingCard rotate={5}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '4px' }}>Bills This Check</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#C05621' }}>$2,495</div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(12,30,44,0.5)', marginTop: '2px' }}>4 bills due</div>
-            </FloatingCard>
-          </div>
-
-          {/* Mid-left: Tracker card */}
-          <div className="absolute" style={{
-            top: '52%', left: '3%',
-            animation: 'floatC 5.5s ease-in-out infinite',
-          }}>
-            <FloatingCard rotate={4}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Paid This Month</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0C4A6E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: '#38BDF8', fontSize: '0.8rem', fontWeight: 700 }}>2</span>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0C1E2C' }}>of 4 bills</div>
-                  <div style={{ fontSize: '0.7rem', color: 'rgba(12,30,44,0.45)' }}>50% complete</div>
-                </div>
-              </div>
-            </FloatingCard>
-          </div>
-
-          {/* Mid-right: Split card */}
-          <div className="absolute" style={{
-            top: '55%', right: '4%',
-            animation: 'floatA 6.5s ease-in-out infinite',
-          }}>
-            <FloatingCard rotate={-4}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Mortgage Split</div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <div style={{ background: '#E6F7ED', borderRadius: '8px', padding: '4px 10px', textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
-                </div>
-                <div style={{ background: '#FEF3C7', borderRadius: '8px', padding: '4px 10px', textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#B45309' }}>$800</div>
-                </div>
-              </div>
-            </FloatingCard>
-          </div>
-
-          {/* Bottom-center-left: After Bills card */}
-          <div className="absolute" style={{
-            bottom: '8%', left: '15%',
-            animation: 'floatB 5s ease-in-out infinite',
-          }}>
-            <FloatingCard rotate={3}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(12,30,44,0.4)', textTransform: 'uppercase' as const, marginBottom: '4px' }}>After Bills</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16A34A' }}>$2,505</div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(12,30,44,0.5)', marginTop: '2px' }}>available to spend</div>
-            </FloatingCard>
-          </div>
-
-          {/* Bottom-center-right: Currency card */}
-          <div className="absolute" style={{
-            bottom: '10%', right: '14%',
-            animation: 'floatC 7.5s ease-in-out infinite',
-          }}>
-            <FloatingCard rotate={-3}>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                {['$', '\u20AC', '\u00A3', '\u00A5'].map((sym) => (
-                  <div key={sym} style={{
-                    width: '30px', height: '30px', borderRadius: '50%',
-                    background: sym === '$' ? '#0C4A6E' : 'rgba(12,74,110,0.08)',
-                    color: sym === '$' ? '#38BDF8' : '#0C4A6E',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.85rem', fontWeight: 600,
-                  }}>{sym}</div>
-                ))}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(12,30,44,0.45)', marginTop: '6px' }}>7 currencies supported</div>
-            </FloatingCard>
-          </div>
-        </div>
-
-        {/* Center content */}
-        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#0C1E2C' }}>
-            Budget Around Your Paychecks, <span style={{ color: '#0C4A6E' }}>Not the Calendar</span>
-          </h1>
-          <p className="text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>
-            Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles, split large bills across paychecks, and track every dollar with confidence.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <Link
-              href="/auth/signup"
-              className="px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition transform hover:scale-105 inline-block text-center"
-              style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}
-            >
-              Get Started Free
-            </Link>
-            <Link
-              href="/app"
-              className="px-8 py-3 rounded-lg border font-semibold hover:opacity-75 transition inline-block text-center"
-              style={{ borderColor: 'rgba(12,74,110,0.2)', color: '#0C1E2C' }}
-            >
-              Open Web App
-            </Link>
-          </div>
-        </div>
-
-        {/* Float animations */}
-        <style>{`
-          @keyframes floatA {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-12px); }
-          }
-          @keyframes floatB {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-16px); }
-          }
-          @keyframes floatC {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-          }
-        `}</style>
-      </section>
 
       {/* Features Section */}
       <section id="features" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
@@ -498,19 +358,283 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
   );
 }
 
-function FloatingCard({ children, rotate = 0 }: { children: React.ReactNode; rotate?: number }) {
+/* ── Floating Card Shell ── */
+function FloatingCard({ children, rotate = 0, dark = false }: { children: React.ReactNode; rotate?: number; dark?: boolean }) {
   return (
     <div style={{
-      background: '#FFFFFF',
-      borderRadius: '14px',
-      padding: '14px 18px',
-      boxShadow: '0 8px 32px rgba(12,74,110,0.1), 0 2px 8px rgba(0,0,0,0.04)',
-      border: '1px solid rgba(12,74,110,0.08)',
+      background: dark ? 'rgba(15,23,42,0.88)' : 'rgba(255,255,255,0.92)',
+      borderRadius: '16px',
+      padding: '16px 20px',
+      boxShadow: '0 8px 32px rgba(12,74,110,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+      border: `1px solid ${dark ? 'rgba(255,255,255,0.1)' : 'rgba(12,74,110,0.08)'}`,
       transform: `rotate(${rotate}deg)`,
-      backdropFilter: 'blur(8px)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
       minWidth: '140px',
     }}>
       {children}
     </div>
+  );
+}
+
+/* ── Label style helper ── */
+const cardLabel: React.CSSProperties = { fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' };
+const lightLabel = { ...cardLabel, color: 'rgba(12,30,44,0.4)' };
+const darkLabel = { ...cardLabel, color: 'rgba(255,255,255,0.5)' };
+
+/* ── Mini Bar Chart (CSS-only) ── */
+function MiniBarChart({ bars, dark = false }: { bars: { label: string; value: number; max: number; color: string }[]; dark?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '48px' }}>
+      {bars.map((bar) => (
+        <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+          <div style={{
+            width: '18px',
+            height: `${(bar.value / bar.max) * 40}px`,
+            background: bar.color,
+            borderRadius: '3px 3px 0 0',
+            minHeight: '4px',
+          }} />
+          <span style={{ fontSize: '0.5rem', color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(12,30,44,0.4)' }}>{bar.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Mini Donut Chart (SVG) ── */
+function MiniDonut({ segments, size = 60, dark = false }: { segments: { pct: number; color: string; label: string }[]; size?: number; dark?: boolean }) {
+  const r = 22; const circ = 2 * Math.PI * r;
+  let offset = 0;
+  return (
+    <svg width={size} height={size} viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r={r} fill="none" stroke={dark ? 'rgba(255,255,255,0.08)' : 'rgba(12,74,110,0.06)'} strokeWidth="8" />
+      {segments.map((seg) => {
+        const dash = (seg.pct / 100) * circ;
+        const gap = circ - dash;
+        const el = <circle key={seg.label} cx="30" cy="30" r={r} fill="none" stroke={seg.color} strokeWidth="8" strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset} strokeLinecap="round" transform="rotate(-90 30 30)" />;
+        offset += dash;
+        return el;
+      })}
+    </svg>
+  );
+}
+
+/* ── Spending Bar Chart Card (Monarch-style) ── */
+function SpendingChartCard({ dark = false }: { dark?: boolean }) {
+  const bars = [
+    { label: 'Jan', value: 2100, max: 2500, color: '#38BDF8' },
+    { label: 'Feb', value: 2400, max: 2500, color: '#38BDF8' },
+    { label: 'Mar', value: 1900, max: 2500, color: '#38BDF8' },
+    { label: 'Apr', value: 2495, max: 2500, color: '#0C4A6E' },
+  ];
+  return (
+    <>
+      <div style={dark ? darkLabel : lightLabel}>Monthly Spending</div>
+      <div style={{ fontSize: '1.35rem', fontWeight: 700, color: dark ? '#F5F3EF' : '#0C1E2C', marginBottom: '8px' }}>$2,495</div>
+      <MiniBarChart bars={bars} dark={dark} />
+    </>
+  );
+}
+
+/* ── Category Breakdown Card (Monarch-style donut) ── */
+function CategoryDonutCard({ dark = false }: { dark?: boolean }) {
+  const segs = [
+    { pct: 40, color: '#0C4A6E', label: 'Housing' },
+    { pct: 22, color: '#38BDF8', label: 'Insurance' },
+    { pct: 18, color: '#16A34A', label: 'Utilities' },
+    { pct: 20, color: '#F59E0B', label: 'Other' },
+  ];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <MiniDonut segments={segs} dark={dark} />
+      <div>
+        <div style={dark ? darkLabel : lightLabel}>Bill Breakdown</div>
+        {segs.map((s) => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color }} />
+            <span style={{ fontSize: '0.65rem', color: dark ? 'rgba(255,255,255,0.6)' : 'rgba(12,30,44,0.55)' }}>{s.label} {s.pct}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Hero with Floating Cards ── */
+function HeroWithFloatingCards() {
+  const [mobileSlide, setMobileSlide] = useState(0);
+  const mobileCards = 4;
+
+  useEffect(() => {
+    const timer = setInterval(() => setMobileSlide((s) => (s + 1) % mobileCards), 3500);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <section className="relative overflow-hidden px-4 py-24 md:py-36" style={{ backgroundColor: '#EDF6FC', minHeight: '600px' }}>
+
+      {/* ── Desktop: 6 floating cards (lg+) ── */}
+      <div className="hidden lg:block">
+        {/* Top-left: Spending chart */}
+        <div className="absolute" style={{ top: '10%', left: '4%', animation: 'floatA 6s ease-in-out infinite' }}>
+          <FloatingCard rotate={-5}>
+            <SpendingChartCard />
+          </FloatingCard>
+        </div>
+
+        {/* Top-right: Category donut */}
+        <div className="absolute" style={{ top: '6%', right: '4%', animation: 'floatB 7s ease-in-out infinite' }}>
+          <FloatingCard rotate={4} dark>
+            <CategoryDonutCard dark />
+          </FloatingCard>
+        </div>
+
+        {/* Mid-left: Tracker */}
+        <div className="absolute" style={{ top: '52%', left: '3%', animation: 'floatC 5.5s ease-in-out infinite' }}>
+          <FloatingCard rotate={3}>
+            <div style={lightLabel}>Paid This Month</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#0C4A6E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#38BDF8', fontSize: '0.85rem', fontWeight: 700 }}>2</span>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0C1E2C' }}>of 4 bills</div>
+                <div style={{ width: '60px', height: '4px', borderRadius: '2px', background: 'rgba(12,74,110,0.1)', marginTop: '3px' }}>
+                  <div style={{ width: '50%', height: '100%', borderRadius: '2px', background: '#38BDF8' }} />
+                </div>
+              </div>
+            </div>
+          </FloatingCard>
+        </div>
+
+        {/* Mid-right: Split card */}
+        <div className="absolute" style={{ top: '55%', right: '3%', animation: 'floatA 6.5s ease-in-out infinite' }}>
+          <FloatingCard rotate={-4}>
+            <div style={lightLabel}>Mortgage Split</div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ background: '#E6F7ED', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
+              </div>
+              <div style={{ background: '#FEF3C7', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#B45309' }}>$800</div>
+              </div>
+            </div>
+          </FloatingCard>
+        </div>
+
+        {/* Bottom-left: After Bills */}
+        <div className="absolute" style={{ bottom: '8%', left: '14%', animation: 'floatB 5s ease-in-out infinite' }}>
+          <FloatingCard rotate={2}>
+            <div style={lightLabel}>After Bills</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16A34A' }}>$2,505</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(12,30,44,0.5)' }}>available to spend</div>
+          </FloatingCard>
+        </div>
+
+        {/* Bottom-right: Paycheck */}
+        <div className="absolute" style={{ bottom: '6%', right: '12%', animation: 'floatC 7.5s ease-in-out infinite' }}>
+          <FloatingCard rotate={-3} dark>
+            <div style={darkLabel}>Next Paycheck</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>$5,000</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>Apr 10 – Apr 23</div>
+          </FloatingCard>
+        </div>
+      </div>
+
+      {/* ── Mobile: Single rotating card (below lg) ── */}
+      <div className="lg:hidden flex justify-center mb-6" style={{ minHeight: '120px' }}>
+        <div style={{ animation: 'floatA 6s ease-in-out infinite', transition: 'opacity 0.4s' }}>
+          {mobileSlide === 0 && (
+            <FloatingCard dark>
+              <SpendingChartCard dark />
+            </FloatingCard>
+          )}
+          {mobileSlide === 1 && (
+            <FloatingCard dark>
+              <CategoryDonutCard dark />
+            </FloatingCard>
+          )}
+          {mobileSlide === 2 && (
+            <FloatingCard>
+              <div style={lightLabel}>Mortgage Split</div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ background: '#E6F7ED', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 1</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#16A34A' }}>$1,200</div>
+                </div>
+                <div style={{ background: '#FEF3C7', borderRadius: '8px', padding: '5px 10px', textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '0.6rem', color: 'rgba(12,30,44,0.45)' }}>Check 2</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#B45309' }}>$800</div>
+                </div>
+              </div>
+            </FloatingCard>
+          )}
+          {mobileSlide === 3 && (
+            <FloatingCard dark>
+              <div style={darkLabel}>Next Paycheck</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#38BDF8' }}>$5,000</div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>Apr 10 – Apr 23</div>
+            </FloatingCard>
+          )}
+        </div>
+        {/* Dot indicators */}
+        <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px' }} className="lg:hidden">
+          {Array.from({ length: mobileCards }).map((_, i) => (
+            <div key={i} style={{
+              width: i === mobileSlide ? '16px' : '6px',
+              height: '6px',
+              borderRadius: '3px',
+              background: i === mobileSlide ? '#0C4A6E' : 'rgba(12,74,110,0.2)',
+              transition: 'all 0.3s',
+            }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Center content */}
+      <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#0C1E2C' }}>
+          Budget Around Your Paychecks, <span style={{ color: '#0C4A6E' }}>Not the Calendar</span>
+        </h1>
+        <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>
+          Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles, split large bills across paychecks, and track every dollar with confidence.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+          <Link
+            href="/auth/signup"
+            className="px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition transform hover:scale-105 inline-block text-center"
+            style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}
+          >
+            Get Started Free
+          </Link>
+          <Link
+            href="/app"
+            className="px-8 py-3 rounded-lg border font-semibold hover:opacity-75 transition inline-block text-center"
+            style={{ borderColor: 'rgba(12,74,110,0.2)', color: '#0C1E2C' }}
+          >
+            Open Web App
+          </Link>
+        </div>
+      </div>
+
+      {/* Float animations */}
+      <style>{`
+        @keyframes floatA {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+        }
+        @keyframes floatB {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-16px); }
+        }
+        @keyframes floatC {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
+    </section>
   );
 }
