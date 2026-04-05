@@ -167,22 +167,22 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." />
+            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screenshots/Paycheck-Forward-Budgeting.jpg" />
 
             {/* Feature 2 */}
-            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." />
+            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screenshots/Split-Bills.jpg" />
 
             {/* Feature 3 */}
-            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." />
+            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screenshots/Bill-Tracker.jpg" />
 
             {/* Feature 4 */}
-            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." />
+            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screenshots/Forward-Planning.jpg" />
 
             {/* Feature 5 */}
-            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." />
+            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screenshots/Connected-Banking.jpg" />
 
             {/* Feature 6 */}
-            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." />
+            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshots/Currency.jpg" />
           </div>
         </div>
       </section>
@@ -222,18 +222,45 @@ interface FeatureCardProps {
   icon: React.ComponentType<{ size: number; className?: string; color?: string }>;
   title: string;
   description: string;
+  screenshot?: string;
 }
 
-function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
+function FeatureCard({ icon: Icon, title, description, screenshot }: FeatureCardProps) {
   return (
-    <div className="p-8 rounded-xl border transition group hover:shadow-md" style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(12,74,110,0.1)' }}>
-      <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition" style={{ backgroundColor: 'rgba(12,74,110,0.08)' }}>
-        <Icon size={24} color="#0C4A6E" />
+    <div className="rounded-xl border transition group hover:shadow-lg overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(12,74,110,0.1)' }}>
+      {/* Text content on top */}
+      <div className="p-7 pb-5">
+        <div className="w-11 h-11 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(12,74,110,0.08)' }}>
+          <Icon size={22} color="#0C4A6E" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2" style={{ color: '#0C1E2C' }}>{title}</h3>
+        <p className="text-sm leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>
+          {description}
+        </p>
       </div>
-      <h3 className="text-xl font-semibold mb-3" style={{ color: '#0C1E2C' }}>{title}</h3>
-      <p style={{ color: 'rgba(12,30,44,0.6)' }}>
-        {description}
-      </p>
+      {/* Screenshot below */}
+      {screenshot && (
+        <div className="px-7 pb-6 flex justify-center">
+          <div style={{
+            width: '200px',
+            borderRadius: '18px',
+            overflow: 'hidden',
+            border: '3px solid #2A2A2A',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            background: '#1A1814',
+          }}>
+            <img
+              src={screenshot}
+              alt={`${title} screenshot`}
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
