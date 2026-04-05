@@ -372,15 +372,15 @@ function StoryCard({ children, side, visible }: { children: React.ReactNode; sid
     <div style={{
       background: 'rgba(255,255,255,0.10)',
       borderRadius: '22px',
-      padding: '30px 30px 34px',
+      padding: '32px 32px 38px',
       boxShadow: visible
         ? '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 20px rgba(56,189,248,0.08)'
         : '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
       border: visible ? '1px solid rgba(56,189,248,0.25)' : '1px solid rgba(255,255,255,0.15)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      minWidth: '220px',
-      maxWidth: '320px',
+      minWidth: '240px',
+      maxWidth: '340px',
       transform: visible
         ? `rotate(${rotate}deg) scale(1) translateX(0px)`
         : `rotate(${rotate}deg) scale(0.92) translateX(${slideX}px)`,
@@ -502,6 +502,7 @@ function StoryBarChart({ active }: { active: boolean }) {
     { label: 'Apr', value: 2495, max: 2600, color: '#0C4A6E' },
     { label: 'May', value: 2200, max: 2600, color: 'rgba(56,189,248,0.35)' },
     { label: 'Jun', value: 2300, max: 2600, color: 'rgba(56,189,248,0.35)' },
+    { label: 'Jul', value: 2150, max: 2600, color: 'rgba(56,189,248,0.2)' },
   ];
   const [grow, setGrow] = useState(false);
   useEffect(() => {
@@ -538,13 +539,22 @@ function SceneGotPaidA({ active }: { active: boolean }) {
     <>
       <div style={{ ...sceneLabel, color: '#4ADE80', fontSize: '0.7rem' }}>You Got Paid!</div>
       <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Paycheck 1 &middot; Apr 10</div>
-      <div style={{ fontSize: '2rem', fontWeight: 700, color: '#4ADE80' }}>
+      <div style={{ fontSize: '2.1rem', fontWeight: 700, color: '#4ADE80' }}>
         +<AnimatedNumber target={2847} prefix="$" active={active} />
       </div>
       <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '6px' }}>Direct deposit from Acme Corp</div>
-      <div style={{ marginTop: '12px', padding: '8px 14px', borderRadius: '12px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.2)' }}>
-        <div style={{ fontSize: '0.7rem', color: '#4ADE80', fontWeight: 600 }}>Balance updated</div>
+      {/* Account summary */}
+      <div style={{ marginTop: '14px', padding: '10px 14px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>Before</span>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>$1,243</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>After</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ADE80' }}><AnimatedNumber target={4090} active={active} duration={1400} /></span>
+        </div>
       </div>
+      <div style={{ marginTop: '10px', fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>Next paycheck in 14 days</div>
     </>
   );
 }
@@ -558,12 +568,19 @@ function SceneGotPaidB({ active }: { active: boolean }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
         <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>Bills Due</span>
-        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F87171' }}>-<AnimatedNumber target={1205} active={active} /></span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F87171' }}>-<AnimatedNumber target={1492} active={active} /></span>
       </div>
-      <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '6px 0' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>Savings</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FBBF24' }}>-<AnimatedNumber target={300} active={active} /></span>
+      </div>
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Remaining</span>
-        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ADE80' }}><AnimatedNumber target={1642} active={active} /></span>
+        <span style={{ fontSize: '1.15rem', fontWeight: 700, color: '#4ADE80' }}><AnimatedNumber target={1055} active={active} /></span>
+      </div>
+      <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.15)' }}>
+        <div style={{ fontSize: '0.68rem', color: '#4ADE80', fontWeight: 600 }}>37% of paycheck available to spend</div>
       </div>
     </>
   );
@@ -574,10 +591,16 @@ function SceneBillsA({ active }: { active: boolean }) {
   return (
     <>
       <div style={sceneLabel}>Bills This Paycheck</div>
-      <CheckItem label="Rent" amount="$850" delay={300} active={active} />
-      <CheckItem label="Electric" amount="$145" delay={700} active={active} />
+      <CheckItem label="Rent" amount="$850" delay={200} active={active} />
+      <CheckItem label="Car Payment" amount="$287" delay={500} active={active} />
+      <CheckItem label="Electric" amount="$145" delay={800} active={active} />
       <CheckItem label="Internet" amount="$89" delay={1100} active={active} />
-      <CheckItem label="Insurance" amount="$121" delay={1500} active={active} />
+      <CheckItem label="Insurance" amount="$121" delay={1400} active={active} />
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '8px 0' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>Total due</span>
+        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F5F3EF' }}><AnimatedNumber target={1492} active={active} /></span>
+      </div>
     </>
   );
 }
@@ -586,14 +609,18 @@ function SceneBillsB({ active }: { active: boolean }) {
     <>
       <div style={sceneLabel}>Payment Progress</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '14px' }}>
-        <span style={{ fontSize: '2rem', fontWeight: 700, color: '#38BDF8' }}>
-          <AnimatedNumber target={4} prefix="" active={active} duration={2000} />
+        <span style={{ fontSize: '2.2rem', fontWeight: 700, color: '#38BDF8' }}>
+          <AnimatedNumber target={5} prefix="" active={active} duration={2200} />
         </span>
-        <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>of 4 confirmed</span>
+        <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>of 5 confirmed</span>
       </div>
-      <AnimatedBar pct={100} color="#38BDF8" delay={1600} active={active} />
-      <div style={{ fontSize: '0.7rem', color: '#4ADE80', marginTop: '8px', opacity: active ? 1 : 0, transition: 'opacity 0.4s 2s' }}>
-        All bills accounted for this period
+      <AnimatedBar pct={100} color="#38BDF8" delay={1800} active={active} />
+      <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)' }}>
+        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>Total confirmed</span>
+        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#F5F3EF' }}><AnimatedNumber target={1492} active={active} /></span>
+      </div>
+      <div style={{ fontSize: '0.7rem', color: '#4ADE80', marginTop: '10px', opacity: active ? 1 : 0, transition: 'opacity 0.4s 2.2s' }}>
+        $47 less than last pay period
       </div>
     </>
   );
@@ -610,15 +637,15 @@ function SceneSplitA({ active }: { active: boolean }) {
   return (
     <>
       <div style={sceneLabel}>Splitting Mortgage</div>
-      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '12px' }}>$2,000</div>
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '10px' }}>$2,000</div>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <div style={{
           flex: 1, background: 'rgba(74,222,128,0.12)', borderRadius: '12px', padding: '10px 14px',
           textAlign: 'center' as const, border: '1px solid rgba(74,222,128,0.2)',
           transform: split ? 'translateX(0)' : 'translateX(30px)', opacity: split ? 1 : 0,
           transition: 'all 0.5s cubic-bezier(0.4,0,0.2,1)',
         }}>
-          <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 1</div>
+          <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)' }}>Check 1 &middot; Apr 10</div>
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#4ADE80' }}>$1,200</div>
         </div>
         <div style={{
@@ -627,9 +654,19 @@ function SceneSplitA({ active }: { active: boolean }) {
           transform: split ? 'translateX(0)' : 'translateX(-30px)', opacity: split ? 1 : 0,
           transition: 'all 0.5s cubic-bezier(0.4,0,0.2,1) 0.15s',
         }}>
-          <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)' }}>Check 2</div>
+          <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)' }}>Check 2 &middot; Apr 24</div>
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#FBBF24' }}>$800</div>
         </div>
+      </div>
+      {/* Timeline connector */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '4px' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ADE80', flexShrink: 0 }} />
+        <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, #4ADE80, #FBBF24)' }} />
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FBBF24', flexShrink: 0 }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)' }}>Apr 10</span>
+        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)' }}>Apr 24</span>
       </div>
     </>
   );
@@ -637,23 +674,32 @@ function SceneSplitA({ active }: { active: boolean }) {
 function SceneSplitB({ active }: { active: boolean }) {
   return (
     <>
-      <div style={sceneLabel}>Per-Paycheck Impact</div>
-      <div style={{ marginBottom: '8px' }}>
+      <div style={sceneLabel}>Per-Paycheck Load</div>
+      <div style={{ marginBottom: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Check 1 load</span>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Mortgage &middot; Check 1</span>
           <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>42%</span>
         </div>
         <AnimatedBar pct={42} color="#38BDF8" delay={400} active={active} />
       </div>
-      <div>
+      <div style={{ marginBottom: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Check 2 load</span>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Mortgage &middot; Check 2</span>
           <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>28%</span>
         </div>
         <AnimatedBar pct={28} color="#FBBF24" delay={700} active={active} />
       </div>
-      <div style={{ fontSize: '0.7rem', color: '#4ADE80', marginTop: '10px' }}>
-        Balanced — no paycheck over 50%
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '6px 0 10px' }} />
+      {/* Second split example */}
+      <div style={{ marginBottom: '6px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>Car Insurance &middot; 60/40</span>
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>21%</span>
+        </div>
+        <AnimatedBar pct={21} color="#A78BFA" delay={1000} active={active} />
+      </div>
+      <div style={{ fontSize: '0.68rem', color: '#4ADE80', marginTop: '8px' }}>
+        All paychecks balanced under 50%
       </div>
     </>
   );
@@ -661,27 +707,38 @@ function SceneSplitB({ active }: { active: boolean }) {
 
 /* Scene 3: Pay Forward */
 function SceneForwardA({ active }: { active: boolean }) {
-  const [pct, setPct] = useState(0);
+  const [pctMay, setPctMay] = useState(0);
+  const [pctJun, setPctJun] = useState(0);
   useEffect(() => {
-    if (!active) { setPct(0); return; }
-    const t = setTimeout(() => setPct(75), 400);
-    return () => clearTimeout(t);
+    if (!active) { setPctMay(0); setPctJun(0); return; }
+    const t1 = setTimeout(() => setPctMay(75), 400);
+    const t2 = setTimeout(() => setPctJun(30), 900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [active]);
   return (
     <>
       <div style={sceneLabel}>Planning Ahead</div>
-      <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '4px' }}>May 2026</div>
-      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', marginBottom: '12px' }}>Already funded</div>
-      <div style={{ position: 'relative', width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-        <div style={{
-          width: `${pct}%`, height: '100%', borderRadius: '4px',
-          background: 'linear-gradient(90deg, #38BDF8, #0C4A6E)',
-          transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1)',
-        }} />
+      {/* May */}
+      <div style={{ marginBottom: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#F5F3EF' }}>May 2026</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38BDF8' }}>75%</span>
+        </div>
+        <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ width: `${pctMay}%`, height: '100%', borderRadius: '4px', background: 'linear-gradient(90deg, #38BDF8, #0C4A6E)', transition: 'width 1.2s cubic-bezier(0.4,0,0.2,1)' }} />
+        </div>
+        <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>$1,875 of $2,495 funded</div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>$1,875 of $2,495</span>
-        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38BDF8' }}>75%</span>
+      {/* June */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#F5F3EF' }}>June 2026</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(56,189,248,0.6)' }}>30%</span>
+        </div>
+        <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ width: `${pctJun}%`, height: '100%', borderRadius: '4px', background: 'linear-gradient(90deg, rgba(56,189,248,0.5), rgba(12,74,110,0.5))', transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }} />
+        </div>
+        <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '4px' }}>$749 of $2,495 funded</div>
       </div>
     </>
   );
@@ -690,12 +747,20 @@ function SceneForwardB({ active }: { active: boolean }) {
   return (
     <>
       <div style={sceneLabel}>You&apos;re Ahead</div>
-      <div style={{ fontSize: '2.2rem', fontWeight: 700, color: '#38BDF8', lineHeight: 1.1 }}>
+      <div style={{ fontSize: '2.4rem', fontWeight: 700, color: '#38BDF8', lineHeight: 1.1 }}>
         <AnimatedNumber target={2} prefix="" active={active} duration={800} />
       </div>
-      <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginBottom: '10px' }}>weeks ahead of schedule</div>
-      <div style={{ padding: '8px 14px', borderRadius: '12px', background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.18)' }}>
-        <div style={{ fontSize: '0.7rem', color: '#38BDF8', fontWeight: 600 }}>Next month is 75% covered</div>
+      <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginBottom: '14px' }}>weeks ahead of schedule</div>
+      <div style={{ padding: '10px 14px', borderRadius: '12px', background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.18)', marginBottom: '10px' }}>
+        <div style={{ fontSize: '0.72rem', color: '#38BDF8', fontWeight: 600 }}>Next month is 75% covered</div>
+      </div>
+      {/* Savings streak */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
+        <span style={{ fontSize: '1rem' }}>&#x1F525;</span>
+        <div>
+          <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#FBBF24' }}>4-month saving streak</div>
+          <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)' }}>You&apos;ve planned ahead every month since Jan</div>
+        </div>
       </div>
     </>
   );
@@ -706,13 +771,18 @@ function SceneBudgetA({ active }: { active: boolean }) {
   return (
     <>
       <div style={sceneLabel}>Monthly Spending</div>
-      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '2px' }}>
+      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '2px' }}>
         <AnimatedNumber target={2495} active={active} />
       </div>
-      <div style={{ fontSize: '0.7rem', color: '#16A34A', marginBottom: '10px' }}>
+      <div style={{ fontSize: '0.7rem', color: '#16A34A', marginBottom: '12px' }}>
         <span style={{ marginRight: '4px' }}>&#8599;</span>$105 less than last month
       </div>
       <StoryBarChart active={active} />
+      {/* Top category callout */}
+      <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)' }}>
+        <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)' }}>Highest</span>
+        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Housing &middot; $998</span>
+      </div>
     </>
   );
 }
@@ -724,19 +794,26 @@ function SceneBudgetB({ active }: { active: boolean }) {
     { pct: 20, color: '#F59E0B', label: 'Other' },
   ];
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-      <StoryDonut segments={segs} active={active} />
-      <div>
-        <div style={sceneLabel}>Breakdown</div>
-        {segs.map((s) => (
-          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color }} />
-            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>{s.label}</span>
-            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>{s.pct}%</span>
-          </div>
-        ))}
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+        <StoryDonut segments={segs} active={active} />
+        <div>
+          <div style={sceneLabel}>Breakdown</div>
+          {segs.map((s) => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color }} />
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>{s.label}</span>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>{s.pct}%</span>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+      {/* Spending change callout */}
+      <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.15)' }}>
+        <div style={{ fontSize: '0.7rem', color: '#4ADE80', fontWeight: 600 }}>Utilities down 12% this month</div>
+        <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>Saved $18 vs. March</div>
+      </div>
+    </>
   );
 }
 
@@ -796,7 +873,7 @@ function HeroWithFloatingCards() {
       <div className="hidden lg:block" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
         {/* Left card slot */}
         <div className="absolute" style={{ top: '15%', left: '3%' }}>
-          <div style={{ position: 'relative', minHeight: '260px', minWidth: '280px' }}>
+          <div style={{ position: 'relative', minHeight: '340px', minWidth: '300px' }}>
             {SCENES.map((s, i) => {
               const CardA = s.A;
               return (
@@ -810,7 +887,7 @@ function HeroWithFloatingCards() {
 
         {/* Right card slot */}
         <div className="absolute" style={{ top: '12%', right: '3%' }}>
-          <div style={{ position: 'relative', minHeight: '260px', minWidth: '280px' }}>
+          <div style={{ position: 'relative', minHeight: '340px', minWidth: '300px' }}>
             {SCENES.map((s, i) => {
               const CardB = s.B;
               return (
@@ -825,7 +902,7 @@ function HeroWithFloatingCards() {
 
       {/* ── Mobile: 1 card, centered (below lg) ── */}
       <div className="lg:hidden flex justify-center mb-6" onTouchStart={() => setPaused(true)} onTouchEnd={() => { const t = setTimeout(() => setPaused(false), 2000); return () => clearTimeout(t); }}>
-        <div style={{ position: 'relative', minHeight: '220px', minWidth: '260px' }}>
+        <div style={{ position: 'relative', minHeight: '280px', minWidth: '280px' }}>
           {SCENES.map((s, i) => {
             const CardA = s.A;
             return (
