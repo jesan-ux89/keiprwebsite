@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#EDF6FC', color: '#0C1E2C' }}>
       {/* ── BAR 1: Top Utility / Announcement Bar ── */}
-      <div style={{ backgroundColor: '#0C4A6E' }} className="w-full">
+      <div style={{ backgroundColor: '#1A1814' }} className="w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-center gap-2">
           <span className="text-xs sm:text-sm font-medium text-white/90 tracking-wide">
             Keipr is now on the web — budget smarter from any device
