@@ -44,20 +44,20 @@ export default function Home() {
 
           {/* Center: Nav Links (desktop) */}
           <div className="hidden md:flex items-center gap-10">
-            <a href="#features" className="text-sm font-medium text-white/60 hover:text-white tracking-wide transition">
+            <a href="#features" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               How It Works
             </a>
-            <a href="#features" className="text-sm font-medium text-white/60 hover:text-white tracking-wide transition">
+            <a href="#features" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               Features
             </a>
-            <a href="#pricing" className="text-sm font-medium text-white/60 hover:text-white tracking-wide transition">
+            <a href="#pricing" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               Pricing
             </a>
           </div>
 
           {/* Right: Actions + Store Buttons (desktop) */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white/75 hover:text-white transition">
+            <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-white/80 transition">
               Sign In
             </Link>
 
