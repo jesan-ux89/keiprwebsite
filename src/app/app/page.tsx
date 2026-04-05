@@ -22,7 +22,9 @@ interface PaycheckData {
   amount: number;
   startDate: string;
   endDate: string;
+  payDate: string;
   frequency: string;
+  incomeName: string;
 }
 
 export default function DashboardPage() {
@@ -40,7 +42,18 @@ export default function DashboardPage() {
       setPaycheckLoading(true);
       try {
         const res = await paychecksAPI.getCurrent();
-        setCurrentPaycheck(res.data?.paycheck || null);
+        const raw = res.data?.paycheck;
+        if (raw) {
+          setCurrentPaycheck({
+            id: raw.id,
+            amount: Number(raw.amount) || 0,
+            startDate: raw.period_start || raw.pay_date,
+            endDate: raw.period_end || raw.pay_date,
+            payDate: raw.pay_date,
+            frequency: raw.income_sources?.frequency || incomeSources[0]?.frequency || 'biweekly',
+            incomeName: raw.income_sources?.name || 'Paycheck',
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch current paycheck:', error);
       } finally {
@@ -49,7 +62,7 @@ export default function DashboardPage() {
     };
 
     fetchCurrentPaycheck();
-  }, []);
+  }, [incomeSources]);
 
   // Filter bills for current paycheck
   useEffect(() => {
@@ -343,7 +356,14 @@ export default function DashboardPage() {
       ) : viewMode === 'paycheck' ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
           {/* Current Paycheck Section */}
-          {currentPaycheck && (
+          {!currentPaycheck ? (
+            <Card style={{ padding: '2rem', textAlign: 'center' }}>
+              <p style={{ color: colors.text, fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>No paycheck data yet</p>
+              <p style={{ color: colors.textMuted, fontSize: '0.95rem' }}>
+                Set up your pay schedule in Settings to see paycheck-level tracking here.
+              </p>
+            </Card>
+          ) : (
             <Card>
               <div style={{ marginBottom: '1.5rem' }}>
                 <h2
