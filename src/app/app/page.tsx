@@ -115,6 +115,23 @@ export default function DashboardPage() {
     ? bills.filter(b => b.category === savingsCategory.name).reduce((s, b) => s + (b.total || 0), 0)
     : 0;
   const savingsPct = monthlyIncome > 0 ? Math.round((savingsAmt / monthlyIncome) * 100) : 0;
+  const expensesPctOfIncome = monthlyIncome > 0 ? Math.round((totalBillsMonthly / monthlyIncome) * 100) : 0;
+
+  // ── 6-month spending trend data (MATCHES MOBILE) ──────────
+  const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const trendData = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(new Date().getFullYear(), new Date().getMonth() + i, 1);
+    const label = MONTH_LABELS[d.getMonth()];
+    const billsTotal = i === 0
+      ? totalBillsMonthly
+      : bills.filter(b => b.isRecurring).reduce((s, b) => s + (b.total || 0), 0);
+    const income = monthlyIncome;
+    return { label, bills: billsTotal, income, remaining: income - billsTotal };
+  });
+  const trendMax = Math.max(...trendData.map(d => Math.max(d.income, d.bills)), 1);
+
+  // ── Expanded category state ────────────────────────────────
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
 
   // ── Dynamic labels ─────────────────────────────────────────
   const now = new Date();
@@ -622,44 +639,154 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, margin: '0 0 1rem 0' }}>
-              Monthly Summary
-            </h2>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1.5rem',
-                marginTop: '1.5rem',
-              }}
-            >
-              <div>
-                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>Monthly Bills</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: 0 }}>{fmt(totalBillsMonthly)}</p>
-              </div>
-              <div>
-                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>Monthly Income</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: 0 }}>{fmt(monthlyIncome)}</p>
-              </div>
-              <div>
-                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>Surplus</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: monthlyRemaining >= 0 ? colors.green : colors.red, margin: 0 }}>
-                  {fmt(monthlyRemaining)}
-                </p>
-              </div>
-              {savingsAmt > 0 && (
-                <div>
-                  <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>Savings</p>
-                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: 0 }}>
-                    {fmt(savingsAmt)} ({savingsPct}%)
-                  </p>
-                </div>
-              )}
-            </div>
+        /* ── MONTHLY VIEW (MATCHES MOBILE) ──────────────────────── */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* 4-card summary grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+            <Card>
+              <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Total Income</p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.green, margin: '0 0 0.25rem 0' }}>{fmt(monthlyIncome)}</p>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>{paycheckCount} paycheck{paycheckCount !== 1 ? 's' : ''} &times; {fmt(totalPaycheck)}</p>
+            </Card>
+            <Card>
+              <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsMonthly)}</p>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>{expensesPctOfIncome}% of income</p>
+            </Card>
+            <Card>
+              <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Remaining</p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: monthlyRemaining >= 0 ? colors.green : colors.red, margin: '0 0 0.25rem 0' }}>{fmt(monthlyRemaining)}</p>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>After bills</p>
+            </Card>
+            <Card>
+              <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Savings</p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0A7B6C', margin: '0 0 0.25rem 0' }}>{fmt(savingsAmt)}</p>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>{savingsPct}% of income</p>
+            </Card>
           </div>
-        </Card>
+
+          {/* 6-month spending trend chart */}
+          <div>
+            <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
+              6-Month Spending Trend
+            </h2>
+            <Card>
+              {/* Legend */}
+              <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#38BDF8' }} />
+                  <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Income</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0C4A6E' }} />
+                  <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Bills</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
+                  <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Remaining</span>
+                </div>
+              </div>
+              {/* Bar chart */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '0.75rem', height: '160px' }}>
+                {trendData.map((d, i) => {
+                  const incomeH = Math.max(2, (d.income / trendMax) * 140);
+                  const billsH = Math.max(2, (d.bills / trendMax) * 140);
+                  const remainH = Math.max(2, (Math.max(0, d.remaining) / trendMax) * 140);
+                  return (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '140px' }}>
+                        <div style={{ width: '14px', height: `${incomeH}px`, backgroundColor: '#38BDF8', borderRadius: '3px 3px 0 0' }} />
+                        <div style={{ width: '14px', height: `${billsH}px`, backgroundColor: '#0C4A6E', borderRadius: '3px 3px 0 0' }} />
+                        <div style={{ width: '14px', height: `${remainH}px`, backgroundColor: '#0A7B6C', borderRadius: '3px 3px 0 0' }} />
+                      </div>
+                      <span style={{ fontSize: '0.7rem', fontWeight: i === 0 ? 700 : 400, color: i === 0 ? colors.electric : colors.textMuted }}>{d.label}</span>
+                      <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(d.bills)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {trendData.length > 1 && trendData[0].bills === trendData[1].bills && (
+                <p style={{ fontSize: '0.7rem', color: colors.textMuted, textAlign: 'center', margin: '1rem 0 0 0', fontStyle: 'italic' }}>
+                  Future months projected from recurring bills
+                </p>
+              )}
+            </Card>
+          </div>
+
+          {/* Category breakdown */}
+          <div>
+            <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
+              Category Breakdown
+            </h2>
+            {allocations.length === 0 ? (
+              <Card style={{ textAlign: 'center', padding: '2rem' }}>
+                <p style={{ color: colors.textMuted, margin: 0 }}>No bills assigned to categories yet.</p>
+              </Card>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[...allocations].sort((a, b) => b.amtMonthly - a.amtMonthly).map(({ name, color, amtMonthly }) => {
+                  const isExp = expandedCats['m_' + name] || false;
+                  const catBills = bills.filter(b => b.category === name).sort((x, y) => (x.dueDay || 1) - (y.dueDay || 1));
+                  const pctOfIncome = monthlyIncome > 0 ? Math.round((amtMonthly / monthlyIncome) * 100) : 0;
+                  return (
+                    <div key={name}>
+                      <Card
+                        onClick={() => setExpandedCats(prev => ({ ...prev, ['m_' + name]: !prev['m_' + name] }))}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: color }} />
+                            <div>
+                              <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>{name}</p>
+                              <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                                {catBills.length} bill{catBills.length !== 1 ? 's' : ''} · {pctOfIncome}% of income
+                              </p>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.electric }}>{fmt(amtMonthly)}</span>
+                            <span style={{ fontSize: '0.65rem', color: isExp ? colors.electric : colors.textMuted }}>{isExp ? '\u25B2' : '\u25BC'}</span>
+                          </div>
+                        </div>
+                      </Card>
+                      {isExp && (
+                        <div style={{ marginLeft: '1.5rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          {catBills.map(b => {
+                            const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                            return (
+                              <div
+                                key={b.id}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  padding: '0.75rem 1rem',
+                                  backgroundColor: colors.background,
+                                  borderRadius: '0.5rem',
+                                  borderLeft: `3px solid ${color}`,
+                                }}
+                              >
+                                <div>
+                                  <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>{b.name}</p>
+                                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                                    Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}
+                                  </p>
+                                </div>
+                                <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(b.total)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <style>{`
