@@ -1,43 +1,108 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import {
   Calendar,
   Zap,
   BarChart3,
   TrendingUp,
   Landmark,
-  Globe
+  Globe,
+  Search,
+  User,
+  Menu,
+  X,
+  ChevronRight
 } from 'lucide-react';
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="flex flex-col min-h-screen text-primary">
-      {/* Navigation */}
-      <nav style={{ borderColor: 'var(--border-dark)' }} className="border-b sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-opacity-60">
+      {/* ── BAR 1: Top Utility / Announcement Bar ── */}
+      <div style={{ backgroundColor: '#0C4A6E' }} className="w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-center gap-2">
+          <span className="text-xs sm:text-sm font-medium text-white/90 tracking-wide">
+            Keipr is now on the web — budget smarter from any device
+          </span>
+          <Link href="/auth/signup" className="text-xs sm:text-sm font-semibold text-white underline underline-offset-2 hover:text-white/80 transition flex items-center gap-0.5">
+            Get Started <ChevronRight size={14} />
+          </Link>
+        </div>
+      </div>
+
+      {/* ── BAR 2: Main Navigation ── */}
+      <nav className="sticky top-0 z-50 bg-[#1A1814] border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-electric flex items-center justify-center">
-              <span className="brand-midnight font-bold text-sm">K</span>
-            </div>
-            <span className="text-xl font-bold">Keipr</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" style={{ color: 'var(--text-muted-dark)' }} className="hover:text-primary transition">
+          {/* Left: Logo */}
+          <Link href="/" className="flex items-baseline gap-[2px] shrink-0">
+            <span style={{ fontFamily: 'Georgia, serif' }} className="text-[26px] font-bold text-[#38BDF8]">k</span>
+            <span className="text-[21px] font-light text-[#E8E5DC] tracking-[2px]">eipr</span>
+          </Link>
+
+          {/* Center: Nav Links (desktop) */}
+          <div className="hidden md:flex items-center gap-10">
+            <a href="#features" className="text-sm font-medium text-[#E8E5DC]/60 hover:text-[#E8E5DC] tracking-wide transition">
               Features
             </a>
-            <a href="#pricing" style={{ color: 'var(--text-muted-dark)' }} className="hover:text-primary transition">
+            <a href="#pricing" className="text-sm font-medium text-[#E8E5DC]/60 hover:text-[#E8E5DC] tracking-wide transition">
               Pricing
             </a>
-            <Link
-              href="/auth/signin"
-              className="px-4 py-2 rounded-lg text-primary hover:opacity-75 transition"
-              style={{ backgroundColor: 'var(--border-dark)' }}
-            >
+            <a href="#" className="text-sm font-medium text-[#E8E5DC]/60 hover:text-[#E8E5DC] tracking-wide transition">
+              How It Works
+            </a>
+          </div>
+
+          {/* Right: Actions (desktop) */}
+          <div className="hidden md:flex items-center gap-3">
+            <button className="p-2 rounded-full hover:bg-white/[0.05] transition" aria-label="Search">
+              <Search size={18} className="text-[#E8E5DC]/60" />
+            </button>
+            <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#E8E5DC]/80 hover:text-[#E8E5DC] transition">
+              <User size={16} />
               Sign In
             </Link>
+            <Link href="/auth/signup" className="px-5 py-2 rounded-full bg-[#38BDF8] text-[#0C4A6E] text-sm font-semibold hover:opacity-90 transition">
+              Join Free
+            </Link>
           </div>
+
+          {/* Mobile: Hamburger */}
+          <button
+            className="md:hidden p-2 text-[#E8E5DC]/60"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-white/[0.06] bg-[#1A1814] px-4 pb-4">
+            <div className="flex flex-col gap-1 pt-2">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#E8E5DC]/70 hover:text-[#E8E5DC] hover:bg-white/[0.05] rounded-lg transition">
+                Features
+              </a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#E8E5DC]/70 hover:text-[#E8E5DC] hover:bg-white/[0.05] rounded-lg transition">
+                Pricing
+              </a>
+              <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-[#E8E5DC]/70 hover:text-[#E8E5DC] hover:bg-white/[0.05] rounded-lg transition">
+                How It Works
+              </a>
+              <div className="border-t border-white/[0.06] mt-2 pt-3 flex flex-col gap-2">
+                <Link href="/auth/login" className="px-4 py-3 text-sm text-[#E8E5DC]/80 hover:text-[#E8E5DC] rounded-lg transition text-center">
+                  Sign In
+                </Link>
+                <Link href="/auth/signup" className="px-4 py-3 text-sm font-semibold bg-[#38BDF8] text-[#0C4A6E] rounded-full transition text-center hover:opacity-90">
+                  Join Free
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
