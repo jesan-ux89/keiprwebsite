@@ -78,7 +78,8 @@ export default function SuggestionsPage() {
     }
   };
 
-  const confidenceColor = (score: number) => {
+  const confidenceColor = (score: number | undefined | null) => {
+    if (score == null) return colors.textMuted;
     if (score >= 0.8) return colors.green;
     if (score >= 0.6) return colors.amber;
     return colors.red;
@@ -107,8 +108,7 @@ export default function SuggestionsPage() {
       {error && (
         <Card
           style={{
-            backgroundColor: colors.red,
-            opacity: 0.1,
+            backgroundColor: `${colors.red}15`,
             marginBottom: '2rem',
             display: 'flex',
             alignItems: 'center',
@@ -157,7 +157,7 @@ export default function SuggestionsPage() {
                       Typical Amount
                     </p>
                     <p style={{ color: colors.text, fontWeight: 600, margin: 0 }}>
-                      ${suggestion.amount.toFixed(2)}
+                      ${(suggestion.amount ?? 0).toFixed(2)}
                     </p>
                   </div>
                   <div>
@@ -173,7 +173,7 @@ export default function SuggestionsPage() {
                       Confidence
                     </p>
                     <p style={{ color: confidenceColor(suggestion.confidence_score), fontWeight: 600, margin: 0 }}>
-                      {Math.round(suggestion.confidence_score * 100)}%
+                      {suggestion.confidence_score != null ? `${Math.round(suggestion.confidence_score * 100)}%` : 'N/A'}
                     </p>
                   </div>
                 </div>

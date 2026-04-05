@@ -102,8 +102,7 @@ export default function HistoryPage() {
       {error && (
         <Card
           style={{
-            backgroundColor: colors.red,
-            opacity: 0.1,
+            backgroundColor: `${colors.red}15`,
             marginBottom: '2rem',
             display: 'flex',
             alignItems: 'center',
@@ -192,7 +191,7 @@ export default function HistoryPage() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: '1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                          ${match.transaction_amount.toFixed(2)}
+                          ${(match.transaction_amount ?? 0).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -218,7 +217,7 @@ export default function HistoryPage() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: '1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                          ${match.bill_amount.toFixed(2)}
+                          ${(match.bill_amount ?? 0).toFixed(2)}
                         </p>
                       </div>
                     </div>

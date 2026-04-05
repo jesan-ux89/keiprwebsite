@@ -72,7 +72,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, refreshIncomeSources } = useApp();
+  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, refreshIncomeSources, fmt } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -479,7 +479,7 @@ export default function SettingsPage() {
                     </div>
                     <div style={{ textAlign: 'right', marginRight: '1rem' }}>
                       <p style={{ color: colors.text, fontWeight: 600, margin: 0 }}>
-                        ${source.typicalAmount.toFixed(2)}
+                        {fmt(source.typicalAmount ?? 0)}
                       </p>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>

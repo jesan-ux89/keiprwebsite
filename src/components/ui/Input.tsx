@@ -40,7 +40,6 @@ export function Input({ label, error, ...props }: InputProps) {
           boxSizing: 'border-box',
           ...props.style,
         }}
-        placeholder={props.placeholder}
       />
       {error && (
         <p

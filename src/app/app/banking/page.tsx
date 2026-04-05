@@ -144,7 +144,7 @@ export default function BankingPage() {
                   Last Sync
                 </p>
                 <p style={{ color: colors.text, fontSize: '1rem', fontWeight: 500, margin: 0 }}>
-                  {status.lastSync ? new Date(status.lastSync).toLocaleDateString() : 'Never'}
+                  {status.lastSync && !isNaN(new Date(status.lastSync).getTime()) ? new Date(status.lastSync).toLocaleDateString() : 'Never'}
                 </p>
               </div>
             </div>
@@ -184,8 +184,7 @@ export default function BankingPage() {
       {error && (
         <Card
           style={{
-            backgroundColor: colors.red,
-            opacity: 0.1,
+            backgroundColor: `${colors.red}15`,
             marginBottom: '2rem',
             display: 'flex',
             alignItems: 'center',

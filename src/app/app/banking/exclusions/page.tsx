@@ -100,8 +100,7 @@ export default function ExclusionsPage() {
       {error && (
         <Card
           style={{
-            backgroundColor: colors.red,
-            opacity: 0.1,
+            backgroundColor: `${colors.red}15`,
             marginBottom: '2rem',
             display: 'flex',
             alignItems: 'center',

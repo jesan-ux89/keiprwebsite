@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keipr Top Bar Color Options (Black nav stays)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #666; }
+
+  .option { margin-bottom: 10px; }
+  .option-label {
+    text-align: center; padding: 12px;
+    font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: #38BDF8; background: #222;
+  }
+
+  .announce { height: 36px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; }
+  .announce a { font-weight: 600; text-decoration: underline; }
+
+  /* Black nav (same for all) */
+  .nav { height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: #1A1814; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .nav-logo { display: flex; align-items: baseline; gap: 1px; }
+  .nav-logo .k { font-family: Georgia, serif; font-size: 26px; font-weight: 700; color: #38BDF8; }
+  .nav-logo .rest { font-size: 21px; font-weight: 300; letter-spacing: 2px; color: #E8E5DC; }
+  .nav-center { display: flex; gap: 36px; }
+  .nav-center a { font-size: 14px; font-weight: 500; text-decoration: none; color: rgba(232,229,220,0.6); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .nav-right .signin { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 16px; color: rgba(232,229,220,0.8); }
+  .store-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 7px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); }
+  .store-label { display: flex; flex-direction: column; }
+  .store-label .top { font-size: 8px; color: rgba(232,229,220,0.6); line-height: 1; }
+  .store-label .bottom { font-size: 12px; font-weight: 600; color: #E8E5DC; line-height: 1.2; }
+
+  .hero { padding: 60px 32px; text-align: center; background: #EDF6FC; }
+  .hero h1 { font-size: 36px; font-weight: 700; color: #0C1E2C; margin-bottom: 12px; line-height: 1.15; }
+  .hero h1 span { color: #0C4A6E; }
+  .hero p { font-size: 15px; color: rgba(12,30,44,0.6); max-width: 500px; margin: 0 auto; line-height: 1.5; }
+
+  /* ── Option 1: White ── */
+  .opt1 .announce { background: #FFFFFF; color: rgba(26,24,20,0.7); border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .opt1 .announce a { color: #0C4A6E; }
+
+  /* ── Option 2: Ice Blue (matching page bg) ── */
+  .opt2 .announce { background: #EDF6FC; color: rgba(12,30,44,0.7); border-bottom: 1px solid rgba(12,74,110,0.1); }
+  .opt2 .announce a { color: #0C4A6E; }
+
+  /* ── Option 3: Midnight Blue ── */
+  .opt3 .announce { background: #0C4A6E; color: rgba(255,255,255,0.9); }
+  .opt3 .announce a { color: #fff; }
+
+  /* ── Option 4: Electric Blue ── */
+  .opt4 .announce { background: #38BDF8; color: #0C1E2C; }
+  .opt4 .announce a { color: #0C4A6E; font-weight: 700; }
+
+  /* ── Option 5: Parchment / Cream ── */
+  .opt5 .announce { background: #E8E5DC; color: rgba(26,24,20,0.7); border-bottom: 1px solid rgba(26,24,20,0.08); }
+  .opt5 .announce a { color: #0C4A6E; }
+
+  /* ── Option 6: Light Mint ── */
+  .opt6 .announce { background: #D1FAE5; color: rgba(6,78,59,0.8); border-bottom: 1px solid rgba(6,78,59,0.1); }
+  .opt6 .announce a { color: #065F46; }
+</style>
+</head>
+<body>
+
+<!-- Option 1: White -->
+<div class="option opt1">
+  <div class="option-label">Option 1 — White top bar</div>
+  <div class="announce">Keipr is now on the web — budget smarter from any device <a href="#">Get Started →</a></div>
+  <div class="nav">
+    <div class="nav-logo"><span class="k">k</span><span class="rest">eipr</span></div>
+    <div class="nav-center"><a>How It Works</a><a>Features</a><a>Pricing</a></div>
+    <div class="nav-right">
+      <a class="signin">Sign In</a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><div class="store-label"><span class="top">Download on the</span><span class="bottom">App Store</span></div></a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg><div class="store-label"><span class="top">Get it on</span><span class="bottom">Google Play</span></div></a>
+    </div>
+  </div>
+  <div class="hero"><h1>Budget Around Your Paychecks, <span>Not the Calendar</span></h1><p>Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles.</p></div>
+</div>
+
+<!-- Option 2: Ice Blue -->
+<div class="option opt2">
+  <div class="option-label">Option 2 — Ice Blue top bar (matches page background)</div>
+  <div class="announce">Keipr is now on the web — budget smarter from any device <a href="#">Get Started →</a></div>
+  <div class="nav">
+    <div class="nav-logo"><span class="k">k</span><span class="rest">eipr</span></div>
+    <div class="nav-center"><a>How It Works</a><a>Features</a><a>Pricing</a></div>
+    <div class="nav-right">
+      <a class="signin">Sign In</a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><div class="store-label"><span class="top">Download on the</span><span class="bottom">App Store</span></div></a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg><div class="store-label"><span class="top">Get it on</span><span class="bottom">Google Play</span></div></a>
+    </div>
+  </div>
+  <div class="hero"><h1>Budget Around Your Paychecks, <span>Not the Calendar</span></h1><p>Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles.</p></div>
+</div>
+
+<!-- Option 3: Midnight Blue -->
+<div class="option opt3">
+  <div class="option-label">Option 3 — Midnight Blue top bar (#0C4A6E)</div>
+  <div class="announce">Keipr is now on the web — budget smarter from any device <a href="#">Get Started →</a></div>
+  <div class="nav">
+    <div class="nav-logo"><span class="k">k</span><span class="rest">eipr</span></div>
+    <div class="nav-center"><a>How It Works</a><a>Features</a><a>Pricing</a></div>
+    <div class="nav-right">
+      <a class="signin">Sign In</a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><div class="store-label"><span class="top">Download on the</span><span class="bottom">App Store</span></div></a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg><div class="store-label"><span class="top">Get it on</span><span class="bottom">Google Play</span></div></a>
+    </div>
+  </div>
+  <div class="hero"><h1>Budget Around Your Paychecks, <span>Not the Calendar</span></h1><p>Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles.</p></div>
+</div>
+
+<!-- Option 4: Electric Blue -->
+<div class="option opt4">
+  <div class="option-label">Option 4 — Electric Blue top bar (#38BDF8) — bold & eye-catching</div>
+  <div class="announce">Keipr is now on the web — budget smarter from any device <a href="#">Get Started →</a></div>
+  <div class="nav">
+    <div class="nav-logo"><span class="k">k</span><span class="rest">eipr</span></div>
+    <div class="nav-center"><a>How It Works</a><a>Features</a><a>Pricing</a></div>
+    <div class="nav-right">
+      <a class="signin">Sign In</a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><div class="store-label"><span class="top">Download on the</span><span class="bottom">App Store</span></div></a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg><div class="store-label"><span class="top">Get it on</span><span class="bottom">Google Play</span></div></a>
+    </div>
+  </div>
+  <div class="hero"><h1>Budget Around Your Paychecks, <span>Not the Calendar</span></h1><p>Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles.</p></div>
+</div>
+
+<!-- Option 5: Parchment -->
+<div class="option opt5">
+  <div class="option-label">Option 5 — Parchment / Cream (#E8E5DC) — warm & soft</div>
+  <div class="announce">Keipr is now on the web — budget smarter from any device <a href="#">Get Started →</a></div>
+  <div class="nav">
+    <div class="nav-logo"><span class="k">k</span><span class="rest">eipr</span></div>
+    <div class="nav-center"><a>How It Works</a><a>Features</a><a>Pricing</a></div>
+    <div class="nav-right">
+      <a class="signin">Sign In</a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><div class="store-label"><span class="top">Download on the</span><span class="bottom">App Store</span></div></a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg><div class="store-label"><span class="top">Get it on</span><span class="bottom">Google Play</span></div></a>
+    </div>
+  </div>
+  <div class="hero"><h1>Budget Around Your Paychecks, <span>Not the Calendar</span></h1><p>Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles.</p></div>
+</div>
+
+<!-- Option 6: Light Mint -->
+<div class="option opt6">
+  <div class="option-label">Option 6 — Light Mint (#D1FAE5) — fresh & unique</div>
+  <div class="announce">Keipr is now on the web — budget smarter from any device <a href="#">Get Started →</a></div>
+  <div class="nav">
+    <div class="nav-logo"><span class="k">k</span><span class="rest">eipr</span></div>
+    <div class="nav-center"><a>How It Works</a><a>Features</a><a>Pricing</a></div>
+    <div class="nav-right">
+      <a class="signin">Sign In</a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><div class="store-label"><span class="top">Download on the</span><span class="bottom">App Store</span></div></a>
+      <a class="store-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92z" fill="#4285F4"/><path d="M17.556 8.236L5.178.734C4.756.49 4.324.394 3.93.447l9.862 9.862 3.764-2.073z" fill="#EA4335"/><path d="M17.556 15.764l-3.764-2.073L3.93 23.553c.394.053.826-.043 1.248-.287l12.378-7.502z" fill="#34A853"/><path d="M20.778 12c0-.678-.378-1.28-.945-1.588l-2.277-1.376-4.014 2.214L14.792 12l-1.25.75 4.014 2.214 2.277-1.376c.567-.308.945-.91.945-1.588z" fill="#FBBC04"/></svg><div class="store-label"><span class="top">Get it on</span><span class="bottom">Google Play</span></div></a>
+    </div>
+  </div>
+  <div class="hero"><h1>Budget Around Your Paychecks, <span>Not the Calendar</span></h1><p>Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles.</p></div>
+</div>
+
+</body>
+</html>

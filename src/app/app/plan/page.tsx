@@ -436,7 +436,11 @@ export default function PlanPage() {
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button
                               style={{ ...styles.deleteButton, backgroundColor: colors.green }}
-                              onClick={() => handleUpdatePlanBill(planBill.id, parseFloat(editAmount))}
+                              onClick={() => {
+                                const val = parseFloat(editAmount);
+                                if (!isNaN(val) && val >= 0) handleUpdatePlanBill(planBill.id, val);
+                                else alert('Please enter a valid amount');
+                              }}
                             >
                               Save
                             </button>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keipr — Midnight Blue Variations (Top Bar)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 30px; }
+  h1 { text-align: center; margin-bottom: 10px; color: #1a1814; font-size: 28px; }
+  p.subtitle { text-align: center; margin-bottom: 40px; color: #666; font-size: 16px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; }
+  .option { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.12); background: white; }
+  .option-label { padding: 12px 20px; background: white; font-weight: 700; font-size: 16px; color: #1a1814; display: flex; justify-content: space-between; align-items: center; }
+  .option-label span.hex { font-weight: 400; font-size: 13px; color: #888; font-family: monospace; }
+  .swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); display: inline-block; margin-right: 8px; vertical-align: middle; }
+
+  /* Top bar */
+  .top-bar { padding: 8px 30px; display: flex; justify-content: center; align-items: center; font-size: 13px; letter-spacing: 0.3px; }
+  .top-bar a { font-weight: 600; text-decoration: underline; margin-left: 8px; }
+
+  /* Nav bar — always black */
+  .nav-bar { background: #1A1814; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 14px; font-weight: 500; }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .nav-right .signin { color: rgba(255,255,255,0.8); font-size: 14px; text-decoration: none; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 5px 10px; font-size: 11px; color: white; text-decoration: none; }
+
+  /* Hero peek */
+  .hero-peek { background: #EDF6FC; padding: 40px 30px; text-align: center; }
+  .hero-peek h2 { font-size: 26px; color: #0C1E2C; font-weight: 800; }
+  .hero-peek p { font-size: 14px; color: rgba(12,30,44,0.6); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>Midnight Blue Variations — Top Bar</h1>
+<p class="subtitle">All options paired with the black (#1A1814) main nav. Pick your favorite shade.</p>
+
+<div class="grid">
+
+  <!-- Option 1: Original Midnight Blue -->
+  <div class="option">
+    <div class="option-label">
+      <div><span class="swatch" style="background:#0C4A6E;"></span> Option 1 — Original Midnight</div>
+      <span class="hex">#0C4A6E</span>
+    </div>
+    <div class="top-bar" style="background:#0C4A6E; color: rgba(255,255,255,0.9);">
+      Keipr is now on the web — budget smarter from any device
+      <a href="#" style="color: #38BDF8;">Get Started →</a>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-logo">Keipr</div>
+      <div class="nav-links"><a href="#">How It Works</a><a href="#">Features</a><a href="#">Pricing</a></div>
+      <div class="nav-right">
+        <a href="#" class="signin">Sign In</a>
+        <a href="#" class="badge">▶ Google Play</a>
+        <a href="#" class="badge"> App Store</a>
+      </div>
+    </div>
+    <div class="hero-peek"><h2>Budget Around Your Paychecks</h2><p>Not the calendar. Not guesswork. Your actual pay cycle.</p></div>
+  </div>
+
+  <!-- Option 2: Deeper Navy -->
+  <div class="option">
+    <div class="option-label">
+      <div><span class="swatch" style="background:#083344;"></span> Option 2 — Deep Navy</div>
+      <span class="hex">#083344</span>
+    </div>
+    <div class="top-bar" style="background:#083344; color: rgba(255,255,255,0.9);">
+      Keipr is now on the web — budget smarter from any device
+      <a href="#" style="color: #38BDF8;">Get Started →</a>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-logo">Keipr</div>
+      <div class="nav-links"><a href="#">How It Works</a><a href="#">Features</a><a href="#">Pricing</a></div>
+      <div class="nav-right">
+        <a href="#" class="signin">Sign In</a>
+        <a href="#" class="badge">▶ Google Play</a>
+        <a href="#" class="badge"> App Store</a>
+      </div>
+    </div>
+    <div class="hero-peek"><h2>Budget Around Your Paychecks</h2><p>Not the calendar. Not guesswork. Your actual pay cycle.</p></div>
+  </div>
+
+  <!-- Option 3: Lighter Midnight -->
+  <div class="option">
+    <div class="option-label">
+      <div><span class="swatch" style="background:#0E5A85;"></span> Option 3 — Lighter Midnight</div>
+      <span class="hex">#0E5A85</span>
+    </div>
+    <div class="top-bar" style="background:#0E5A85; color: rgba(255,255,255,0.9);">
+      Keipr is now on the web — budget smarter from any device
+      <a href="#" style="color: #B8E6FF;">Get Started →</a>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-logo">Keipr</div>
+      <div class="nav-links"><a href="#">How It Works</a><a href="#">Features</a><a href="#">Pricing</a></div>
+      <div class="nav-right">
+        <a href="#" class="signin">Sign In</a>
+        <a href="#" class="badge">▶ Google Play</a>
+        <a href="#" class="badge"> App Store</a>
+      </div>
+    </div>
+    <div class="hero-peek"><h2>Budget Around Your Paychecks</h2><p>Not the calendar. Not guesswork. Your actual pay cycle.</p></div>
+  </div>
+
+  <!-- Option 4: Muted Steel Blue -->
+  <div class="option">
+    <div class="option-label">
+      <div><span class="swatch" style="background:#1E3A5F;"></span> Option 4 — Steel Blue</div>
+      <span class="hex">#1E3A5F</span>
+    </div>
+    <div class="top-bar" style="background:#1E3A5F; color: rgba(255,255,255,0.85);">
+      Keipr is now on the web — budget smarter from any device
+      <a href="#" style="color: #38BDF8;">Get Started →</a>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-logo">Keipr</div>
+      <div class="nav-links"><a href="#">How It Works</a><a href="#">Features</a><a href="#">Pricing</a></div>
+      <div class="nav-right">
+        <a href="#" class="signin">Sign In</a>
+        <a href="#" class="badge">▶ Google Play</a>
+        <a href="#" class="badge"> App Store</a>
+      </div>
+    </div>
+    <div class="hero-peek"><h2>Budget Around Your Paychecks</h2><p>Not the calendar. Not guesswork. Your actual pay cycle.</p></div>
+  </div>
+
+  <!-- Option 5: Rich Indigo Midnight -->
+  <div class="option">
+    <div class="option-label">
+      <div><span class="swatch" style="background:#0F3460;"></span> Option 5 — Indigo Midnight</div>
+      <span class="hex">#0F3460</span>
+    </div>
+    <div class="top-bar" style="background:#0F3460; color: rgba(255,255,255,0.9);">
+      Keipr is now on the web — budget smarter from any device
+      <a href="#" style="color: #38BDF8;">Get Started →</a>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-logo">Keipr</div>
+      <div class="nav-links"><a href="#">How It Works</a><a href="#">Features</a><a href="#">Pricing</a></div>
+      <div class="nav-right">
+        <a href="#" class="signin">Sign In</a>
+        <a href="#" class="badge">▶ Google Play</a>
+        <a href="#" class="badge"> App Store</a>
+      </div>
+    </div>
+    <div class="hero-peek"><h2>Budget Around Your Paychecks</h2><p>Not the calendar. Not guesswork. Your actual pay cycle.</p></div>
+  </div>
+
+  <!-- Option 6: Soft Ocean -->
+  <div class="option">
+    <div class="option-label">
+      <div><span class="swatch" style="background:#155E8A;"></span> Option 6 — Soft Ocean</div>
+      <span class="hex">#155E8A</span>
+    </div>
+    <div class="top-bar" style="background:#155E8A; color: rgba(255,255,255,0.9);">
+      Keipr is now on the web — budget smarter from any device
+      <a href="#" style="color: #E0F4FC;">Get Started →</a>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-logo">Keipr</div>
+      <div class="nav-links"><a href="#">How It Works</a><a href="#">Features</a><a href="#">Pricing</a></div>
+      <div class="nav-right">
+        <a href="#" class="signin">Sign In</a>
+        <a href="#" class="badge">▶ Google Play</a>
+        <a href="#" class="badge"> App Store</a>
+      </div>
+    </div>
+    <div class="hero-peek"><h2>Budget Around Your Paychecks</h2><p>Not the calendar. Not guesswork. Your actual pay cycle.</p></div>
+  </div>
+
+</div>
+
+<p style="text-align:center; margin-top: 30px; color: #999; font-size: 13px;">All options use black (#1A1814) main nav + Ice Blue (#EDF6FC) page background</p>
+
+</body>
+</html>

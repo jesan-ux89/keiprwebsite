@@ -70,7 +70,8 @@ export default function ConfirmationsPage() {
     }
   };
 
-  const confidenceColor = (score: number) => {
+  const confidenceColor = (score: number | undefined | null) => {
+    if (score == null) return colors.textMuted;
     if (score >= 0.8) return colors.green;
     if (score >= 0.6) return colors.amber;
     return colors.red;
@@ -99,8 +100,7 @@ export default function ConfirmationsPage() {
       {error && (
         <Card
           style={{
-            backgroundColor: colors.red,
-            opacity: 0.1,
+            backgroundColor: `${colors.red}15`,
             marginBottom: '2rem',
             display: 'flex',
             alignItems: 'center',
@@ -153,7 +153,7 @@ export default function ConfirmationsPage() {
                     </p>
                   </div>
                   <p style={{ fontSize: '1.125rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                    ${confirmation.transaction_amount.toFixed(2)}
+                    ${(confirmation.transaction_amount ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function ConfirmationsPage() {
                     {confirmation.bill_name}
                   </p>
                   <p style={{ fontSize: '1.125rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                    ${confirmation.bill_amount.toFixed(2)}
+                    ${(confirmation.bill_amount ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function ConfirmationsPage() {
                     }}
                   />
                   <span style={{ color: confidenceColor(confirmation.confidence_score), fontWeight: 600, fontSize: '0.875rem' }}>
-                    {Math.round(confirmation.confidence_score * 100)}%
+                    {confirmation.confidence_score != null ? `${Math.round(confirmation.confidence_score * 100)}%` : 'N/A'}
                   </span>
                 </div>
               </div>

@@ -52,9 +52,11 @@ export default function DashboardPage() {
   const paydayDate = currentPeriod?.start || new Date();
   const monthShort = paydayDate.toLocaleString('default', { month: 'short' });
   const dayOfMonth = paydayDate.getDate();
+  const currentPaycheckNum = currentPeriod?.paycheckNumber ?? 1;
+  const nextPaycheckNum = nextPeriod?.paycheckNumber ?? 2;
 
   // ── billAmountForPaycheck (MATCHES MOBILE) ─────────────────
-  function billAmountForPaycheck(b: Bill, paycheck: number = currentPeriod.paycheckNumber): number {
+  function billAmountForPaycheck(b: Bill, paycheck: number = currentPeriod?.paycheckNumber ?? 1): number {
     if (b.isSplit) {
       if (paycheck === 1) return b.p1 || 0;
       if (paycheck === 2) return b.p2 || 0;
@@ -80,11 +82,11 @@ export default function DashboardPage() {
   const totalSpentMonthly = bills.reduce((s, b) => s + (b.funded || 0), 0);
 
   // ── This paycheck calculations (MATCHES MOBILE) ────────────
-  const totalBillsThisCheck = thisPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, currentPeriod.paycheckNumber), 0);
+  const totalBillsThisCheck = thisPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
   const remaining = (totalPaycheck || 0) - totalBillsThisCheck;
   const spentPct = totalPaycheck > 0 ? Math.round((totalBillsThisCheck / totalPaycheck) * 100) : 0;
 
-  const nextBillsTotal = nextPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPeriod.paycheckNumber), 0);
+  const nextBillsTotal = nextPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
   const nextRemaining = (totalPaycheck || 0) - nextBillsTotal;
 
   // ── Monthly income (MATCHES MOBILE) ─────────────────────────
@@ -165,7 +167,7 @@ export default function DashboardPage() {
               fontSize: '0.875rem',
             }}
           >
-            {monthName} cycle · Paycheck {currentPeriod.paycheckNumber} of {paycheckCount}
+            {monthName} cycle · Paycheck {currentPaycheckNum} of {paycheckCount}
           </p>
         </div>
         <Button
@@ -325,7 +327,7 @@ export default function DashboardPage() {
           {/* This paycheck bills */}
           <Card>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: '0 0 1rem 0' }}>
-              This Paycheck — {currentPeriod.label}
+              This Paycheck — {currentPeriod?.label ?? ''}
             </h2>
 
             {thisPaycheckBills.length === 0 ? (
@@ -335,10 +337,10 @@ export default function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {thisPaycheckBills.map((bill) => {
-                  const amt = billAmountForPaycheck(bill, currentPeriod.paycheckNumber);
+                  const amt = billAmountForPaycheck(bill, currentPaycheckNum);
                   const isPaid = bill.isSplit
                     ? (() => {
-                        const pNum = currentPeriod.paycheckNumber;
+                        const pNum = currentPaycheckNum;
                         if (pNum === 1) return bill.p1done;
                         if (pNum === 2) return bill.p2done;
                         if (pNum === 3) return bill.p3done;
@@ -366,7 +368,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
                           {bill.category}
-                          {bill.isSplit && ` · P${currentPeriod.paycheckNumber}`}
+                          {bill.isSplit && ` · P${currentPaycheckNum}`}
                           {bill.isAutoPay && ' · AutoPay'}
                         </p>
                       </div>
@@ -382,7 +384,7 @@ export default function DashboardPage() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => toggleSplitPaid(bill.id, currentPeriod.paycheckNumber)}
+                          onClick={() => toggleSplitPaid(bill.id, currentPaycheckNum)}
                           style={{ whiteSpace: 'nowrap' }}
                         >
                           Mark Paid
@@ -399,7 +401,7 @@ export default function DashboardPage() {
           {isTwiceMonthly && nextPaycheckBills.length > 0 && (
             <Card>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.5rem 0' }}>
-                Next Check — {nextPeriod.label}
+                Next Check — {nextPeriod?.label ?? ''}
               </h2>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>
@@ -411,7 +413,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {nextPaycheckBills.map((bill) => {
-                  const amt = billAmountForPaycheck(bill, nextPeriod.paycheckNumber);
+                  const amt = billAmountForPaycheck(bill, nextPaycheckNum);
                   return (
                     <div
                       key={bill.id}
@@ -424,7 +426,7 @@ export default function DashboardPage() {
                       }}
                     >
                       <span style={{ color: colors.text, fontWeight: 500 }}>
-                        {bill.name}{bill.isSplit ? ` · P${nextPeriod.paycheckNumber}` : ''}
+                        {bill.name}{bill.isSplit ? ` · P${nextPaycheckNum}` : ''}
                       </span>
                       <span style={{ color: colors.text, fontWeight: 600 }}>{fmt(amt)}</span>
                     </div>
@@ -436,6 +438,11 @@ export default function DashboardPage() {
         </div>
       ) : viewMode === 'cycles' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {allocations.length === 0 && (
+            <Card style={{ textAlign: 'center', padding: '2rem' }}>
+              <p style={{ color: colors.textMuted, margin: 0 }}>No categories with bills yet. Add bills to see cycle breakdowns.</p>
+            </Card>
+          )}
           {allocations.map(({ name, color, amt, amtMonthly, spent }) => (
             <Card key={name}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
