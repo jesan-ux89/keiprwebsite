@@ -1208,20 +1208,20 @@ export default function DashboardPage() {
                   </Card>
                 </div>
 
-                {/* CHART 2: 6-Month Trend (existing) */}
+                {/* CHART 2: 6-Month Trend */}
                 <div style={{ minWidth: '100%', boxSizing: 'border-box' }}>
                   <Card>
                     <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#38BDF8' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#2ECC71' }} />
                         <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Income</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0C4A6E' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#E74C3C' }} />
                         <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Bills</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#3498DB' }} />
                         <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Remaining</span>
                       </div>
                     </div>
@@ -1233,9 +1233,9 @@ export default function DashboardPage() {
                         return (
                           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
                             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '140px' }}>
-                              <div style={{ width: '14px', height: `${incomeH}px`, backgroundColor: '#38BDF8', borderRadius: '3px 3px 0 0' }} />
-                              <div style={{ width: '14px', height: `${billsH}px`, backgroundColor: '#0C4A6E', borderRadius: '3px 3px 0 0' }} />
-                              <div style={{ width: '14px', height: `${remainH}px`, backgroundColor: '#0A7B6C', borderRadius: '3px 3px 0 0' }} />
+                              <div style={{ width: '14px', height: `${incomeH}px`, backgroundColor: '#2ECC71', borderRadius: '3px 3px 0 0' }} />
+                              <div style={{ width: '14px', height: `${billsH}px`, backgroundColor: '#E74C3C', borderRadius: '3px 3px 0 0' }} />
+                              <div style={{ width: '14px', height: `${remainH}px`, backgroundColor: '#3498DB', borderRadius: '3px 3px 0 0' }} />
                             </div>
                             <span style={{ fontSize: '0.7rem', fontWeight: i === 0 ? 700 : 400, color: i === 0 ? colors.electric : colors.textMuted }}>{d.label}</span>
                             <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(d.bills)}</span>
@@ -1256,11 +1256,11 @@ export default function DashboardPage() {
                   <Card>
                     <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#38BDF8' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#2ECC71' }} />
                         <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Income</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0C4A6E' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#E74C3C' }} />
                         <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Bills</span>
                       </div>
                     </div>
@@ -1271,8 +1271,8 @@ export default function DashboardPage() {
                         return (
                           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
                             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', height: '140px' }}>
-                              <div style={{ width: '18px', height: `${incomeH}px`, backgroundColor: '#38BDF8', borderRadius: '4px 4px 0 0' }} />
-                              <div style={{ width: '18px', height: `${billsH}px`, backgroundColor: '#0C4A6E', borderRadius: '4px 4px 0 0' }} />
+                              <div style={{ width: '18px', height: `${incomeH}px`, backgroundColor: '#2ECC71', borderRadius: '4px 4px 0 0' }} />
+                              <div style={{ width: '18px', height: `${billsH}px`, backgroundColor: '#E74C3C', borderRadius: '4px 4px 0 0' }} />
                             </div>
                             <span style={{ fontSize: '0.7rem', fontWeight: i === 3 ? 700 : 400, color: i === 3 ? colors.electric : colors.textMuted }}>{d.label}</span>
                             <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(d.bills)}</span>
@@ -1290,14 +1290,12 @@ export default function DashboardPage() {
                       {/* SVG Progress Ring */}
                       <div style={{ position: 'relative', width: 140, height: 140 }}>
                         <svg viewBox="0 0 140 140" width="140" height="140">
-                          {/* Background ring */}
-                          <circle cx="70" cy="70" r="55" fill="none" stroke={isDark ? '#333' : '#E8E5DC'} strokeWidth="16" />
-                          {/* Funded arc */}
+                          <circle cx="70" cy="70" r="55" fill="none" stroke={isDark ? '#444' : '#E0DDD5'} strokeWidth="16" />
                           {fundedPct > 0 && (
                             <circle
                               cx="70" cy="70" r="55"
                               fill="none"
-                              stroke="#0A7B6C"
+                              stroke="#2ECC71"
                               strokeWidth="16"
                               strokeDasharray={`${(fundedPct / 100) * 345.6} 345.6`}
                               strokeLinecap="round"
@@ -1307,7 +1305,7 @@ export default function DashboardPage() {
                           <circle cx="70" cy="70" r="35" fill={isDark ? '#2A2720' : '#F5F3EF'} />
                         </svg>
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0A7B6C' }}>{fundedPct}%</div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#2ECC71' }}>{fundedPct}%</div>
                           <div style={{ fontSize: '0.65rem', color: colors.textMuted }}>Funded</div>
                         </div>
                       </div>
@@ -1315,14 +1313,14 @@ export default function DashboardPage() {
                       <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem', justifyContent: 'center' }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#2ECC71' }} />
                             <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>Funded</span>
                           </div>
-                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0A7B6C' }}>{fmt(fundedAmt)}</span>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#2ECC71' }}>{fmt(fundedAmt)}</span>
                         </div>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem', justifyContent: 'center' }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isDark ? '#333' : '#E8E5DC' }} />
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isDark ? '#444' : '#E0DDD5' }} />
                             <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>Remaining</span>
                           </div>
                           <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(unfundedAmt)}</span>
