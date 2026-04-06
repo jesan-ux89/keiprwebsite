@@ -1423,7 +1423,7 @@ export default function DashboardPage() {
 
           {/* One-Time Funds — prompt to create or show existing */}
           {oneTimeFunds.length === 0 && (
-            <a href="/app/settings" style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
+            <a href="/app/settings?section=income" style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
               <div style={{
                 padding: '1rem 1.25rem',
                 backgroundColor: colors.cardBg || colors.inputBg,

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -119,7 +120,9 @@ export default function SettingsPage() {
   const [allocSaving, setAllocSaving] = useState(false);
   const [showAllocForm, setShowAllocForm] = useState(false);
 
-  const [expandedSection, setExpandedSection] = useState<string | null>('profile');
+  const searchParams = useSearchParams();
+  const initialSection = searchParams.get('section') || 'profile';
+  const [expandedSection, setExpandedSection] = useState<string | null>(initialSection);
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
