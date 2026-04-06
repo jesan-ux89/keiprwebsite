@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -139,6 +139,40 @@ export default function DashboardPage() {
     return { label, bills: billsTotal, income, remaining: income - billsTotal };
   });
   const trendMax = Math.max(...trendData.map(d => Math.max(d.income, d.bills)), 1);
+
+  // ── Chart carousel state (MATCHES MOBILE) ─────────────────
+  const [activeChart, setActiveChart] = useState(0);
+  const chartScrollRef = useRef<HTMLDivElement>(null);
+  const CHART_COUNT = 4;
+  const CHART_TITLES = ['Monthly breakdown', '6-month spending trend', 'Income vs bills', 'Funded vs unfunded'];
+
+  // Category donut data
+  const donutData = allocations
+    .slice()
+    .sort((a: any, b: any) => b.amtMonthly - a.amtMonthly)
+    .map((a: any) => ({
+      name: a.name,
+      amount: a.amtMonthly,
+      color: a.color,
+      pct: totalBillsMonthly > 0 ? (a.amtMonthly / totalBillsMonthly) * 100 : 0,
+    }))
+    .filter((d: any) => d.pct > 0);
+
+  // Income vs Bills data (last 4 months incl. current)
+  const ivbData = Array.from({ length: 4 }, (_, i) => {
+    const d = new Date(new Date().getFullYear(), new Date().getMonth() - (3 - i), 1);
+    const label = MONTH_LABELS[d.getMonth()];
+    const billsAmt = (3 - i) === 0
+      ? totalBillsMonthly
+      : bills.filter((b: any) => b.isRecurring).reduce((s: number, b: any) => s + (b.total || 0), 0);
+    return { label, income: monthlyIncome, bills: billsAmt };
+  });
+  const ivbMax = Math.max(...ivbData.map(d => Math.max(d.income, d.bills)), 1);
+
+  // Funded vs Unfunded
+  const fundedAmt = totalSpentMonthly;
+  const unfundedAmt = Math.max(0, totalBillsMonthly - totalSpentMonthly);
+  const fundedPct = totalBillsMonthly > 0 ? Math.round((fundedAmt / totalBillsMonthly) * 100) : 0;
 
   // ── Side income helpers (MATCHES MOBILE) ────────────────────
   function getSideIncomeForPaycheck(paycheckNum: number) {
@@ -1095,52 +1129,225 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* 6-month spending trend chart */}
+          {/* CHART CAROUSEL */}
           <div>
             <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
-              6-Month Spending Trend
+              {CHART_TITLES[activeChart]}
             </h2>
-            <Card>
-              {/* Legend */}
-              <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#38BDF8' }} />
-                  <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Income</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0C4A6E' }} />
-                  <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Bills</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
-                  <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Remaining</span>
-                </div>
-              </div>
-              {/* Bar chart */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '0.75rem', height: '160px' }}>
-                {trendData.map((d, i) => {
-                  const incomeH = Math.max(2, (d.income / trendMax) * 140);
-                  const billsH = Math.max(2, (d.bills / trendMax) * 140);
-                  const remainH = Math.max(2, (Math.max(0, d.remaining) / trendMax) * 140);
-                  return (
-                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '140px' }}>
-                        <div style={{ width: '14px', height: `${incomeH}px`, backgroundColor: '#38BDF8', borderRadius: '3px 3px 0 0' }} />
-                        <div style={{ width: '14px', height: `${billsH}px`, backgroundColor: '#0C4A6E', borderRadius: '3px 3px 0 0' }} />
-                        <div style={{ width: '14px', height: `${remainH}px`, backgroundColor: '#0A7B6C', borderRadius: '3px 3px 0 0' }} />
+            <div style={{ position: 'relative', overflow: 'hidden' }}>
+              <div
+                ref={chartScrollRef}
+                style={{
+                  display: 'flex',
+                  transition: 'transform 0.3s ease',
+                  transform: `translateX(-${activeChart * 100}%)`,
+                }}
+              >
+                {/* CHART 1: Category Donut */}
+                <div style={{ minWidth: '100%', boxSizing: 'border-box' }}>
+                  <Card>
+                    {donutData.length === 0 ? (
+                      <p style={{ fontSize: '0.8rem', color: colors.textMuted, textAlign: 'center', margin: 0 }}>No category data yet</p>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        {/* SVG Donut */}
+                        <div style={{ position: 'relative', width: 140, height: 140, flexShrink: 0 }}>
+                          <svg viewBox="0 0 140 140" width="140" height="140">
+                            {(() => {
+                              let cumAngle = -90;
+                              return donutData.map((seg: any, i: number) => {
+                                const angle = (seg.pct / 100) * 360;
+                                const startAngle = cumAngle;
+                                cumAngle += angle;
+                                const endAngle = cumAngle;
+                                const largeArc = angle > 180 ? 1 : 0;
+                                const r = 55;
+                                const cx = 70, cy = 70;
+                                const x1 = cx + r * Math.cos((startAngle * Math.PI) / 180);
+                                const y1 = cy + r * Math.sin((startAngle * Math.PI) / 180);
+                                const x2 = cx + r * Math.cos((endAngle * Math.PI) / 180);
+                                const y2 = cy + r * Math.sin((endAngle * Math.PI) / 180);
+                                return (
+                                  <path
+                                    key={i}
+                                    d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                                    fill={seg.color}
+                                  />
+                                );
+                              });
+                            })()}
+                            <circle cx="70" cy="70" r="35" fill={isDark ? '#2A2720' : '#F5F3EF'} />
+                          </svg>
+                          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsMonthly)}</div>
+                            <div style={{ fontSize: '0.65rem', color: colors.textMuted }}>Total</div>
+                          </div>
+                        </div>
+                        {/* Legend */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {donutData.slice(0, 6).map((seg: any, i: number) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: seg.color, flexShrink: 0 }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '0.8rem', color: colors.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seg.name}</div>
+                                <div style={{ fontSize: '0.7rem', color: colors.textMuted }}>{fmt(seg.amount)} ({seg.pct.toFixed(1)}%)</div>
+                              </div>
+                            </div>
+                          ))}
+                          {donutData.length > 6 && (
+                            <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>+{donutData.length - 6} more</span>
+                          )}
+                        </div>
                       </div>
-                      <span style={{ fontSize: '0.7rem', fontWeight: i === 0 ? 700 : 400, color: i === 0 ? colors.electric : colors.textMuted }}>{d.label}</span>
-                      <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(d.bills)}</span>
+                    )}
+                  </Card>
+                </div>
+
+                {/* CHART 2: 6-Month Trend (existing) */}
+                <div style={{ minWidth: '100%', boxSizing: 'border-box' }}>
+                  <Card>
+                    <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#38BDF8' }} />
+                        <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Income</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0C4A6E' }} />
+                        <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Bills</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
+                        <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Remaining</span>
+                      </div>
                     </div>
-                  );
-                })}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '0.75rem', height: '160px' }}>
+                      {trendData.map((d, i) => {
+                        const incomeH = Math.max(2, (d.income / trendMax) * 140);
+                        const billsH = Math.max(2, (d.bills / trendMax) * 140);
+                        const remainH = Math.max(2, (Math.max(0, d.remaining) / trendMax) * 140);
+                        return (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '140px' }}>
+                              <div style={{ width: '14px', height: `${incomeH}px`, backgroundColor: '#38BDF8', borderRadius: '3px 3px 0 0' }} />
+                              <div style={{ width: '14px', height: `${billsH}px`, backgroundColor: '#0C4A6E', borderRadius: '3px 3px 0 0' }} />
+                              <div style={{ width: '14px', height: `${remainH}px`, backgroundColor: '#0A7B6C', borderRadius: '3px 3px 0 0' }} />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', fontWeight: i === 0 ? 700 : 400, color: i === 0 ? colors.electric : colors.textMuted }}>{d.label}</span>
+                            <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(d.bills)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {trendData.length > 1 && trendData[0].bills === trendData[1].bills && (
+                      <p style={{ fontSize: '0.7rem', color: colors.textMuted, textAlign: 'center', margin: '1rem 0 0 0', fontStyle: 'italic' }}>
+                        Future months projected from recurring bills
+                      </p>
+                    )}
+                  </Card>
+                </div>
+
+                {/* CHART 3: Income vs Bills */}
+                <div style={{ minWidth: '100%', boxSizing: 'border-box' }}>
+                  <Card>
+                    <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#38BDF8' }} />
+                        <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Income</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0C4A6E' }} />
+                        <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Bills</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', height: '160px' }}>
+                      {ivbData.map((d, i) => {
+                        const incomeH = Math.max(2, (d.income / ivbMax) * 140);
+                        const billsH = Math.max(2, (d.bills / ivbMax) * 140);
+                        return (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', height: '140px' }}>
+                              <div style={{ width: '18px', height: `${incomeH}px`, backgroundColor: '#38BDF8', borderRadius: '4px 4px 0 0' }} />
+                              <div style={{ width: '18px', height: `${billsH}px`, backgroundColor: '#0C4A6E', borderRadius: '4px 4px 0 0' }} />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', fontWeight: i === 3 ? 700 : 400, color: i === 3 ? colors.electric : colors.textMuted }}>{d.label}</span>
+                            <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(d.bills)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                </div>
+
+                {/* CHART 4: Funded vs Unfunded */}
+                <div style={{ minWidth: '100%', boxSizing: 'border-box' }}>
+                  <Card>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      {/* SVG Progress Ring */}
+                      <div style={{ position: 'relative', width: 140, height: 140 }}>
+                        <svg viewBox="0 0 140 140" width="140" height="140">
+                          {/* Background ring */}
+                          <circle cx="70" cy="70" r="55" fill="none" stroke={isDark ? '#333' : '#E8E5DC'} strokeWidth="16" />
+                          {/* Funded arc */}
+                          {fundedPct > 0 && (
+                            <circle
+                              cx="70" cy="70" r="55"
+                              fill="none"
+                              stroke="#0A7B6C"
+                              strokeWidth="16"
+                              strokeDasharray={`${(fundedPct / 100) * 345.6} 345.6`}
+                              strokeLinecap="round"
+                              transform="rotate(-90 70 70)"
+                            />
+                          )}
+                          <circle cx="70" cy="70" r="35" fill={isDark ? '#2A2720' : '#F5F3EF'} />
+                        </svg>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0A7B6C' }}>{fundedPct}%</div>
+                          <div style={{ fontSize: '0.65rem', color: colors.textMuted }}>Funded</div>
+                        </div>
+                      </div>
+                      {/* Legend below */}
+                      <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem', justifyContent: 'center' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
+                            <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>Funded</span>
+                          </div>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0A7B6C' }}>{fmt(fundedAmt)}</span>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem', justifyContent: 'center' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isDark ? '#333' : '#E8E5DC' }} />
+                            <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>Remaining</span>
+                          </div>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(unfundedAmt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
               </div>
-              {trendData.length > 1 && trendData[0].bills === trendData[1].bills && (
-                <p style={{ fontSize: '0.7rem', color: colors.textMuted, textAlign: 'center', margin: '1rem 0 0 0', fontStyle: 'italic' }}>
-                  Future months projected from recurring bills
-                </p>
-              )}
-            </Card>
+            </div>
+
+            {/* Dot indicators */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', marginTop: '0.75rem' }}>
+              {Array.from({ length: CHART_COUNT }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveChart(i)}
+                  style={{
+                    width: activeChart === i ? 18 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: activeChart === i ? '#38BDF8' : (isDark ? '#333' : '#E8E5DC'),
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'all 0.2s ease',
+                  }}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Category breakdown */}
