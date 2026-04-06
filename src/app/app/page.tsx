@@ -143,6 +143,7 @@ export default function DashboardPage() {
 
   // ── Chart carousel state (MATCHES MOBILE) ─────────────────
   const [activeChart, setActiveChart] = useState(0);
+  const [selectedDonutIdx, setSelectedDonutIdx] = useState(0);
   const chartScrollRef = useRef<HTMLDivElement>(null);
   const CHART_COUNT = 4;
   const CHART_TITLES = ['Monthly breakdown', '6-month spending trend', 'Income vs bills', 'Monthly funded vs unfunded'];
@@ -1155,8 +1156,8 @@ export default function DashboardPage() {
                     {donutData.length === 0 ? (
                       <p style={{ fontSize: '0.8rem', color: colors.textMuted, textAlign: 'center', margin: 0 }}>No category data yet</p>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', justifyContent: 'center', padding: '1rem 2rem' }}>
-                        {/* SVG Donut */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 2rem' }}>
+                        {/* Big SVG Donut */}
                         <div style={{ position: 'relative', width: 250, height: 250, flexShrink: 0 }}>
                           <svg viewBox="0 0 250 250" width="250" height="250">
                             {donutData.map((seg: any, i: number) => {
@@ -1175,28 +1176,28 @@ export default function DashboardPage() {
                                   key={i}
                                   d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
                                   fill={seg.color}
+                                  opacity={selectedDonutIdx === i ? 1 : 0.8}
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => setSelectedDonutIdx(i)}
                                 />
                               );
                             })}
-                            <circle cx="125" cy="125" r="62" fill={String(isDark ? '#2A2720' : '#F5F3EF')} />
+                            <circle cx="125" cy="125" r="60" fill={String(isDark ? '#2A2720' : '#F5F3EF')} />
                           </svg>
                           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.35rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsMonthly)}</div>
-                            <div style={{ fontSize: '0.8rem', color: colors.textMuted }}>Total</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsMonthly)}</div>
+                            <div style={{ fontSize: '0.85rem', color: colors.textMuted }}>Total</div>
                           </div>
                         </div>
-                        {/* Legend */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                          {donutData.map((seg: any, i: number) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: seg.color, flexShrink: 0 }} />
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: '0.9rem', color: colors.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seg.name}</div>
-                                <div style={{ fontSize: '0.8rem', color: colors.textMuted }}>{fmt(seg.amount)} ({seg.pct.toFixed(1)}%)</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        {/* Click-to-reveal category detail */}
+                        {donutData[selectedDonutIdx] && (
+                          <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem', padding: '0.6rem 1.2rem', backgroundColor: isDark ? '#332F28' : '#EAE7E0', borderRadius: '10px', gap: '0.6rem' }}>
+                            <div style={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: donutData[selectedDonutIdx].color, flexShrink: 0 }} />
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>{donutData[selectedDonutIdx].name}</span>
+                            <span style={{ fontSize: '0.95rem', color: colors.textMuted, marginLeft: 'auto' }}>{fmt(donutData[selectedDonutIdx].amount)} ({donutData[selectedDonutIdx].pct.toFixed(1)}%)</span>
+                          </div>
+                        )}
+                        <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '0.5rem', fontStyle: 'italic' }}>Click a slice to see details</p>
                       </div>
                     )}
                   </Card>
