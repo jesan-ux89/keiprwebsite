@@ -13,7 +13,8 @@ import {
   User,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Wallet
 } from 'lucide-react';
 
 export default function Home() {
@@ -170,6 +171,9 @@ export default function Home() {
 
             {/* Feature 6 */}
             <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshots/Currency.jpg" onScreenshotClick={setLightboxSrc} />
+
+            {/* Feature 7 */}
+            <FeatureCard icon={Wallet} title="One-Time Fund Tracking" description="Got a tax refund, bonus, or loan payout? Track it separately from your regular budget. Add spending items against it and watch the balance drain to zero — no impact on your paycheck calculations." />
           </div>
         </div>
       </section>
