@@ -665,7 +665,9 @@ export default function DashboardPage() {
                           {getUnpaidBillsForPaycheck(currentPeriod.paycheckNumber as number, src.available).length === 0 ? (
                             <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0 0 0.375rem 0' }}>No unpaid bills fit within {fmt(src.available)}</p>
                           ) : (
-                            getUnpaidBillsForPaycheck(currentPeriod.paycheckNumber as number, src.available).map(b => (
+                            getUnpaidBillsForPaycheck(currentPeriod.paycheckNumber as number, src.available).map(b => {
+                              const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                              return (
                               <button
                                 key={b.id}
                                 onClick={() => handleAllocateToBill(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number, b.id)}
@@ -676,10 +678,14 @@ export default function DashboardPage() {
                                   fontSize: '0.8rem', color: colors.text,
                                 }}
                               >
-                                <span>{b.name}</span>
+                                <div>
+                                  <span>{b.name}</span>
+                                  <span style={{ display: 'block', fontSize: '0.65rem', color: colors.textMuted, marginTop: '0.125rem' }}>Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}</span>
+                                </div>
                                 <span style={{ fontWeight: 600, color: '#38BDF8' }}>{fmt(billAmountForPaycheck(b, currentPeriod.paycheckNumber as number))}</span>
                               </button>
-                            ))
+                              );
+                            })
                           )}
                           <a
                             href="/app/bills"
@@ -926,7 +932,9 @@ export default function DashboardPage() {
                           {getUnpaidBillsForPaycheck(nextPeriod.paycheckNumber as number, src.available).length === 0 ? (
                             <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0 0 0.375rem 0' }}>No unpaid bills fit within {fmt(src.available)}</p>
                           ) : (
-                            getUnpaidBillsForPaycheck(nextPeriod.paycheckNumber as number, src.available).map(b => (
+                            getUnpaidBillsForPaycheck(nextPeriod.paycheckNumber as number, src.available).map(b => {
+                              const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                              return (
                               <button
                                 key={b.id}
                                 onClick={() => handleAllocateToBill(src.incomeSourceId, src.available, nextPeriod.paycheckNumber as number, b.id, `next-${src.incomeSourceId}`)}
@@ -937,10 +945,14 @@ export default function DashboardPage() {
                                   fontSize: '0.8rem', color: colors.text,
                                 }}
                               >
-                                <span>{b.name}</span>
+                                <div>
+                                  <span>{b.name}</span>
+                                  <span style={{ display: 'block', fontSize: '0.65rem', color: colors.textMuted, marginTop: '0.125rem' }}>Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}</span>
+                                </div>
                                 <span style={{ fontWeight: 600, color: '#38BDF8' }}>{fmt(billAmountForPaycheck(b, nextPeriod.paycheckNumber as number))}</span>
                               </button>
-                            ))
+                              );
+                            })
                           )}
                           <a href="/app/bills" style={{ display: 'block', textAlign: 'center', fontSize: '0.8rem', color: '#38BDF8', padding: '0.5rem', textDecoration: 'none', border: '0.5px dashed rgba(56,189,248,0.12)', borderRadius: '0.5rem', marginTop: '0.25rem' }}>+ Add new bill</a>
                           <button onClick={() => setSidePickBill(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.7rem', color: colors.textMuted, padding: '0.5rem', width: '100%' }}>Cancel</button>
