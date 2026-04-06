@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const {
     bills, billsLoading, refreshBills, refreshIncomeSources, refreshPayments, refreshCategories,
-    incomeSources, categories, fmt, isBillPaid, isSplitPaid, toggleSplitPaid, userName, userInitials,
+    incomeSources, categories, fmt, isBillPaid, isSplitPaid, markBillPaid, toggleSplitPaid, userName, userInitials,
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
   } = useApp();
@@ -187,6 +187,16 @@ export default function DashboardPage() {
     setSideActionError(null);
     try {
       await allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'bill', amount: amt, billId: bill.id });
+      // Auto-mark the bill as paid in the tracker
+      if (bill.isSplit) {
+        if (!isSplitPaid(billId, paycheckNum)) {
+          await toggleSplitPaid(billId, paycheckNum);
+        }
+      } else {
+        if (!isBillPaid(billId)) {
+          await markBillPaid(billId);
+        }
+      }
       setSideActionLoading(null);
     } catch (err: any) {
       setSideActionLoading(null);
