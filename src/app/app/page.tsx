@@ -151,33 +151,35 @@ export default function DashboardPage() {
     });
   }
 
+  const [sideActionLoading, setSideActionLoading] = useState<string | null>(null);
+  const [sideActionError, setSideActionError] = useState<string | null>(null);
+  const [sidePickBill, setSidePickBill] = useState<string | null>(null);
+
   async function handleAllocateToSavings(sourceId: string, available: number, paycheckNum: number) {
-    if (!window.confirm(`Move ${fmt(available)} to savings?`)) return;
+    setSideActionLoading(sourceId);
+    setSideActionError(null);
     try {
       await allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'savings', amount: available });
-      alert(`${fmt(available)} moved to savings.`);
+      setSideActionLoading(null);
     } catch (err: any) {
-      alert(err?.response?.data?.error || err?.message || 'Failed to allocate');
+      setSideActionLoading(null);
+      setSideActionError(err?.response?.data?.error || err?.message || 'Failed to move to savings');
     }
   }
 
-  async function handleAllocateToBill(sourceId: string, available: number, paycheckNum: number) {
-    const eligibleBills = bills.filter(b => {
-      const amt = billAmountForPaycheck(b, paycheckNum);
-      return amt > 0 && amt <= available;
-    });
-    if (eligibleBills.length === 0) {
-      alert(`No bills fit within ${fmt(available)}. Try moving to savings instead.`);
-      return;
-    }
-    const bill = eligibleBills[0];
-    if (window.confirm(`Apply ${fmt(billAmountForPaycheck(bill, paycheckNum))} to "${bill.name}"?`)) {
-      try {
-        await allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'bill', amount: billAmountForPaycheck(bill, paycheckNum), billId: bill.id });
-        alert(`${fmt(billAmountForPaycheck(bill, paycheckNum))} applied to ${bill.name}.`);
-      } catch (err: any) {
-        alert(err?.response?.data?.error || err?.message || 'Failed to allocate');
-      }
+  async function handleAllocateToBill(sourceId: string, available: number, paycheckNum: number, billId: string) {
+    const bill = bills.find(b => b.id === billId);
+    if (!bill) return;
+    const amt = billAmountForPaycheck(bill, paycheckNum);
+    setSidePickBill(null);
+    setSideActionLoading(sourceId);
+    setSideActionError(null);
+    try {
+      await allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'bill', amount: amt, billId: bill.id });
+      setSideActionLoading(null);
+    } catch (err: any) {
+      setSideActionLoading(null);
+      setSideActionError(err?.response?.data?.error || err?.message || 'Failed to apply to bill');
     }
   }
 
@@ -638,34 +640,77 @@ export default function DashboardPage() {
                       </div>
                     ))}
 
-                  {/* Action buttons */}
-                  {src.available > 0 && (
-                    <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.625rem' }}>
-                      <button
-                        onClick={() => handleAllocateToSavings(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number)}
-                        style={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
-                          padding: '0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.15)',
-                          backgroundColor: 'rgba(56,189,248,0.08)', cursor: 'pointer',
-                          fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
-                        }}
-                      >
-                        {'💰'} Move to savings
-                      </button>
-                      <button
-                        onClick={() => handleAllocateToBill(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number)}
-                        style={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
-                          padding: '0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.15)',
-                          backgroundColor: 'rgba(56,189,248,0.08)', cursor: 'pointer',
-                          fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
-                        }}
-                      >
-                        {'📋'} Apply to a bill
-                      </button>
-                    </div>
-                  )}
-                  {src.available === 0 && (
+                  {/* Action area */}
+                  {sideActionLoading === src.incomeSourceId ? (
+                    <p style={{ fontSize: '0.8rem', color: '#38BDF8', textAlign: 'center', padding: '0.75rem 0', margin: 0 }}>Saving...</p>
+                  ) : src.available > 0 ? (
+                    <>
+                      {sideActionError && (
+                        <p style={{ fontSize: '0.75rem', color: '#A32D2D', textAlign: 'center', margin: '0 0 0.375rem 0' }}>{sideActionError}</p>
+                      )}
+                      {sidePickBill === src.incomeSourceId ? (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38BDF8', margin: '0 0 0.375rem 0' }}>Choose a bill:</p>
+                          {bills.filter(b => {
+                            const amt = billAmountForPaycheck(b, currentPeriod.paycheckNumber as number);
+                            return amt > 0 && amt <= src.available;
+                          }).length === 0 ? (
+                            <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0 0 0.375rem 0' }}>No bills fit within {fmt(src.available)}</p>
+                          ) : (
+                            bills.filter(b => {
+                              const amt = billAmountForPaycheck(b, currentPeriod.paycheckNumber as number);
+                              return amt > 0 && amt <= src.available;
+                            }).map(b => (
+                              <button
+                                key={b.id}
+                                onClick={() => handleAllocateToBill(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number, b.id)}
+                                style={{
+                                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  padding: '0.5rem 0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.12)',
+                                  backgroundColor: 'rgba(56,189,248,0.06)', cursor: 'pointer', marginBottom: '0.25rem',
+                                  fontSize: '0.8rem', color: colors.text,
+                                }}
+                              >
+                                <span>{b.name}</span>
+                                <span style={{ fontWeight: 600, color: '#38BDF8' }}>{fmt(billAmountForPaycheck(b, currentPeriod.paycheckNumber as number))}</span>
+                              </button>
+                            ))
+                          )}
+                          <button
+                            onClick={() => setSidePickBill(null)}
+                            style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.7rem', color: colors.textMuted, padding: '0.5rem', width: '100%' }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.625rem' }}>
+                          <button
+                            onClick={() => handleAllocateToSavings(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number)}
+                            style={{
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
+                              padding: '0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.15)',
+                              backgroundColor: 'rgba(56,189,248,0.08)', cursor: 'pointer',
+                              fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
+                            }}
+                          >
+                            {'💰'} Move to savings
+                          </button>
+                          <button
+                            onClick={() => { setSideActionError(null); setSidePickBill(src.incomeSourceId); }}
+                            style={{
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
+                              padding: '0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.15)',
+                              backgroundColor: 'rgba(56,189,248,0.08)', cursor: 'pointer',
+                              fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
+                            }}
+                          >
+                            {'📋'} Apply to a bill
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <p style={{ fontSize: '0.8rem', color: '#0A7B6C', textAlign: 'center', padding: '0.625rem 0', fontWeight: 500, margin: 0 }}>
                       Fully allocated for this paycheck
                     </p>
