@@ -1421,7 +1421,32 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* One-Time Funds */}
+          {/* One-Time Funds — prompt to create or show existing */}
+          {oneTimeFunds.length === 0 && (
+            <a href="/app/settings" style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
+              <div style={{
+                padding: '1rem 1.25rem',
+                backgroundColor: colors.cardBg || colors.inputBg,
+                borderRadius: '0.75rem',
+                border: `1px dashed ${colors.divider}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.electric)}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = colors.divider)}
+              >
+                <span style={{ fontSize: '1.5rem' }}>💰</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>Got a bonus or tax refund?</p>
+                  <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>Track one-time funds and plan how to spend them.</p>
+                </div>
+                <span style={{ fontSize: '0.9rem', color: colors.electric, fontWeight: 600 }}>Add →</span>
+              </div>
+            </a>
+          )}
           {oneTimeFunds.length > 0 && (
             <div style={{ marginTop: '1.5rem' }}>
               <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
