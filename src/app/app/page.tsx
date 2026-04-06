@@ -22,9 +22,10 @@ import {
  */
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Housing: '#0C4A6E', Transport: '#38BDF8', Groceries: '#0E6494',
-  Dining: '#56CCF2', Subscriptions: '#7C3AED', Fun: '#F59E0B',
-  Savings: '#888780', Other: '#6B7280',
+  Housing: '#0C4A6E', Transport: '#38BDF8', Groceries: '#E67E22',
+  Dining: '#E74C3C', Subscriptions: '#7C3AED', Fun: '#F59E0B',
+  Insurance: '#2ECC71', Savings: '#1ABC9C', Utilities: '#E84393',
+  Other: '#95A5A6',
 };
 
 type ViewMode = 'paycheck' | 'nextcheck' | 'cycles' | 'monthly';
@@ -144,7 +145,7 @@ export default function DashboardPage() {
   const [activeChart, setActiveChart] = useState(0);
   const chartScrollRef = useRef<HTMLDivElement>(null);
   const CHART_COUNT = 4;
-  const CHART_TITLES = ['Monthly breakdown', '6-month spending trend', 'Income vs bills', 'Funded vs unfunded'];
+  const CHART_TITLES = ['Monthly breakdown', '6-month spending trend', 'Income vs bills', 'Monthly funded vs unfunded'];
 
   // Category donut data
   const donutData = allocations
