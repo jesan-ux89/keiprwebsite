@@ -151,11 +151,17 @@ export default function DashboardPage() {
     });
   }
 
-  function handleAllocateToSavings(sourceId: string, available: number, paycheckNum: number) {
-    allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'savings', amount: available });
+  async function handleAllocateToSavings(sourceId: string, available: number, paycheckNum: number) {
+    if (!window.confirm(`Move ${fmt(available)} to savings?`)) return;
+    try {
+      await allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'savings', amount: available });
+      alert(`${fmt(available)} moved to savings.`);
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || 'Failed to allocate');
+    }
   }
 
-  function handleAllocateToBill(sourceId: string, available: number, paycheckNum: number) {
+  async function handleAllocateToBill(sourceId: string, available: number, paycheckNum: number) {
     const eligibleBills = bills.filter(b => {
       const amt = billAmountForPaycheck(b, paycheckNum);
       return amt > 0 && amt <= available;
@@ -164,10 +170,14 @@ export default function DashboardPage() {
       alert(`No bills fit within ${fmt(available)}. Try moving to savings instead.`);
       return;
     }
-    // For web, show a simple prompt with the first eligible bill
     const bill = eligibleBills[0];
     if (window.confirm(`Apply ${fmt(billAmountForPaycheck(bill, paycheckNum))} to "${bill.name}"?`)) {
-      allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'bill', amount: billAmountForPaycheck(bill, paycheckNum), billId: bill.id });
+      try {
+        await allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'bill', amount: billAmountForPaycheck(bill, paycheckNum), billId: bill.id });
+        alert(`${fmt(billAmountForPaycheck(bill, paycheckNum))} applied to ${bill.name}.`);
+      } catch (err: any) {
+        alert(err?.response?.data?.error || err?.message || 'Failed to allocate');
+      }
     }
   }
 
