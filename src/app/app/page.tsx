@@ -147,14 +147,18 @@ export default function DashboardPage() {
   const CHART_COUNT = 4;
   const CHART_TITLES = ['Monthly breakdown', '6-month spending trend', 'Income vs bills', 'Monthly funded vs unfunded'];
 
-  // Category donut data
+  // Category donut data — use dedicated high-contrast palette
+  const DONUT_PALETTE = [
+    '#0C4A6E', '#E67E22', '#2ECC71', '#E74C3C', '#7C3AED',
+    '#F59E0B', '#E84393', '#1ABC9C', '#3498DB', '#95A5A6',
+  ];
   const donutData = allocations
     .slice()
     .sort((a: any, b: any) => b.amtMonthly - a.amtMonthly)
-    .map((a: any) => ({
+    .map((a: any, i: number) => ({
       name: a.name,
       amount: a.amtMonthly,
-      color: a.color,
+      color: DONUT_PALETTE[i % DONUT_PALETTE.length],
       pct: totalBillsMonthly > 0 ? (a.amtMonthly / totalBillsMonthly) * 100 : 0,
     }))
     .filter((d: any) => d.pct > 0);
