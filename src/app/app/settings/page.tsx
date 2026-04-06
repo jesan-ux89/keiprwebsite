@@ -501,6 +501,23 @@ export default function SettingsPage() {
 
         {expandedSection === 'income' && (
           <>
+            {/* Primary income explainer */}
+            {incomeSources.length > 0 && (
+              <p style={{
+                fontSize: '0.8rem',
+                color: colors.textMuted,
+                lineHeight: 1.5,
+                margin: '0 0 0.75rem 0',
+                padding: '0.625rem 0.75rem',
+                backgroundColor: 'rgba(56,189,248,0.06)',
+                borderRadius: '0.5rem',
+                border: '0.5px solid rgba(56,189,248,0.15)',
+              }}>
+                Your <span style={{ fontWeight: 600, color: '#38BDF8' }}>primary</span> income drives the pay schedule across the app &mdash; dashboard, tracker, and plan all organize bills around its pay dates.
+                {incomeSources.length > 1 ? ' Secondary incomes add to your per-paycheck totals.' : ''}
+              </p>
+            )}
+
             {incomeSources.length === 0 ? (
               <p style={{ color: colors.textMuted, margin: '0 0 1rem 0' }}>
                 No income sources yet. Add one to get started.

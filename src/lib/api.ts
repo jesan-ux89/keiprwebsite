@@ -113,4 +113,19 @@ export const bankingAPI = {
   triggerSync:         () => api.post('/banking-data/sync'),
 };
 
+// Rollover
+export const rolloverAPI = {
+  getCurrent: () => api.get('/rollover/current'),
+  decide:     (data: { action: string; periodMonth: number; periodYear: number }) => api.post('/rollover/decide', data),
+  getHistory: () => api.get('/rollover/history'),
+};
+
+// Secondary Income
+export const secondaryIncomeAPI = {
+  getAllocations: (month: number, year: number) => api.get('/secondary-income/allocations', { params: { month, year } }),
+  allocate:       (data: Record<string, unknown>) => api.post('/secondary-income/allocate', data),
+  removeAllocation: (id: string) => api.delete(`/secondary-income/allocations/${id}`),
+  getSummary:     (month: number, year: number) => api.get('/secondary-income/summary', { params: { month, year } }),
+};
+
 export default api;

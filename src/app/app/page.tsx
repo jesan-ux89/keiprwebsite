@@ -34,9 +34,12 @@ export default function DashboardPage() {
   const {
     bills, billsLoading, refreshBills, refreshIncomeSources, refreshPayments, refreshCategories,
     incomeSources, categories, fmt, isBillPaid, toggleSplitPaid, userName, userInitials,
+    currentRollover, decideRollover,
+    sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('paycheck');
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedSide, setExpandedSide] = useState<Record<string, boolean>>({});
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
   const primaryIncome = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
@@ -90,8 +93,11 @@ export default function DashboardPage() {
   const nextBillsTotal = nextPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
   const nextRemaining = (totalPaycheck || 0) - nextBillsTotal;
 
+  // ── Rollover bonus (MATCHES MOBILE) ──────────────────────────
+  const rolloverBonus = (currentRollover?.action === 'rolled_over' && currentRollover.rolloverAmount > 0) ? currentRollover.rolloverAmount : 0;
+
   // ── Monthly income (MATCHES MOBILE) ─────────────────────────
-  const monthlyIncome = totalPaycheck * paycheckCount;
+  const monthlyIncome = totalPaycheck * paycheckCount + rolloverBonus;
   const monthlyRemaining = monthlyIncome - totalBillsMonthly;
 
   // ── Category allocations (MATCHES MOBILE) ──────────────────
@@ -130,6 +136,40 @@ export default function DashboardPage() {
     return { label, bills: billsTotal, income, remaining: income - billsTotal };
   });
   const trendMax = Math.max(...trendData.map(d => Math.max(d.income, d.bills)), 1);
+
+  // ── Side income helpers (MATCHES MOBILE) ────────────────────
+  function getSideIncomeForPaycheck(paycheckNum: number) {
+    return sideIncomeSummary.map(src => {
+      const pData = src.byPaycheck[paycheckNum] || { allocated: 0, toSavings: 0, toBills: 0 };
+      let carry = 0;
+      for (let pn = 1; pn < paycheckNum; pn++) {
+        const prev = src.byPaycheck[pn] || { allocated: 0, toSavings: 0, toBills: 0 };
+        carry += (src.amount - prev.allocated);
+      }
+      const available = src.amount + Math.max(0, carry) - pData.allocated;
+      return { ...src, allocated: pData.allocated, toSavings: pData.toSavings, toBills: pData.toBills, available, carry: Math.max(0, carry) };
+    });
+  }
+
+  function handleAllocateToSavings(sourceId: string, available: number, paycheckNum: number) {
+    allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'savings', amount: available });
+  }
+
+  function handleAllocateToBill(sourceId: string, available: number, paycheckNum: number) {
+    const eligibleBills = bills.filter(b => {
+      const amt = billAmountForPaycheck(b, paycheckNum);
+      return amt > 0 && amt <= available;
+    });
+    if (eligibleBills.length === 0) {
+      alert(`No bills fit within ${fmt(available)}. Try moving to savings instead.`);
+      return;
+    }
+    // For web, show a simple prompt with the first eligible bill
+    const bill = eligibleBills[0];
+    if (window.confirm(`Apply ${fmt(billAmountForPaycheck(bill, paycheckNum))} to "${bill.name}"?`)) {
+      allocateSideIncome({ incomeSourceId: sourceId, paycheckNumber: paycheckNum, action: 'bill', amount: billAmountForPaycheck(bill, paycheckNum), billId: bill.id });
+    }
+  }
 
   // ── Expanded category state ────────────────────────────────
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
@@ -203,6 +243,83 @@ export default function DashboardPage() {
           Refresh
         </Button>
       </div>
+
+      {/* ROLLOVER PROMPT — shows at start of month when user hasn't decided */}
+      {currentRollover && currentRollover.action === 'pending' && currentRollover.previousLeftover > 0 && (
+        <div style={{
+          backgroundColor: 'rgba(56,189,248,0.08)',
+          borderRadius: '0.75rem',
+          padding: '1.25rem',
+          marginBottom: '1.5rem',
+          border: '0.5px solid rgba(56,189,248,0.2)',
+          textAlign: 'center',
+        }}>
+          <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#38BDF8', margin: '0 0 0.25rem 0' }}>
+            Leftover from last month
+          </p>
+          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text, margin: '0 0 0.5rem 0' }}>
+            {fmt(currentRollover.previousLeftover)}
+          </p>
+          <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0 0 1rem 0', lineHeight: 1.5 }}>
+            You had money left over. Would you like to carry it into this month or start fresh?
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <button
+              onClick={() => decideRollover('rolled_over')}
+              style={{
+                flex: 1,
+                maxWidth: '200px',
+                backgroundColor: '#0C4A6E',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '0.625rem',
+                padding: '0.75rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Roll over
+            </button>
+            <button
+              onClick={() => decideRollover('fresh_start')}
+              style={{
+                flex: 1,
+                maxWidth: '200px',
+                backgroundColor: 'transparent',
+                color: colors.textMuted,
+                border: `0.5px solid ${colors.cardBorder}`,
+                borderRadius: '0.625rem',
+                padding: '0.75rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              Start fresh
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ROLLED OVER BANNER — shows when user chose to roll over */}
+      {currentRollover && currentRollover.action === 'rolled_over' && currentRollover.rolloverAmount > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          backgroundColor: 'rgba(56,189,248,0.06)',
+          borderRadius: '0.625rem',
+          padding: '0.75rem',
+          marginBottom: '1rem',
+          border: '0.5px solid rgba(56,189,248,0.12)',
+        }}>
+          <span style={{ fontSize: '0.875rem' }}>&#8617;&#65039;</span>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#38BDF8' }}>
+            <span style={{ fontWeight: 600 }}>{fmt(currentRollover.rolloverAmount)}</span> rolled over from last month
+          </p>
+        </div>
+      )}
 
       {/* Summary Cards — Paycheck View */}
       <div
@@ -453,6 +570,100 @@ export default function DashboardPage() {
               </div>
             </Card>
           )}
+
+          {/* SIDE INCOME — This Check */}
+          {secondaryIncome.length > 0 && getSideIncomeForPaycheck(currentPeriod.paycheckNumber as number).map(src => (
+            <div
+              key={src.incomeSourceId}
+              style={{
+                backgroundColor: 'rgba(56,189,248,0.05)',
+                borderRadius: '0.75rem',
+                border: '0.5px solid rgba(56,189,248,0.15)',
+                overflow: 'hidden',
+              }}
+            >
+              <button
+                onClick={() => setExpandedSide(prev => ({ ...prev, [src.incomeSourceId]: !prev[src.incomeSourceId] }))}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.875rem',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#38BDF8' }}>{src.name}</p>
+                  <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.75rem', color: colors.textMuted }}>
+                    {fmt(src.amount)} income{src.carry > 0 ? ` + ${fmt(src.carry)} carried over` : ''}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: colors.text }}>{fmt(src.available)}</p>
+                  <p style={{ margin: 0, fontSize: '0.65rem', color: colors.textMuted }}>available</p>
+                </div>
+              </button>
+
+              {expandedSide[src.incomeSourceId] && (
+                <div style={{ padding: '0 0.875rem 0.875rem', borderTop: '0.5px solid rgba(56,189,248,0.1)' }}>
+                  {/* Existing allocations */}
+                  {sideIncomeAllocations
+                    .filter(a => a.incomeSourceId === src.incomeSourceId && a.paycheckNumber === (currentPeriod.paycheckNumber as number))
+                    .map(a => (
+                      <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '0.5px solid rgba(56,189,248,0.08)' }}>
+                        <span style={{ fontSize: '0.8rem' }}>{a.action === 'savings' ? '\uD83D\uDCB0' : '\uD83D\uDCCB'}</span>
+                        <span style={{ flex: 1, fontSize: '0.8rem', color: colors.textMuted }}>
+                          {a.action === 'savings' ? 'Moved to savings' : `Applied to ${a.billName || 'bill'}`}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text }}>{fmt(a.amount)}</span>
+                        <button
+                          onClick={() => removeAllocation(a.id)}
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.75rem', color: '#A32D2D', padding: '0 0.25rem' }}
+                        >
+                          Undo
+                        </button>
+                      </div>
+                    ))}
+
+                  {/* Action buttons */}
+                  {src.available > 0 && (
+                    <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.625rem' }}>
+                      <button
+                        onClick={() => handleAllocateToSavings(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number)}
+                        style={{
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
+                          padding: '0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.15)',
+                          backgroundColor: 'rgba(56,189,248,0.08)', cursor: 'pointer',
+                          fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
+                        }}
+                      >
+                        \uD83D\uDCB0 Move to savings
+                      </button>
+                      <button
+                        onClick={() => handleAllocateToBill(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number)}
+                        style={{
+                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
+                          padding: '0.625rem', borderRadius: '0.5rem', border: '0.5px solid rgba(56,189,248,0.15)',
+                          backgroundColor: 'rgba(56,189,248,0.08)', cursor: 'pointer',
+                          fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
+                        }}
+                      >
+                        \uD83D\uDCCB Apply to a bill
+                      </button>
+                    </div>
+                  )}
+                  {src.available === 0 && (
+                    <p style={{ fontSize: '0.8rem', color: '#0A7B6C', textAlign: 'center', padding: '0.625rem 0', fontWeight: 500, margin: 0 }}>
+                      Fully allocated for this paycheck
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       ) : viewMode === 'nextcheck' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -591,6 +802,33 @@ export default function DashboardPage() {
               </Card>
             </>
           )}
+
+          {/* SIDE INCOME — Next Check */}
+          {secondaryIncome.length > 0 && getSideIncomeForPaycheck(nextPeriod.paycheckNumber as number).map(src => (
+            <div
+              key={`next-${src.incomeSourceId}`}
+              style={{
+                backgroundColor: 'rgba(56,189,248,0.05)',
+                borderRadius: '0.75rem',
+                border: '0.5px solid rgba(56,189,248,0.15)',
+                padding: '0.875rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#38BDF8' }}>{src.name}</p>
+                <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.75rem', color: colors.textMuted }}>
+                  {fmt(src.amount)} income{src.carry > 0 ? ` + ${fmt(src.carry)} carried over` : ''}
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: colors.text }}>{fmt(src.available)}</p>
+                <p style={{ margin: 0, fontSize: '0.65rem', color: colors.textMuted }}>available</p>
+              </div>
+            </div>
+          ))}
         </div>
       ) : viewMode === 'cycles' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

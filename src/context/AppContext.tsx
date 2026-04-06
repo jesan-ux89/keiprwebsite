@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { billsAPI, usersAPI, authAPI } from '../lib/api';
+import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
 
 /**
@@ -71,6 +71,44 @@ export interface Category {
   icon?: string;
 }
 
+// ── Secondary Income Allocation types ──────────────────────
+export interface SecondaryAllocation {
+  id: string;
+  incomeSourceId: string;
+  periodMonth: number;
+  periodYear: number;
+  paycheckNumber: number;
+  action: 'savings' | 'bill';
+  amount: number;
+  billId?: string;
+  billName?: string;
+  sourceName?: string;
+  note?: string;
+}
+
+export interface SideIncomeSummary {
+  incomeSourceId: string;
+  name: string;
+  amount: number;
+  frequency: string;
+  totalAllocated: number;
+  totalToSavings: number;
+  totalToBills: number;
+  remaining: number;
+  byPaycheck: Record<number, { allocated: number; toSavings: number; toBills: number }>;
+}
+
+// ── Monthly Rollover type ──────────────────────────────────
+export interface MonthlyRollover {
+  id: string;
+  periodMonth: number;
+  periodYear: number;
+  previousLeftover: number;
+  action: 'rolled_over' | 'fresh_start' | 'pending';
+  rolloverAmount: number;
+  decidedAt?: string;
+}
+
 // ── Context type ────────────────────────────────────────────
 interface AppContextType {
   // Bills
@@ -116,6 +154,20 @@ interface AppContextType {
   isPro: boolean;
   isUltra: boolean;
 
+  // Secondary income allocations
+  sideIncomeSummary: SideIncomeSummary[];
+  sideIncomeAllocations: SecondaryAllocation[];
+  sideIncomeLoading: boolean;
+  allocateSideIncome: (data: { incomeSourceId: string; paycheckNumber: number; action: 'savings' | 'bill'; amount: number; billId?: string; note?: string }) => Promise<void>;
+  removeAllocation: (id: string) => Promise<void>;
+  refreshSideIncome: () => Promise<void>;
+
+  // Rollover
+  currentRollover: MonthlyRollover | null;
+  rolloverLoading: boolean;
+  decideRollover: (action: 'rolled_over' | 'fresh_start') => Promise<void>;
+  refreshRollover: () => Promise<void>;
+
   // User info
   userName: string;
   userInitials: string;
@@ -160,6 +212,17 @@ const AppContext = createContext<AppContextType>({
   tier: 'free',
   isPro: false,
   isUltra: false,
+
+  sideIncomeSummary: [],
+  sideIncomeAllocations: [],
+  sideIncomeLoading: false,
+  allocateSideIncome: async () => {},
+  removeAllocation: async () => {},
+  refreshSideIncome: async () => {},
+  currentRollover: null,
+  rolloverLoading: false,
+  decideRollover: async () => {},
+  refreshRollover: async () => {},
 
   userName: '',
   userInitials: '',
@@ -302,6 +365,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
+  const [sideIncomeSummary, setSideIncomeSummary] = useState<SideIncomeSummary[]>([]);
+  const [sideIncomeAllocations, setSideIncomeAllocations] = useState<SecondaryAllocation[]>([]);
+  const [sideIncomeLoading, setSideIncomeLoading] = useState(false);
+  const [currentRollover, setCurrentRollover] = useState<MonthlyRollover | null>(null);
+  const [rolloverLoading, setRolloverLoading] = useState(false);
+
   const [currencyCode, setCurrencyCodeState] = useState('USD');
   const [tier, setTier] = useState<'free' | 'pro' | 'ultra'>('free');
   const isPro = tier === 'pro' || tier === 'ultra';
@@ -400,6 +469,121 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // ── Fetch secondary income (MATCHES MOBILE) ─────────────
+  const fetchSideIncome = useCallback(async () => {
+    if (!user) return;
+    setSideIncomeLoading(true);
+    try {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      const [summaryRes, allocRes] = await Promise.all([
+        secondaryIncomeAPI.getSummary(month, year),
+        secondaryIncomeAPI.getAllocations(month, year),
+      ]);
+      setSideIncomeSummary((summaryRes.data?.summary || []).map((s: Record<string, unknown>) => ({
+        incomeSourceId: String(s.incomeSourceId),
+        name: String(s.name),
+        amount: parseFloat(String(s.amount)) || 0,
+        frequency: String(s.frequency || ''),
+        totalAllocated: parseFloat(String(s.totalAllocated)) || 0,
+        totalToSavings: parseFloat(String(s.totalToSavings)) || 0,
+        totalToBills: parseFloat(String(s.totalToBills)) || 0,
+        remaining: parseFloat(String(s.remaining)) || 0,
+        byPaycheck: (s.byPaycheck || {}) as Record<number, { allocated: number; toSavings: number; toBills: number }>,
+      })));
+      setSideIncomeAllocations((allocRes.data?.allocations || []).map((a: Record<string, unknown>) => ({
+        id: String(a.id),
+        incomeSourceId: String(a.income_source_id),
+        periodMonth: Number(a.period_month),
+        periodYear: Number(a.period_year),
+        paycheckNumber: Number(a.paycheck_number),
+        action: String(a.action) as 'savings' | 'bill',
+        amount: parseFloat(String(a.amount)) || 0,
+        billId: a.bill_id ? String(a.bill_id) : undefined,
+        billName: (a.bills as Record<string, unknown>)?.name ? String((a.bills as Record<string, unknown>).name) : undefined,
+        sourceName: (a.income_sources as Record<string, unknown>)?.name ? String((a.income_sources as Record<string, unknown>).name) : undefined,
+        note: a.note ? String(a.note) : undefined,
+      })));
+    } catch (error) {
+      console.error('Failed to fetch side income:', error);
+    } finally {
+      setSideIncomeLoading(false);
+    }
+  }, [user]);
+
+  const allocateSideIncome = async (data: { incomeSourceId: string; paycheckNumber: number; action: 'savings' | 'bill'; amount: number; billId?: string; note?: string }) => {
+    const now = new Date();
+    try {
+      await secondaryIncomeAPI.allocate({
+        incomeSourceId: data.incomeSourceId,
+        periodMonth: now.getMonth() + 1,
+        periodYear: now.getFullYear(),
+        paycheckNumber: data.paycheckNumber,
+        action: data.action,
+        amount: data.amount,
+        billId: data.billId || undefined,
+        note: data.note || undefined,
+      });
+      await fetchSideIncome();
+    } catch (error) {
+      console.error('allocateSideIncome failed:', error);
+      throw error;
+    }
+  };
+
+  const removeAllocation = async (id: string) => {
+    setSideIncomeAllocations(prev => prev.filter(a => a.id !== id));
+    try {
+      await secondaryIncomeAPI.removeAllocation(id);
+      await fetchSideIncome();
+    } catch (error) {
+      console.error('removeAllocation failed:', error);
+      fetchSideIncome();
+    }
+  };
+
+  // ── Fetch rollover (MATCHES MOBILE) ──────────────────────
+  const fetchRollover = useCallback(async () => {
+    if (!user) return;
+    setRolloverLoading(true);
+    try {
+      const res = await rolloverAPI.getCurrent();
+      const r = res.data?.rollover;
+      if (r) {
+        setCurrentRollover({
+          id: r.id,
+          periodMonth: r.period_month,
+          periodYear: r.period_year,
+          previousLeftover: parseFloat(r.previous_leftover) || 0,
+          action: r.action,
+          rolloverAmount: parseFloat(r.rollover_amount) || 0,
+          decidedAt: r.decided_at || undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch rollover:', error);
+    } finally {
+      setRolloverLoading(false);
+    }
+  }, [user]);
+
+  const decideRollover = async (action: 'rolled_over' | 'fresh_start') => {
+    if (!currentRollover) return;
+    const newAmount = action === 'rolled_over' ? currentRollover.previousLeftover : 0;
+    setCurrentRollover(prev => prev ? { ...prev, action, rolloverAmount: newAmount, decidedAt: new Date().toISOString() } : null);
+    try {
+      await rolloverAPI.decide({
+        action,
+        periodMonth: currentRollover.periodMonth,
+        periodYear: currentRollover.periodYear,
+      });
+    } catch (error) {
+      console.error('decideRollover failed:', error);
+      fetchRollover();
+    }
+  };
+
   // ── Initial fetch + sync user profile ─────────────────────
   useEffect(() => {
     if (!user) return;
@@ -438,11 +622,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Fetch data
-      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments()]);
+      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome()]);
     }
 
     syncAndFetch();
-  }, [user, fetchBills, fetchIncomeSources, fetchCategories, fetchPayments]);
+  }, [user, fetchBills, fetchIncomeSources, fetchCategories, fetchPayments, fetchRollover, fetchSideIncome]);
 
   // ── Bill CRUD ─────────────────────────────────────────────
   const addBill = async (data: Record<string, unknown>): Promise<Bill> => {
@@ -713,6 +897,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         currency,
         setCurrencyCode,
         fmt,
+
+        sideIncomeSummary,
+        sideIncomeAllocations,
+        sideIncomeLoading,
+        allocateSideIncome,
+        removeAllocation,
+        refreshSideIncome: fetchSideIncome,
+
+        currentRollover,
+        rolloverLoading,
+        decideRollover,
+        refreshRollover: fetchRollover,
 
         tier,
         isPro,
