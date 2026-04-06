@@ -1155,7 +1155,7 @@ export default function DashboardPage() {
                     {donutData.length === 0 ? (
                       <p style={{ fontSize: '0.8rem', color: colors.textMuted, textAlign: 'center', margin: 0 }}>No category data yet</p>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem', justifyContent: 'center', padding: '0.5rem 1rem' }}>
                         {/* SVG Donut */}
                         <div style={{ position: 'relative', width: 200, height: 200, flexShrink: 0 }}>
                           <svg viewBox="0 0 200 200" width="200" height="200">
