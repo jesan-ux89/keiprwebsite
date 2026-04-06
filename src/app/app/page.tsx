@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
+import { usersAPI } from '@/lib/api';
 import type { Bill } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -206,6 +207,20 @@ export default function DashboardPage() {
 
   // ── Expanded category state ────────────────────────────────
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
+
+  // ── One-time funds for Monthly tab ────────────────────────
+  const oneTimeFunds = incomeSources.filter((s: any) => s.isOneTime);
+  const [fundAllocMap, setFundAllocMap] = useState<Record<string, any[]>>({});
+  useEffect(() => {
+    if (oneTimeFunds.length === 0) return;
+    oneTimeFunds.forEach((fund: any) => {
+      usersAPI.getFundAllocations(fund.id)
+        .then(res => {
+          setFundAllocMap(prev => ({ ...prev, [fund.id]: res.data?.allocations || [] }));
+        })
+        .catch(() => {});
+    });
+  }, [incomeSources]);
 
   // ── Dynamic labels ─────────────────────────────────────────
   const now = new Date();
@@ -1197,6 +1212,69 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* One-Time Funds */}
+          {oneTimeFunds.length > 0 && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
+                One-Time Funds
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {oneTimeFunds.map((fund: any) => {
+                  const allocs = fundAllocMap[fund.id] || [];
+                  const totalAllocated = allocs.reduce((s: number, a: any) => s + parseFloat(a.amount), 0);
+                  const remaining = Math.max(0, (fund.typicalAmount || 0) - totalAllocated);
+                  const isFullySpent = remaining < 0.01;
+                  const spentPct = (fund.typicalAmount || 0) > 0 ? Math.min(100, Math.round((totalAllocated / (fund.typicalAmount || 1)) * 100)) : 0;
+
+                  return (
+                    <a
+                      key={fund.id}
+                      href="/app/settings"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <Card style={{ cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+                          <span style={{ fontSize: '1.25rem', marginRight: '0.75rem' }}>💰</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>{fund.name}</p>
+                              {isFullySpent && (
+                                <span style={{
+                                  backgroundColor: 'rgba(10,123,108,0.12)',
+                                  color: '#0A7B6C',
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 600,
+                                }}>Fully spent</span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                              {allocs.length} item{allocs.length !== 1 ? 's' : ''} · Click to manage
+                            </p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '1rem', fontWeight: 600, color: isFullySpent ? '#0A7B6C' : '#854F0B', margin: 0 }}>{fmt(remaining)}</p>
+                            <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: '0.1rem 0 0 0' }}>remaining</p>
+                          </div>
+                        </div>
+
+                        {/* Mini progress bar */}
+                        <div style={{ height: '3px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${spentPct}%`, backgroundColor: isFullySpent ? '#0A7B6C' : spentPct > 80 ? '#854F0B' : '#38BDF8', borderRadius: '2px' }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                          <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{fmt(totalAllocated)} spent</span>
+                          <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>of {fmt(fund.typicalAmount || 0)}</span>
+                        </div>
+                      </Card>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
