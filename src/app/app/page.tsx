@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
   // ── Side income helpers (MATCHES MOBILE) ────────────────────
   function getSideIncomeForPaycheck(paycheckNum: number) {
-    return sideIncomeSummary.map(src => {
+    return sideIncomeSummary.filter(src => !oneTimeFundIds.has(src.incomeSourceId)).map(src => {
       const pData = src.byPaycheck[paycheckNum] || { allocated: 0, toSavings: 0, toBills: 0 };
       let carry = 0;
       for (let pn = 1; pn < paycheckNum; pn++) {
@@ -212,6 +212,7 @@ export default function DashboardPage() {
 
   // ── One-time funds for Monthly tab ────────────────────────
   const oneTimeFunds = incomeSources.filter((s: any) => s.isOneTime);
+  const oneTimeFundIds = new Set(oneTimeFunds.map((f: any) => f.id));
   const [fundAllocMap, setFundAllocMap] = useState<Record<string, any[]>>({});
   useEffect(() => {
     if (oneTimeFunds.length === 0) return;
