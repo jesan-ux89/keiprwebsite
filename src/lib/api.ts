@@ -83,6 +83,10 @@ export const usersAPI = {
   updateCategory:      (id: string, data: Record<string, unknown>) => api.patch(`/users/me/categories/${id}`, data),
   deleteCategory:      (id: string) => api.delete(`/users/me/categories/${id}`),
   deleteAccount:       () => api.delete('/auth/delete-account'),
+  // Fund allocations (one-time fund spending items)
+  getFundAllocations:  (fundId: string) => api.get(`/users/me/income-sources/${fundId}/allocations`),
+  addFundAllocation:   (fundId: string, data: Record<string, unknown>) => api.post(`/users/me/income-sources/${fundId}/allocations`, data),
+  deleteFundAllocation:(fundId: string, allocId: string) => api.delete(`/users/me/income-sources/${fundId}/allocations/${allocId}`),
 };
 
 // Export

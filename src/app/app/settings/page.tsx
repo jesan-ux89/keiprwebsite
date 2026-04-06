@@ -92,6 +92,16 @@ export default function SettingsPage() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundLoading, setFundLoading] = useState(false);
 
+  // Fund detail (allocation tracking)
+  const [expandedFundId, setExpandedFundId] = useState<string | null>(null);
+  const [fundAllocations, setFundAllocations] = useState<any[]>([]);
+  const [fundAllocLoading, setFundAllocLoading] = useState(false);
+  const [allocName, setAllocName] = useState('');
+  const [allocAmount, setAllocAmount] = useState('');
+  const [allocError, setAllocError] = useState<string | null>(null);
+  const [allocSaving, setAllocSaving] = useState(false);
+  const [showAllocForm, setShowAllocForm] = useState(false);
+
   const [expandedSection, setExpandedSection] = useState<string | null>('profile');
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -252,6 +262,69 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Failed to delete one-time fund:', error);
       alert('Failed to delete one-time fund');
+    }
+  };
+
+  // Fund allocation handlers
+  const loadFundAllocations = async (fundId: string) => {
+    setFundAllocLoading(true);
+    try {
+      const res = await usersAPI.getFundAllocations(fundId);
+      setFundAllocations(res.data?.allocations || []);
+    } catch (err) {
+      console.error('Failed to load fund allocations:', err);
+      setFundAllocations([]);
+    } finally {
+      setFundAllocLoading(false);
+    }
+  };
+
+  const toggleFundDetail = (fundId: string) => {
+    if (expandedFundId === fundId) {
+      setExpandedFundId(null);
+      setFundAllocations([]);
+      setShowAllocForm(false);
+    } else {
+      setExpandedFundId(fundId);
+      loadFundAllocations(fundId);
+      setShowAllocForm(false);
+      setAllocError(null);
+    }
+  };
+
+  const handleAddAllocation = async (fundId: string, fundTotal: number) => {
+    setAllocError(null);
+    const name = allocName.trim();
+    const amount = parseFloat(allocAmount);
+    const totalAllocated = fundAllocations.reduce((s: number, a: any) => s + parseFloat(a.amount), 0);
+    const remaining = fundTotal - totalAllocated;
+
+    if (!name) { setAllocError('Enter a name for this item.'); return; }
+    if (isNaN(amount) || amount <= 0) { setAllocError('Enter a valid amount.'); return; }
+    if (amount > remaining + 0.01) { setAllocError(`Amount exceeds remaining balance of ${fmt(remaining)}.`); return; }
+
+    setAllocSaving(true);
+    try {
+      const res = await usersAPI.addFundAllocation(fundId, { name, amount });
+      const newAlloc = res.data?.allocation;
+      if (newAlloc) setFundAllocations(prev => [...prev, newAlloc]);
+      setAllocName('');
+      setAllocAmount('');
+      setShowAllocForm(false);
+    } catch (err: any) {
+      setAllocError(err?.response?.data?.error || 'Failed to add item.');
+    } finally {
+      setAllocSaving(false);
+    }
+  };
+
+  const handleDeleteAllocation = async (fundId: string, allocId: string) => {
+    setFundAllocations(prev => prev.filter(a => a.id !== allocId));
+    try {
+      await usersAPI.deleteFundAllocation(fundId, allocId);
+    } catch (err) {
+      console.error('Failed to delete allocation:', err);
+      loadFundAllocations(fundId);
     }
   };
 
@@ -704,53 +777,234 @@ export default function SettingsPage() {
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                {incomeSources.filter(s => s.isOneTime).map((fund) => (
+                {incomeSources.filter(s => s.isOneTime).map((fund) => {
+                  const isExpanded = expandedFundId === fund.id;
+                  const totalAllocated = isExpanded ? fundAllocations.reduce((s: number, a: any) => s + parseFloat(a.amount), 0) : 0;
+                  const remaining = (fund.typicalAmount ?? 0) - totalAllocated;
+                  const isFullySpent = isExpanded && remaining < 0.01;
+                  const spentPct = (fund.typicalAmount ?? 0) > 0 ? Math.min(100, Math.round((totalAllocated / (fund.typicalAmount ?? 1)) * 100)) : 0;
+
+                  return (
                   <div
                     key={fund.id}
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
                       padding: '0.75rem',
                       backgroundColor: colors.background,
                       borderRadius: '0.5rem',
+                      border: isExpanded ? '1px solid rgba(10,123,108,0.2)' : 'none',
                     }}
                   >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <p style={{ color: colors.text, fontWeight: 500, margin: 0, fontSize: '0.95rem' }}>
-                          {fund.name}
+                    {/* Fund header row — clickable */}
+                    <div
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                      onClick={() => toggleFundDetail(fund.id)}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.1rem' }}>💰</span>
+                          <p style={{ color: colors.text, fontWeight: 500, margin: 0, fontSize: '0.95rem' }}>
+                            {fund.name}
+                          </p>
+                          <span style={{
+                            backgroundColor: isFullySpent ? 'rgba(10,123,108,0.12)' : 'rgba(10,123,108,0.12)',
+                            color: '#0A7B6C',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            border: '0.5px solid rgba(10,123,108,0.25)',
+                          }}>{isFullySpent ? 'Fully spent' : 'One-time'}</span>
+                        </div>
+                        <p style={{ color: colors.textMuted, margin: '0.25rem 0 0 1.6rem', fontSize: '0.8rem' }}>
+                          {isExpanded ? `${fundAllocations.length} item${fundAllocations.length !== 1 ? 's' : ''} · Click to collapse` : 'Click to view spending'}
                         </p>
-                        <span style={{
-                          backgroundColor: 'rgba(10,123,108,0.12)',
-                          color: '#0A7B6C',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          border: '0.5px solid rgba(10,123,108,0.25)',
-                        }}>One-time</span>
                       </div>
-                      <p style={{ color: colors.textMuted, margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>
-                        One-time fund
-                      </p>
+                      <div style={{ textAlign: 'right', marginRight: '1rem' }}>
+                        <p style={{ color: '#0A7B6C', fontWeight: 600, margin: 0 }}>
+                          {fmt(fund.typicalAmount ?? 0)}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteFund(fund.id); }}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
                     </div>
-                    <div style={{ textAlign: 'right', marginRight: '1rem' }}>
-                      <p style={{ color: '#0A7B6C', fontWeight: 600, margin: 0 }}>
-                        {fmt(fund.typicalAmount ?? 0)}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDeleteFund(fund.id)}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
+
+                    {/* Expanded detail */}
+                    {isExpanded && (
+                      <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${colors.cardBorder}` }}>
+                        {fundAllocLoading ? (
+                          <p style={{ color: colors.textMuted, fontSize: '0.85rem', textAlign: 'center', padding: '1rem 0' }}>Loading...</p>
+                        ) : (
+                          <>
+                            {/* Summary bar */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                              <div>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: colors.text }}>{fmt(fund.typicalAmount ?? 0)}</div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Spent</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#A32D2D' }}>{fmt(totalAllocated)}</div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Remaining</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: isFullySpent ? '#0A7B6C' : '#854F0B' }}>{fmt(remaining)}</div>
+                              </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div style={{ height: '4px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                              <div style={{ height: '100%', width: `${spentPct}%`, backgroundColor: isFullySpent ? '#0A7B6C' : spentPct > 80 ? '#854F0B' : '#38BDF8', borderRadius: '2px' }} />
+                            </div>
+
+                            {/* Allocation items */}
+                            {fundAllocations.length === 0 ? (
+                              <p style={{ color: colors.textMuted, fontSize: '0.85rem', textAlign: 'center', padding: '0.75rem 0' }}>
+                                No spending items yet. Click below to start spending from this fund.
+                              </p>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                {fundAllocations.map((alloc: any) => (
+                                  <div key={alloc.id} style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '0.6rem 0.75rem', backgroundColor: colors.card, borderRadius: '0.5rem',
+                                    border: `0.5px solid ${colors.cardBorder}`,
+                                  }}>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontSize: '0.85rem', fontWeight: 500, color: colors.text }}>{alloc.name}</div>
+                                      <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                                        {new Date(alloc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                      </div>
+                                    </div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#A32D2D', marginRight: '0.75rem' }}>{fmt(parseFloat(alloc.amount))}</div>
+                                    <button
+                                      onClick={() => handleDeleteAllocation(fund.id, alloc.id)}
+                                      style={{
+                                        padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                                        backgroundColor: 'rgba(163,45,45,0.08)', color: '#A32D2D', fontSize: '0.75rem', fontWeight: 600,
+                                      }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Add allocation form / button */}
+                            {!isFullySpent && (
+                              showAllocForm ? (
+                                <div style={{
+                                  padding: '0.75rem', backgroundColor: colors.card, borderRadius: '0.5rem',
+                                  border: '1px solid rgba(10,123,108,0.2)', marginBottom: '0.5rem',
+                                }}>
+                                  {allocError && (
+                                    <div style={{
+                                      backgroundColor: 'rgba(163,45,45,0.1)', padding: '0.5rem 0.75rem',
+                                      borderRadius: '0.375rem', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#A32D2D',
+                                    }}>
+                                      {allocError}
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <div>
+                                      <label style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>What's it for</label>
+                                      <input
+                                        type="text"
+                                        value={allocName}
+                                        onChange={(e) => setAllocName(e.target.value)}
+                                        placeholder="e.g. New Tires"
+                                        style={{
+                                          width: '100%', padding: '8px 10px', borderRadius: '6px',
+                                          border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.inputBg,
+                                          color: colors.text, fontSize: '0.85rem', fontFamily: 'inherit', boxSizing: 'border-box',
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Amount</label>
+                                      <input
+                                        type="number"
+                                        value={allocAmount}
+                                        onChange={(e) => setAllocAmount(e.target.value)}
+                                        placeholder="0.00"
+                                        style={{
+                                          width: '100%', padding: '8px 10px', borderRadius: '6px',
+                                          border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.inputBg,
+                                          color: colors.text, fontSize: '0.85rem', fontFamily: 'inherit', boxSizing: 'border-box',
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0 0 0.5rem 0' }}>{fmt(remaining)} remaining in this fund</p>
+                                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button
+                                      onClick={() => handleAddAllocation(fund.id, fund.typicalAmount ?? 0)}
+                                      disabled={allocSaving}
+                                      style={{
+                                        padding: '8px 16px', borderRadius: '6px', border: 'none',
+                                        backgroundColor: '#0A7B6C', color: '#fff', fontSize: '0.85rem',
+                                        fontWeight: 600, cursor: 'pointer', opacity: allocSaving ? 0.6 : 1,
+                                      }}
+                                    >
+                                      {allocSaving ? 'Adding...' : 'Add item'}
+                                    </button>
+                                    <button
+                                      onClick={() => { setShowAllocForm(false); setAllocError(null); }}
+                                      style={{
+                                        padding: '8px 16px', borderRadius: '6px',
+                                        border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.card,
+                                        color: colors.textSub, fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
+                                      }}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => { setShowAllocForm(true); setAllocName(''); setAllocAmount(''); setAllocError(null); }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                                    width: '100%', padding: '0.6rem', borderRadius: '0.5rem', cursor: 'pointer',
+                                    backgroundColor: 'rgba(10,123,108,0.06)', border: '1px solid rgba(10,123,108,0.15)',
+                                    color: '#0A7B6C', fontSize: '0.85rem', fontWeight: 500,
+                                  }}
+                                >
+                                  <Plus size={16} /> Spend from this fund
+                                </button>
+                              )
+                            )}
+
+                            {/* Fully spent notice */}
+                            {isFullySpent && (
+                              <div style={{
+                                display: 'flex', gap: '0.5rem', alignItems: 'flex-start',
+                                padding: '0.75rem', backgroundColor: 'rgba(10,123,108,0.06)',
+                                borderRadius: '0.5rem', border: '0.5px solid rgba(10,123,108,0.15)',
+                              }}>
+                                <span>✅</span>
+                                <div>
+                                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0A7B6C', marginBottom: '2px' }}>Fully spent</div>
+                                  <div style={{ fontSize: '0.8rem', color: colors.textSub, lineHeight: 1.4 }}>
+                                    This fund has been fully allocated. Remove items to free up balance, or delete the fund when you no longer need it.
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
