@@ -94,6 +94,16 @@ export const exportAPI = {
   requestExport: () => api.post('/export'),
 };
 
+// Subscriptions (Lemon Squeezy)
+export const subscriptionsAPI = {
+  getStatus:   () => api.get('/subscriptions/status'),
+  checkout:    (planKey: string) => api.post('/subscriptions/checkout', { planKey }),
+  getPortal:   () => api.post('/subscriptions/portal'),
+  cancel:      () => api.post('/subscriptions/cancel'),
+  resume:      () => api.post('/subscriptions/resume'),
+  changePlan:  (planKey: string) => api.post('/subscriptions/change-plan', { planKey }),
+};
+
 // Banking (Ultra tier — Plaid integration)
 export const bankingAPI = {
   getLinkToken:        () => api.post('/banking/link-token'),

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { usersAPI, exportAPI } from '@/lib/api';
+import { usersAPI, exportAPI, subscriptionsAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -52,19 +52,36 @@ const CURRENCIES = [
 
 const TIERS = [
   {
+    key: 'free',
     name: 'Free',
-    price: '$0',
+    monthlyPrice: '$0',
+    annualPrice: '$0',
+    monthlyLabel: 'Free forever',
+    annualLabel: 'Free forever',
+    monthlyPlanKey: null,
+    annualPlanKey: null,
     features: ['1 income source', '1 split', '1 month planning'],
-    current: true,
   },
   {
+    key: 'pro',
     name: 'Pro',
-    price: '$7.99/mo',
+    monthlyPrice: '$7.99',
+    annualPrice: '$6.99',
+    monthlyLabel: '/month',
+    annualLabel: '/month, billed annually',
+    monthlyPlanKey: 'pro_monthly',
+    annualPlanKey: 'pro_annual',
     features: ['Unlimited income sources', 'Unlimited splits', 'Unlimited planning', 'Data export', 'Trends'],
   },
   {
+    key: 'ultra',
     name: 'Ultra',
-    price: '$11.99/mo',
+    monthlyPrice: '$11.99',
+    annualPrice: '$10.99',
+    monthlyLabel: '/month',
+    annualLabel: '/month, billed annually',
+    monthlyPlanKey: 'ultra_monthly',
+    annualPlanKey: 'ultra_annual',
     features: ['Everything in Pro', 'Connected banking via Plaid', 'Bill suggestions', 'Transaction matching'],
   },
 ];
@@ -107,11 +124,91 @@ export default function SettingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Subscription state
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly');
+  const [subStatus, setSubStatus] = useState<any>(null);
+  const [subLoading, setSubLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
   useEffect(() => {
     if (user?.displayName) {
       setDisplayName(user.displayName);
     }
   }, [user]);
+
+  // Load subscription status when subscription section opens
+  useEffect(() => {
+    if (expandedSection === 'subscription') {
+      loadSubStatus();
+    }
+  }, [expandedSection]);
+
+  const loadSubStatus = async () => {
+    try {
+      const res = await subscriptionsAPI.getStatus();
+      setSubStatus(res.data);
+    } catch (err) {
+      console.error('Failed to load subscription status:', err);
+    }
+  };
+
+  const handleCheckout = async (planKey: string) => {
+    setCheckoutLoading(planKey);
+    try {
+      const res = await subscriptionsAPI.checkout(planKey);
+      if (res.data?.checkoutUrl) {
+        window.open(res.data.checkoutUrl, '_blank');
+      }
+    } catch (err: any) {
+      console.error('Checkout failed:', err);
+      alert(err?.response?.data?.error || 'Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setSubLoading(true);
+    try {
+      const res = await subscriptionsAPI.getPortal();
+      if (res.data?.customerPortalUrl) {
+        window.open(res.data.customerPortalUrl, '_blank');
+      }
+    } catch (err: any) {
+      console.error('Portal failed:', err);
+      alert(err?.response?.data?.error || 'Failed to open subscription management');
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm('Are you sure you want to cancel your subscription? You\'ll keep access until the end of your billing period.')) return;
+    setSubLoading(true);
+    try {
+      const res = await subscriptionsAPI.cancel();
+      alert(res.data?.message || 'Subscription cancelled.');
+      await loadSubStatus();
+    } catch (err: any) {
+      console.error('Cancel failed:', err);
+      alert(err?.response?.data?.error || 'Failed to cancel subscription');
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const handleResumeSubscription = async () => {
+    setSubLoading(true);
+    try {
+      await subscriptionsAPI.resume();
+      await loadSubStatus();
+    } catch (err: any) {
+      console.error('Resume failed:', err);
+      alert(err?.response?.data?.error || 'Failed to resume subscription');
+    } finally {
+      setSubLoading(false);
+    }
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -1058,67 +1155,290 @@ export default function SettingsPage() {
         </button>
 
         {expandedSection === 'subscription' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-            {TIERS.map((tier) => (
-              <div
-                key={tier.name}
-                style={{
-                  padding: '1.5rem',
-                  backgroundColor: colors.background,
-                  borderRadius: '0.75rem',
-                  border: tier.current ? `2px solid ${colors.electric}` : `1px solid ${colors.divider}`,
-                  position: 'relative',
-                }}
-              >
-                {tier.current && (
+          <div>
+            {/* Billing interval toggle */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <div style={{
+                display: 'inline-flex',
+                backgroundColor: colors.background,
+                borderRadius: '0.5rem',
+                padding: '4px',
+                border: `1px solid ${colors.divider}`,
+              }}>
+                <button
+                  onClick={() => setBillingInterval('monthly')}
+                  style={{
+                    padding: '0.5rem 1.25rem',
+                    borderRadius: '0.375rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    backgroundColor: billingInterval === 'monthly' ? colors.electric : 'transparent',
+                    color: billingInterval === 'monthly' ? colors.midnight : colors.textMuted,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingInterval('annual')}
+                  style={{
+                    padding: '0.5rem 1.25rem',
+                    borderRadius: '0.375rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    backgroundColor: billingInterval === 'annual' ? colors.electric : 'transparent',
+                    color: billingInterval === 'annual' ? colors.midnight : colors.textMuted,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  Annual
+                  <span style={{ fontSize: '0.7rem', marginLeft: '0.35rem', color: billingInterval === 'annual' ? colors.midnight : '#22c55e' }}>Save ~13%</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Active subscription status bar */}
+            {subStatus && subStatus.plan !== 'free' && (
+              <div style={{
+                padding: '1rem 1.25rem',
+                backgroundColor: colors.background,
+                borderRadius: '0.75rem',
+                border: `1px solid ${colors.electric}`,
+                marginBottom: '1.25rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+              }}>
+                <div>
+                  <span style={{ color: colors.text, fontWeight: 600, fontSize: '0.95rem' }}>
+                    Keipr {subStatus.plan.charAt(0).toUpperCase() + subStatus.plan.slice(1)}
+                  </span>
+                  <span style={{
+                    marginLeft: '0.75rem',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '1rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    backgroundColor: subStatus.subscriptionStatus === 'active' || subStatus.subscriptionStatus === 'trialing' ? '#22c55e20' : '#f59e0b20',
+                    color: subStatus.subscriptionStatus === 'active' || subStatus.subscriptionStatus === 'trialing' ? '#22c55e' : '#f59e0b',
+                  }}>
+                    {subStatus.subscriptionStatus === 'trialing' ? 'Trial' : subStatus.subscriptionStatus}
+                  </span>
+                  {subStatus.subscriptionStatus === 'cancelled' && subStatus.subscriptionEndsAt && (
+                    <span style={{ color: colors.textMuted, fontSize: '0.8rem', marginLeft: '0.5rem' }}>
+                      Access until {new Date(subStatus.subscriptionEndsAt).toLocaleDateString()}
+                    </span>
+                  )}
+                  {subStatus.subscriptionStatus === 'trialing' && subStatus.trialEndsAt && (
+                    <span style={{ color: colors.textMuted, fontSize: '0.8rem', marginLeft: '0.5rem' }}>
+                      Trial ends {new Date(subStatus.trialEndsAt).toLocaleDateString()}
+                    </span>
+                  )}
+                  {subStatus.subscriptionRenewsAt && subStatus.subscriptionStatus === 'active' && (
+                    <span style={{ color: colors.textMuted, fontSize: '0.8rem', marginLeft: '0.5rem' }}>
+                      Renews {new Date(subStatus.subscriptionRenewsAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {subStatus.subscriptionStatus === 'cancelled' ? (
+                    <button
+                      onClick={handleResumeSubscription}
+                      disabled={subLoading}
+                      style={{
+                        padding: '0.4rem 1rem',
+                        borderRadius: '0.375rem',
+                        border: `1px solid ${colors.electric}`,
+                        backgroundColor: 'transparent',
+                        color: colors.electric,
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        cursor: subLoading ? 'not-allowed' : 'pointer',
+                        opacity: subLoading ? 0.6 : 1,
+                      }}
+                    >
+                      {subLoading ? 'Resuming...' : 'Resume'}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleManageSubscription}
+                        disabled={subLoading}
+                        style={{
+                          padding: '0.4rem 1rem',
+                          borderRadius: '0.375rem',
+                          border: `1px solid ${colors.divider}`,
+                          backgroundColor: 'transparent',
+                          color: colors.text,
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: subLoading ? 'not-allowed' : 'pointer',
+                          opacity: subLoading ? 0.6 : 1,
+                        }}
+                      >
+                        Manage Billing
+                      </button>
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={subLoading}
+                        style={{
+                          padding: '0.4rem 1rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #ef4444',
+                          backgroundColor: 'transparent',
+                          color: '#ef4444',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: subLoading ? 'not-allowed' : 'pointer',
+                          opacity: subLoading ? 0.6 : 1,
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tier cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+              {TIERS.map((tier) => {
+                const currentPlan = subStatus?.plan || 'free';
+                const isCurrent = tier.key === currentPlan;
+                const price = billingInterval === 'annual' ? tier.annualPrice : tier.monthlyPrice;
+                const label = billingInterval === 'annual' ? tier.annualLabel : tier.monthlyLabel;
+                const planKey = billingInterval === 'annual' ? tier.annualPlanKey : tier.monthlyPlanKey;
+                const isUpgrade = tier.key !== 'free' && !isCurrent && (
+                  (tier.key === 'ultra') || (tier.key === 'pro' && currentPlan === 'free')
+                );
+                const isDowngrade = tier.key !== 'free' && !isCurrent && (
+                  (tier.key === 'pro' && currentPlan === 'ultra')
+                );
+
+                return (
                   <div
+                    key={tier.key}
                     style={{
-                      position: 'absolute',
-                      top: '-12px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      backgroundColor: colors.electric,
-                      color: colors.midnight,
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '1rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
+                      padding: '1.5rem',
+                      backgroundColor: colors.background,
+                      borderRadius: '0.75rem',
+                      border: isCurrent ? `2px solid ${colors.electric}` : `1px solid ${colors.divider}`,
+                      position: 'relative',
                     }}
                   >
-                    <Check size={12} />
-                    Current Plan
-                  </div>
-                )}
+                    {isCurrent && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '-12px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          backgroundColor: colors.electric,
+                          color: colors.midnight,
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '1rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <Check size={12} />
+                        Current Plan
+                      </div>
+                    )}
 
-                <h3 style={{ color: colors.text, fontWeight: 600, margin: '0 0 0.5rem 0' }}>
-                  {tier.name}
-                </h3>
-                <p style={{ color: colors.electric, fontSize: '1.5rem', fontWeight: 700, margin: '0.5rem 0 1rem 0' }}>
-                  {tier.price}
-                </p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {tier.features.map((feature, i) => (
-                    <li key={i} style={{ color: colors.textMuted, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Check size={14} style={{ color: colors.green, flexShrink: 0 }} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                {!tier.current && (
-                  <Button
-                    variant="primary"
-                    size="md"
-                    style={{ width: '100%', marginTop: '1rem' }}
-                    onClick={() => alert(`Upgrade to ${tier.name} coming soon! We're working on integrating payments.`)}
-                  >
-                    Upgrade to {tier.name}
-                  </Button>
-                )}
-              </div>
-            ))}
+                    <h3 style={{ color: colors.text, fontWeight: 600, margin: '0 0 0.5rem 0' }}>
+                      {tier.name}
+                    </h3>
+                    <div style={{ margin: '0.5rem 0 1rem 0' }}>
+                      <span style={{ color: colors.electric, fontSize: '1.5rem', fontWeight: 700 }}>
+                        {price}
+                      </span>
+                      <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>
+                        {label}
+                      </span>
+                    </div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {tier.features.map((feature, i) => (
+                        <li key={i} style={{ color: colors.textMuted, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Check size={14} style={{ color: colors.green, flexShrink: 0 }} />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Action buttons */}
+                    {isUpgrade && planKey && (
+                      <Button
+                        variant="primary"
+                        size="md"
+                        style={{ width: '100%', marginTop: '1rem' }}
+                        disabled={checkoutLoading !== null}
+                        onClick={() => {
+                          if (currentPlan === 'free') {
+                            handleCheckout(planKey);
+                          } else {
+                            // Already subscribed — change plan via API
+                            subscriptionsAPI.changePlan(planKey).then(() => loadSubStatus()).catch((err: any) => alert(err?.response?.data?.error || 'Failed to change plan'));
+                          }
+                        }}
+                      >
+                        {checkoutLoading === planKey ? 'Loading...' : currentPlan === 'free' ? `Start Free Trial` : `Upgrade to ${tier.name}`}
+                      </Button>
+                    )}
+                    {isDowngrade && planKey && (
+                      <button
+                        style={{
+                          width: '100%',
+                          marginTop: '1rem',
+                          padding: '0.6rem',
+                          borderRadius: '0.375rem',
+                          border: `1px solid ${colors.divider}`,
+                          backgroundColor: 'transparent',
+                          color: colors.textMuted,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => {
+                          if (window.confirm(`Downgrade to ${tier.name}? Your billing will be adjusted.`)) {
+                            subscriptionsAPI.changePlan(planKey).then(() => loadSubStatus()).catch((err: any) => alert(err?.response?.data?.error || 'Failed to change plan'));
+                          }
+                        }}
+                      >
+                        Downgrade to {tier.name}
+                      </button>
+                    )}
+                    {isCurrent && tier.key !== 'free' && (
+                      <div style={{
+                        width: '100%',
+                        marginTop: '1rem',
+                        padding: '0.6rem',
+                        textAlign: 'center',
+                        color: colors.textMuted,
+                        fontSize: '0.85rem',
+                      }}>
+                        Your current plan
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 7-day trial note */}
+            <p style={{ textAlign: 'center', color: colors.textMuted, fontSize: '0.8rem', marginTop: '1rem' }}>
+              All paid plans include a 7-day free trial. Cancel anytime.
+            </p>
           </div>
         )}
       </Card>
