@@ -1158,30 +1158,26 @@ export default function DashboardPage() {
                         {/* SVG Donut */}
                         <div style={{ position: 'relative', width: 140, height: 140, flexShrink: 0 }}>
                           <svg viewBox="0 0 140 140" width="140" height="140">
-                            {(() => {
-                              let cumAngle = -90;
-                              return donutData.map((seg: any, i: number) => {
-                                const angle = (seg.pct / 100) * 360;
-                                const startAngle = cumAngle;
-                                cumAngle += angle;
-                                const endAngle = cumAngle;
-                                const largeArc = angle > 180 ? 1 : 0;
-                                const r = 55;
-                                const cx = 70, cy = 70;
-                                const x1 = cx + r * Math.cos((startAngle * Math.PI) / 180);
-                                const y1 = cy + r * Math.sin((startAngle * Math.PI) / 180);
-                                const x2 = cx + r * Math.cos((endAngle * Math.PI) / 180);
-                                const y2 = cy + r * Math.sin((endAngle * Math.PI) / 180);
-                                return (
-                                  <path
-                                    key={i}
-                                    d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                                    fill={seg.color}
-                                  />
-                                );
-                              });
-                            })()}
-                            <circle cx="70" cy="70" r="35" fill={isDark ? '#2A2720' : '#F5F3EF'} />
+                            {donutData.map((seg: any, i: number) => {
+                              const angle = (seg.pct / 100) * 360;
+                              const startAngle = donutData.slice(0, i).reduce((sum: number, s: any) => sum + (s.pct / 100) * 360, 0) - 90;
+                              const endAngle = startAngle + angle;
+                              const largeArc = angle > 180 ? 1 : 0;
+                              const r = 55;
+                              const cx = 70, cy = 70;
+                              const x1 = cx + r * Math.cos((startAngle * Math.PI) / 180);
+                              const y1 = cy + r * Math.sin((startAngle * Math.PI) / 180);
+                              const x2 = cx + r * Math.cos((endAngle * Math.PI) / 180);
+                              const y2 = cy + r * Math.sin((endAngle * Math.PI) / 180);
+                              return (
+                                <path
+                                  key={i}
+                                  d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                                  fill={seg.color}
+                                />
+                              );
+                            })}
+                            <circle cx="70" cy="70" r="35" fill={String(isDark ? '#2A2720' : '#F5F3EF')} />
                           </svg>
                           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
                             <div style={{ fontSize: '1rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsMonthly)}</div>
@@ -1290,7 +1286,7 @@ export default function DashboardPage() {
                       {/* SVG Progress Ring */}
                       <div style={{ position: 'relative', width: 140, height: 140 }}>
                         <svg viewBox="0 0 140 140" width="140" height="140">
-                          <circle cx="70" cy="70" r="55" fill="none" stroke={isDark ? '#444' : '#E0DDD5'} strokeWidth="16" />
+                          <circle cx="70" cy="70" r="55" fill="none" stroke={String(isDark ? '#444' : '#E0DDD5')} strokeWidth="16" />
                           {fundedPct > 0 && (
                             <circle
                               cx="70" cy="70" r="55"
@@ -1302,7 +1298,7 @@ export default function DashboardPage() {
                               transform="rotate(-90 70 70)"
                             />
                           )}
-                          <circle cx="70" cy="70" r="35" fill={isDark ? '#2A2720' : '#F5F3EF'} />
+                          <circle cx="70" cy="70" r="35" fill={String(isDark ? '#2A2720' : '#F5F3EF')} />
                         </svg>
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
                           <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#2ECC71' }}>{fundedPct}%</div>
