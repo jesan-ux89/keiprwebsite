@@ -1155,17 +1155,17 @@ export default function DashboardPage() {
                     {donutData.length === 0 ? (
                       <p style={{ fontSize: '0.8rem', color: colors.textMuted, textAlign: 'center', margin: 0 }}>No category data yet</p>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem', justifyContent: 'center', padding: '0.5rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', justifyContent: 'center', padding: '1rem 2rem' }}>
                         {/* SVG Donut */}
-                        <div style={{ position: 'relative', width: 200, height: 200, flexShrink: 0 }}>
-                          <svg viewBox="0 0 200 200" width="200" height="200">
+                        <div style={{ position: 'relative', width: 250, height: 250, flexShrink: 0 }}>
+                          <svg viewBox="0 0 250 250" width="250" height="250">
                             {donutData.map((seg: any, i: number) => {
                               const angle = (seg.pct / 100) * 360;
                               const startAngle = donutData.slice(0, i).reduce((sum: number, s: any) => sum + (s.pct / 100) * 360, 0) - 90;
                               const endAngle = startAngle + angle;
                               const largeArc = angle > 180 ? 1 : 0;
-                              const r = 80;
-                              const cx = 100, cy = 100;
+                              const r = 100;
+                              const cx = 125, cy = 125;
                               const x1 = cx + r * Math.cos((startAngle * Math.PI) / 180);
                               const y1 = cy + r * Math.sin((startAngle * Math.PI) / 180);
                               const x2 = cx + r * Math.cos((endAngle * Math.PI) / 180);
@@ -1178,27 +1178,24 @@ export default function DashboardPage() {
                                 />
                               );
                             })}
-                            <circle cx="100" cy="100" r="50" fill={String(isDark ? '#2A2720' : '#F5F3EF')} />
+                            <circle cx="125" cy="125" r="62" fill={String(isDark ? '#2A2720' : '#F5F3EF')} />
                           </svg>
                           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsMonthly)}</div>
-                            <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>Total</div>
+                            <div style={{ fontSize: '1.35rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsMonthly)}</div>
+                            <div style={{ fontSize: '0.8rem', color: colors.textMuted }}>Total</div>
                           </div>
                         </div>
                         {/* Legend */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                          {donutData.slice(0, 6).map((seg: any, i: number) => (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {donutData.map((seg: any, i: number) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: seg.color, flexShrink: 0 }} />
-                              <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ minWidth: 0 }}>
                                 <div style={{ fontSize: '0.9rem', color: colors.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seg.name}</div>
                                 <div style={{ fontSize: '0.8rem', color: colors.textMuted }}>{fmt(seg.amount)} ({seg.pct.toFixed(1)}%)</div>
                               </div>
                             </div>
                           ))}
-                          {donutData.length > 6 && (
-                            <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>+{donutData.length - 6} more</span>
-                          )}
                         </div>
                       </div>
                     )}
