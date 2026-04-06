@@ -26,7 +26,7 @@ interface Plan {
 
 export default function PlanPage() {
   const { colors, isDark } = useTheme();
-  const { bills, fmt } = useApp();
+  const { bills, fmt, isPro } = useApp();
   const [months, setMonths] = useState<any[]>([]);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -35,9 +35,9 @@ export default function PlanPage() {
   const [editAmount, setEditAmount] = useState('');
 
   useEffect(() => {
-    setMonths(getPlanMonths());
+    setMonths(getPlanMonths(isPro));
     setSelectedMonthIndex(0);
-  }, []);
+  }, [isPro]);
 
   useEffect(() => {
     if (months.length === 0) return;
@@ -314,8 +314,8 @@ export default function PlanPage() {
     );
   }
 
-  const totalPlanned = plan?.bills.reduce((sum, b) => sum + (b.planned_amount || b.expected_amount), 0) || 0;
-  const totalExpected = plan?.bills.reduce((sum, b) => sum + b.expected_amount, 0) || 0;
+  const totalPlanned = plan?.bills?.reduce((sum, b) => sum + (b.planned_amount || b.expected_amount), 0) || 0;
+  const totalExpected = plan?.bills?.reduce((sum, b) => sum + b.expected_amount, 0) || 0;
   const difference = totalPlanned - totalExpected;
 
   return (
@@ -500,6 +500,44 @@ export default function PlanPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Pro Nudge Tip */}
+      {isPro && months.length >= 5 && (
+        <div style={{
+          marginTop: '32px',
+          padding: '16px',
+          borderRadius: '8px',
+          backgroundColor: `${colors.electric}10`,
+          border: `1px solid ${colors.electric}30`,
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'flex-start',
+        }}>
+          <div style={{
+            fontSize: '18px',
+            marginTop: '2px',
+          }}>
+            💡
+          </div>
+          <div>
+            <div style={{
+              fontSize: '13px',
+              fontWeight: '600',
+              color: colors.text,
+              marginBottom: '4px',
+            }}>
+              Pro feature: Plan further ahead
+            </div>
+            <div style={{
+              fontSize: '12px',
+              color: colors.textMuted,
+              lineHeight: '1.4',
+            }}>
+              As a Pro subscriber, you can plan 7 months in advance instead of just 4. Use these extra months to prepare for major expenses or seasonal changes.
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

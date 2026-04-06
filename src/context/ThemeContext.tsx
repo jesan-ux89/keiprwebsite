@@ -59,6 +59,8 @@ interface ThemeContextType {
   colors: Colors;
 }
 
+const THEME_STORAGE_KEY = 'keipr_theme_mode';
+
 const ThemeContext = createContext<ThemeContextType>({
   themeMode: 'system',
   setThemeMode: () => {},
@@ -67,9 +69,20 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
   const [systemDark, setSystemDark] = useState(true);
 
+  // Load saved theme on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === 'dark' || saved === 'light' || saved === 'system') {
+        setThemeModeState(saved);
+      }
+    } catch {}
+  }, []);
+
+  // Listen for system theme changes
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     setSystemDark(mq.matches);
@@ -77,6 +90,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
+
+  // Persist theme when changed
+  function setThemeMode(mode: ThemeMode) {
+    setThemeModeState(mode);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, mode);
+    } catch {}
+  }
 
   const isDark = themeMode === 'system' ? systemDark : themeMode === 'dark';
   const colors = isDark ? darkColors : lightColors;

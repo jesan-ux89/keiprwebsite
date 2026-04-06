@@ -378,15 +378,18 @@ export function getPaycheckCount(frequency: string): number {
 // ── Helpers ──────────────────────────────────────────────────
 
 /**
- * Get an array of months for the plan view (current + next 3).
- * Matches the old getPlanMonths() used by PlanScreen.
+ * Get an array of months for the plan view.
+ * Free/default: current + next 3 (4 total)
+ * Pro: current + next 6 (7 total)
+ * Matches the getPlanMonths() used by PlanScreen.
  */
-export function getPlanMonths(): { year: number; month: number; label: string }[] {
+export function getPlanMonths(isPro: boolean = false): { year: number; month: number; label: string }[] {
   const today = new Date();
   const months = [];
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-  for (let i = 0; i < 4; i++) {
+  const count = isPro ? 7 : 4;
+  for (let i = 0; i < count; i++) {
     const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
     months.push({
       year: d.getFullYear(),

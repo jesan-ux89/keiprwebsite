@@ -61,6 +61,7 @@ export interface IncomeSource {
   typicalAmount: number;
   nextPayDate?: string;
   isPrimary?: boolean;
+  isOneTime?: boolean;
 }
 
 // ── Category type ──────────────────────────────────────────
@@ -295,6 +296,7 @@ function mapIncomeSource(raw: Record<string, unknown>): IncomeSource {
     typicalAmount: parseFloat(String(raw.typical_amount || raw.typicalAmount || 0)) || 0,
     nextPayDate: raw.next_pay_date ? String(raw.next_pay_date) : (raw.nextPayDate ? String(raw.nextPayDate) : undefined),
     isPrimary: Boolean(raw.is_primary || raw.isPrimary || false),
+    isOneTime: Boolean(raw.is_one_time || raw.isOneTime || false),
   };
 }
 

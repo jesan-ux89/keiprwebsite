@@ -87,6 +87,11 @@ export default function SettingsPage() {
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [incomeLoading, setIncomeLoading] = useState(false);
 
+  const [fundName, setFundName] = useState('');
+  const [fundAmount, setFundAmount] = useState('');
+  const [showFundModal, setShowFundModal] = useState(false);
+  const [fundLoading, setFundLoading] = useState(false);
+
   const [expandedSection, setExpandedSection] = useState<string | null>('profile');
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -211,6 +216,42 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Failed to set primary income source:', error);
       alert('Failed to set primary income source');
+    }
+  };
+
+  const handleAddFund = async () => {
+    if (!fundName || !fundAmount) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setFundLoading(true);
+    try {
+      await addIncomeSource({
+        name: fundName,
+        typicalAmount: parseFloat(fundAmount),
+        frequency: 'monthly',
+        isOneTime: true,
+      });
+      setFundName('');
+      setFundAmount('');
+      setShowFundModal(false);
+    } catch (error) {
+      console.error('Failed to add one-time fund:', error);
+      alert('Failed to add one-time fund');
+    } finally {
+      setFundLoading(false);
+    }
+  };
+
+  const handleDeleteFund = async (id: string) => {
+    if (!window.confirm('Remove this one-time fund?')) return;
+
+    try {
+      await deleteIncomeSource(id);
+    } catch (error) {
+      console.error('Failed to delete one-time fund:', error);
+      alert('Failed to delete one-time fund');
     }
   };
 
@@ -518,13 +559,13 @@ export default function SettingsPage() {
               </p>
             )}
 
-            {incomeSources.length === 0 ? (
+            {incomeSources.filter(s => !s.isOneTime).length === 0 ? (
               <p style={{ color: colors.textMuted, margin: '0 0 1rem 0' }}>
                 No income sources yet. Add one to get started.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                {incomeSources.map((source) => (
+                {incomeSources.filter(s => !s.isOneTime).map((source) => (
                   <div
                     key={source.id}
                     style={{
@@ -570,7 +611,7 @@ export default function SettingsPage() {
                       >
                         <Edit2 size={16} />
                       </Button>
-                      {incomeSources.length > 1 && !source.isPrimary && (
+                      {incomeSources.filter(s => !s.isOneTime).length > 1 && !source.isPrimary && (
                         <Button
                           variant="secondary"
                           size="sm"
@@ -604,6 +645,127 @@ export default function SettingsPage() {
             >
               <Plus size={18} />
               Add Income Source
+            </Button>
+          </>
+        )}
+      </Card>
+
+      {/* One-Time Funds Section */}
+      <Card style={{ marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => toggleSection('funds')}
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            marginBottom: expandedSection === 'funds' ? '1.5rem' : 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <CreditCard size={20} style={{ color: '#0A7B6C' }} />
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+              One-Time Funds
+            </h2>
+          </div>
+          <ChevronRight
+            size={20}
+            style={{
+              color: colors.textMuted,
+              transform: expandedSection === 'funds' ? 'rotate(90deg)' : 'none',
+              transition: 'transform 0.2s ease',
+            }}
+          />
+        </button>
+
+        {expandedSection === 'funds' && (
+          <>
+            {/* Info box */}
+            <p style={{
+              fontSize: '0.8rem',
+              color: colors.textMuted,
+              lineHeight: 1.5,
+              margin: '0 0 0.75rem 0',
+              padding: '0.625rem 0.75rem',
+              backgroundColor: 'rgba(10,123,108,0.06)',
+              borderRadius: '0.5rem',
+              border: '0.5px solid rgba(10,123,108,0.15)',
+            }}>
+              Track one-time money like tax refunds, bonuses, or loan proceeds separately from your regular budget. Funds won't affect your paycheck calculations.
+            </p>
+
+            {incomeSources.filter(s => s.isOneTime).length === 0 ? (
+              <p style={{ color: colors.textMuted, margin: '0 0 1rem 0' }}>
+                No one-time funds yet.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                {incomeSources.filter(s => s.isOneTime).map((fund) => (
+                  <div
+                    key={fund.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '0.75rem',
+                      backgroundColor: colors.background,
+                      borderRadius: '0.5rem',
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <p style={{ color: colors.text, fontWeight: 500, margin: 0, fontSize: '0.95rem' }}>
+                          {fund.name}
+                        </p>
+                        <span style={{
+                          backgroundColor: 'rgba(10,123,108,0.12)',
+                          color: '#0A7B6C',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          border: '0.5px solid rgba(10,123,108,0.25)',
+                        }}>One-time</span>
+                      </div>
+                      <p style={{ color: colors.textMuted, margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>
+                        One-time fund
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right', marginRight: '1rem' }}>
+                      <p style={{ color: '#0A7B6C', fontWeight: 600, margin: 0 }}>
+                        {fmt(fund.typicalAmount ?? 0)}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteFund(fund.id)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                setFundName('');
+                setFundAmount('');
+                setShowFundModal(true);
+              }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              <Plus size={18} />
+              Add One-Time Fund
             </Button>
           </>
         )}
@@ -943,6 +1105,50 @@ export default function SettingsPage() {
               style={{ flex: 1 }}
             >
               {incomeForm.id ? 'Update' : 'Add'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* One-Time Fund Modal */}
+      <Modal
+        isOpen={showFundModal}
+        onClose={() => setShowFundModal(false)}
+        title="Add One-Time Fund"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <Input
+            label="Fund Name"
+            placeholder="e.g., Tax Refund, Work Bonus"
+            value={fundName}
+            onChange={(e) => setFundName(e.target.value)}
+          />
+
+          <Input
+            label="Total Amount"
+            type="number"
+            placeholder="0.00"
+            value={fundAmount}
+            onChange={(e) => setFundAmount(e.target.value)}
+          />
+
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setShowFundModal(false)}
+              style={{ flex: 1 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleAddFund}
+              loading={fundLoading}
+              style={{ flex: 1 }}
+            >
+              Add Fund
             </Button>
           </div>
         </div>
