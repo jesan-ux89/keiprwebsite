@@ -31,7 +31,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 type ViewMode = 'paycheck' | 'nextcheck' | 'cycles' | 'monthly';
 
 export default function DashboardPage() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const {
     bills, billsLoading, refreshBills, refreshIncomeSources, refreshPayments, refreshCategories,
