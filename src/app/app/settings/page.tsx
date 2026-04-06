@@ -72,7 +72,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, refreshIncomeSources, fmt } = useApp();
+  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -143,6 +143,22 @@ export default function SettingsPage() {
       return;
     }
 
+    // Check if this is the primary income and schedule/payday changed
+    const original = incomeSources.find(s => s.id === incomeForm.id);
+    const isPrimarySource = original?.isPrimary || (!incomeSources.some(s => s.isPrimary) && incomeSources[0]?.id === incomeForm.id);
+    const scheduleChanged = original?.frequency !== incomeForm.frequency;
+    const payDateChanged = (original?.nextPayDate || '') !== incomeForm.nextPayDate;
+
+    if (isPrimarySource && (scheduleChanged || payDateChanged)) {
+      const changes: string[] = [];
+      if (scheduleChanged) changes.push(`pay frequency to ${FREQUENCIES.find(f => f.value === incomeForm.frequency)?.label || incomeForm.frequency}`);
+      if (payDateChanged) changes.push(`next pay date to ${incomeForm.nextPayDate}`);
+      const confirmed = window.confirm(
+        `You're updating your primary income's ${changes.join(' and ')}.\n\nThis will recalculate your pay periods, which affects which bills appear in each paycheck across your dashboard, tracker, and plan.`
+      );
+      if (!confirmed) return;
+    }
+
     setIncomeLoading(true);
     try {
       await updateIncomeSource(incomeForm.id, {
@@ -162,13 +178,39 @@ export default function SettingsPage() {
   };
 
   const handleDeleteIncome = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this income source?')) return;
+    const source = incomeSources.find(s => s.id === id);
+    const isPrimary = source?.isPrimary;
+    const remaining = incomeSources.filter(s => s.id !== id);
+    const message = isPrimary && remaining.length > 0
+      ? `This is your primary income source. Removing it will make "${remaining[0].name}" your new primary, which will change your pay schedule and bill timing across the app. Continue?`
+      : 'Are you sure you want to delete this income source?';
+
+    if (!window.confirm(message)) return;
 
     try {
       await deleteIncomeSource(id);
     } catch (error) {
       console.error('Failed to delete income source:', error);
       alert('Failed to delete income source');
+    }
+  };
+
+  const handleSetPrimary = async (id: string) => {
+    const source = incomeSources.find(s => s.id === id);
+    const currentPrimary = incomeSources.find(s => s.isPrimary) || incomeSources[0];
+    if (!source || source.id === currentPrimary?.id) return;
+
+    const freqLabel = FREQUENCIES.find(f => f.value === source.frequency)?.label || source.frequency;
+    const confirmed = window.confirm(
+      `Setting "${source.name}" as your primary will change your pay schedule across the entire app.\n\nYour dashboard, tracker, and plan will recalculate around "${source.name}"'s pay dates and frequency (${freqLabel}).\n\nThis affects which bills appear in each paycheck period.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await setPrimaryIncomeSource(id);
+    } catch (error) {
+      console.error('Failed to set primary income source:', error);
+      alert('Failed to set primary income source');
     }
   };
 
@@ -478,9 +520,22 @@ export default function SettingsPage() {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <p style={{ color: colors.text, fontWeight: 500, margin: 0, fontSize: '0.95rem' }}>
-                        {source.name}
-                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <p style={{ color: colors.text, fontWeight: 500, margin: 0, fontSize: '0.95rem' }}>
+                          {source.name}
+                        </p>
+                        {source.isPrimary && (
+                          <span style={{
+                            backgroundColor: 'rgba(56,189,248,0.12)',
+                            color: '#38BDF8',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            border: '0.5px solid rgba(56,189,248,0.25)',
+                          }}>Primary</span>
+                        )}
+                      </div>
                       <p style={{ color: colors.textMuted, margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>
                         {FREQUENCIES.find((f) => f.value === source.frequency)?.label} • Next: {source.nextPayDate ? new Date(source.nextPayDate + 'T00:00:00').toLocaleDateString() : 'Not set'}
                       </p>
@@ -498,6 +553,16 @@ export default function SettingsPage() {
                       >
                         <Edit2 size={16} />
                       </Button>
+                      {incomeSources.length > 1 && !source.isPrimary && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleSetPrimary(source.id)}
+                          style={{ color: '#38BDF8', borderColor: 'rgba(56,189,248,0.3)' }}
+                        >
+                          Set Primary
+                        </Button>
+                      )}
                       <Button
                         variant="danger"
                         size="sm"

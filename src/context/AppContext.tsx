@@ -53,13 +53,14 @@ export interface BillPayment {
   paidAt: string;
 }
 
-// ── Income source type (matches mobile: typicalAmount) ──────
+// ── Income source type (matches mobile: typicalAmount, isPrimary) ──
 export interface IncomeSource {
   id: string;
   name: string;
   frequency: string;
   typicalAmount: number;
   nextPayDate?: string;
+  isPrimary?: boolean;
 }
 
 // ── Category type ──────────────────────────────────────────
@@ -98,6 +99,7 @@ interface AppContextType {
   addIncomeSource: (data: Record<string, unknown>) => Promise<IncomeSource>;
   updateIncomeSource: (id: string, data: Record<string, unknown>) => Promise<IncomeSource>;
   deleteIncomeSource: (id: string) => Promise<void>;
+  setPrimaryIncomeSource: (id: string) => Promise<void>;
 
   // Categories
   categories: Category[];
@@ -145,6 +147,7 @@ const AppContext = createContext<AppContextType>({
   addIncomeSource: async () => ({} as IncomeSource),
   updateIncomeSource: async () => ({} as IncomeSource),
   deleteIncomeSource: async () => {},
+  setPrimaryIncomeSource: async () => {},
 
   categories: [],
   categoriesLoading: false,
@@ -228,6 +231,7 @@ function mapIncomeSource(raw: Record<string, unknown>): IncomeSource {
     frequency: String(raw.frequency || 'biweekly'),
     typicalAmount: parseFloat(String(raw.typical_amount || raw.typicalAmount || 0)) || 0,
     nextPayDate: raw.next_pay_date ? String(raw.next_pay_date) : (raw.nextPayDate ? String(raw.nextPayDate) : undefined),
+    isPrimary: Boolean(raw.is_primary || raw.isPrimary || false),
   };
 }
 
@@ -648,8 +652,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteIncomeSource = async (id: string) => {
+    const wasPrimary = incomeSources.find(s => s.id === id)?.isPrimary;
     await usersAPI.deleteIncomeSource(id);
-    setIncomeSources(prev => prev.filter((s) => s.id !== id));
+    setIncomeSources(prev => {
+      const remaining = prev.filter((s) => s.id !== id);
+      // If deleted source was primary, promote the first remaining
+      if (wasPrimary && remaining.length > 0 && !remaining.some(s => s.isPrimary)) {
+        remaining[0] = { ...remaining[0], isPrimary: true };
+      }
+      return remaining;
+    });
+  };
+
+  const setPrimaryIncomeSource = async (id: string) => {
+    // Optimistic: unset all, set chosen one
+    setIncomeSources(prev => prev.map(s => ({ ...s, isPrimary: s.id === id })));
+    try {
+      await usersAPI.updateIncomeSource(id, { isPrimary: true });
+    } catch (err) {
+      console.log('setPrimaryIncomeSource API sync failed:', (err as Error)?.message);
+    }
   };
 
   const setCurrencyCode = (code: string) => {
@@ -682,6 +704,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addIncomeSource,
         updateIncomeSource,
         deleteIncomeSource,
+        setPrimaryIncomeSource,
 
         categories,
         categoriesLoading,

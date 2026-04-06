@@ -39,8 +39,9 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
-  const primaryIncome = incomeSources.length > 0 ? incomeSources[0] : null;
-  const totalPaycheck = primaryIncome ? primaryIncome.typicalAmount : 0;
+  const primaryIncome = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
+  const secondaryIncome = incomeSources.filter(s => s.id !== primaryIncome?.id);
+  const totalPaycheck = incomeSources.reduce((sum, s) => sum + (s.typicalAmount || 0), 0);
   const incomeName = primaryIncome ? primaryIncome.name : 'No income set';
 
   // ── Smart pay period calculation (MATCHES MOBILE) ──────────

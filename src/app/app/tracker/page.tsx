@@ -21,7 +21,7 @@ export default function TrackerPage() {
   const [showNext, setShowNext] = useState(false);
 
   // Derive pay period from income source (MATCHES MOBILE)
-  const primaryIncome = incomeSources.length > 0 ? incomeSources[0] : null;
+  const primaryIncome = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
   const freq = primaryIncome?.frequency || '';
   const payPeriods = primaryIncome
     ? getPayPeriods(primaryIncome.nextPayDate, freq)

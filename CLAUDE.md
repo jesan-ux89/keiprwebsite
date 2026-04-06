@@ -20,6 +20,12 @@ Next.js web app for Keipr, a paycheck-forward budgeting app. The website is a **
 - **GitHub:** `https://github.com/jesan-ux89/keiprwebsite.git` (main branch)
 - **Live URL:** `https://keiprwebsite.vercel.app`
 - **Backend:** `https://keipr-backend-production.up.railway.app/api` (shared with mobile app)
+- **Local Path:** `C:\Users\Jess\_keiprwebsite`
+
+## Local Paths (All Projects)
+- **Mobile App:** `C:\Users\Jess\_KeiprApp`
+- **Backend:** `C:\Users\Jess\_keipr-complete-backend`
+- **Website:** `C:\Users\Jess\_keiprwebsite`
 
 ## Project Structure
 ```
