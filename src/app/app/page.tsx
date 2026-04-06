@@ -624,7 +624,7 @@ export default function DashboardPage() {
                     .filter(a => a.incomeSourceId === src.incomeSourceId && a.paycheckNumber === (currentPeriod.paycheckNumber as number))
                     .map(a => (
                       <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '0.5px solid rgba(56,189,248,0.08)' }}>
-                        <span style={{ fontSize: '0.8rem' }}>{a.action === 'savings' ? '\uD83D\uDCB0' : '\uD83D\uDCCB'}</span>
+                        <span style={{ fontSize: '0.8rem' }}>{a.action === 'savings' ? '💰' : '📋'}</span>
                         <span style={{ flex: 1, fontSize: '0.8rem', color: colors.textMuted }}>
                           {a.action === 'savings' ? 'Moved to savings' : `Applied to ${a.billName || 'bill'}`}
                         </span>
@@ -650,7 +650,7 @@ export default function DashboardPage() {
                           fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
                         }}
                       >
-                        \uD83D\uDCB0 Move to savings
+                        {'💰'} Move to savings
                       </button>
                       <button
                         onClick={() => handleAllocateToBill(src.incomeSourceId, src.available, currentPeriod.paycheckNumber as number)}
@@ -661,7 +661,7 @@ export default function DashboardPage() {
                           fontSize: '0.8rem', fontWeight: 500, color: '#38BDF8',
                         }}
                       >
-                        \uD83D\uDCCB Apply to a bill
+                        {'📋'} Apply to a bill
                       </button>
                     </div>
                   )}
