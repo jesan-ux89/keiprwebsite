@@ -43,9 +43,11 @@ export default function DashboardPage() {
   const [expandedSide, setExpandedSide] = useState<Record<string, boolean>>({});
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
-  const primaryIncome = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
-  const secondaryIncome = incomeSources.filter(s => s.id !== primaryIncome?.id);
-  const totalPaycheck = incomeSources.reduce((sum, s) => sum + (s.typicalAmount || 0), 0);
+  // Exclude one-time funds from paycheck calculations
+  const regularIncome = incomeSources.filter((s: any) => !s.isOneTime);
+  const primaryIncome = regularIncome.find((s: any) => s.isPrimary) || (regularIncome.length > 0 ? regularIncome[0] : null);
+  const secondaryIncome = regularIncome.filter((s: any) => s.id !== primaryIncome?.id);
+  const totalPaycheck = regularIncome.reduce((sum: number, s: any) => sum + (s.typicalAmount || 0), 0);
   const incomeName = primaryIncome ? primaryIncome.name : 'No income set';
 
   // ── Smart pay period calculation (MATCHES MOBILE) ──────────
