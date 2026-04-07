@@ -2006,6 +2006,7 @@ function SecuritySection({ colors, isDark, user, expandedSection, toggleSection 
   const [totpLoading, setTotpLoading] = useState(false);
   const [showTotpSetup, setShowTotpSetup] = useState(false);
   const [totpSecret, setTotpSecret] = useState('');
+  const [totpOtpauth, setTotpOtpauth] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [totpError, setTotpError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -2035,6 +2036,7 @@ function SecuritySection({ colors, isDark, user, expandedSection, toggleSection 
     try {
       const res = await authAPI.totpSetup();
       setTotpSecret(res.data.secret);
+      setTotpOtpauth(res.data.otpauth);
       setShowTotpSetup(true);
     } catch (err: any) {
       const msg = err?.response?.data?.error || 'Failed to start authenticator setup. Make sure the backend is updated.';
@@ -2137,10 +2139,24 @@ function SecuritySection({ colors, isDark, user, expandedSection, toggleSection 
           {showTotpSetup && (
             <div style={{ backgroundColor: inputBg, borderRadius: '12px', padding: '16px', border: `1px solid ${colors.electric}` }}>
               <div style={{ fontSize: '15px', fontWeight: '600', color: colors.text, marginBottom: '12px' }}>Set up authenticator app</div>
-              <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '12px', lineHeight: '1.6' }}>
-                Open any authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.) and add this key manually:
+              <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '16px', lineHeight: '1.6' }}>
+                Scan this QR code with your authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.):
               </p>
-              <div style={{ backgroundColor: colors.background, borderRadius: '8px', padding: '12px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {totpOtpauth && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                  <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '12px', display: 'inline-block' }}>
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(totpOtpauth)}`}
+                      alt="TOTP QR Code"
+                      width={180}
+                      height={180}
+                      style={{ display: 'block' }}
+                    />
+                  </div>
+                </div>
+              )}
+              <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '8px', textAlign: 'center' }}>Or enter this key manually:</p>
+              <div style={{ backgroundColor: colors.background, borderRadius: '8px', padding: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 <code style={{ fontSize: '13px', color: colors.electric, letterSpacing: '1px', userSelect: 'all' }}>{totpSecret}</code>
                 <button
                   onClick={() => { navigator.clipboard.writeText(totpSecret); }}
