@@ -125,6 +125,7 @@ export const bankingAPI = {
   getConfirmations:    () => api.get('/banking-data/confirmations'),
   confirmMatch:        (id: string) => api.post(`/banking-data/confirmations/${id}/confirm`),
   rejectMatch:         (id: string) => api.post(`/banking-data/confirmations/${id}/reject`),
+  getMatchedBills:     () => api.get('/banking-data/matched-bills'),
   getMatchHistory:     (billId?: string) => api.get('/banking-data/match-history', { params: billId ? { bill_id: billId } : {} }),
   unlinkMatch:         (id: string) => api.post(`/banking-data/matches/${id}/unlink`),
   getExclusionRules:   () => api.get('/banking-data/exclusion-rules'),

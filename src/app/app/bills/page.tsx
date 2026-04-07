@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
+import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { Plus, Search, ChevronDown, ChevronUp, Split, Zap } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronUp, Split, Zap, Landmark } from 'lucide-react';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
 
@@ -19,11 +20,20 @@ interface ExpandedBills {
 
 export default function BillsPage() {
   const { colors } = useTheme();
-  const { bills, billsLoading, fmt } = useApp();
+  const { bills, billsLoading, fmt, isUltra } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedBills, setExpandedBills] = useState<ExpandedBills>({});
+  const [matchedBillIds, setMatchedBillIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (isUltra) {
+      bankingAPI.getMatchedBills()
+        .then(res => setMatchedBillIds(new Set(res.data?.matched_bill_ids || [])))
+        .catch(() => {});
+    }
+  }, [isUltra, bills]);
 
   // Group bills by category
   const billsByCategory = useMemo(() => {
@@ -257,6 +267,16 @@ export default function BillsPage() {
                             >
                               {bill.name}
                             </h3>
+                            {matchedBillIds.has(bill.id) && (
+                              <Landmark
+                                size={14}
+                                style={{
+                                  color: colors.electric,
+                                  flexShrink: 0,
+                                }}
+                                title="Matched to bank transaction"
+                              />
+                            )}
                             {bill.isSplit && (
                               <Split
                                 size={16}
