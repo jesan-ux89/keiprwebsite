@@ -25,6 +25,8 @@ interface PlanBill {
 export default function PlanPage() {
   const { colors, isDark } = useTheme();
   const { fmt, isPro, categories = [], incomeSources = [] } = useApp();
+  const dangerColor = isDark ? '#F08070' : '#A32D2D';
+  const dangerBg = isDark ? 'rgba(240,128,112,0.12)' : 'rgba(163,45,45,0.1)';
   const [months, setMonths] = useState<any[]>([]);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
   const [planBills, setPlanBills] = useState<PlanBill[]>([]);
@@ -218,7 +220,7 @@ export default function PlanPage() {
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <span style={{ fontSize: '13px', color: actionStatus.type === 'error' ? '#A32D2D' : '#0A7B6C' }}>
+          <span style={{ fontSize: '13px', color: actionStatus.type === 'error' ? dangerColor : '#0A7B6C' }}>
             {actionStatus.message}
           </span>
           <button
@@ -330,7 +332,7 @@ export default function PlanPage() {
                       </button>
                       <button
                         onClick={() => handleRemove(bill)}
-                        style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: 'rgba(163,45,45,0.1)', color: '#A32D2D', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600' }}
+                        style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: dangerBg, color: dangerColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600' }}
                       >
                         Remove
                       </button>
@@ -338,7 +340,7 @@ export default function PlanPage() {
                   ) : (
                     <button
                       onClick={() => setConfirmingRemoveId(bill.id)}
-                      style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: 'rgba(163,45,45,0.08)', color: '#A32D2D', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: dangerBg, color: dangerColor, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                     >
                       Remove
                     </button>
@@ -373,7 +375,7 @@ export default function PlanPage() {
               backgroundColor: 'rgba(163,45,45,0.1)', padding: '10px 14px', borderRadius: '8px', marginBottom: '12px',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              <span style={{ fontSize: '13px', color: '#A32D2D' }}>{addError}</span>
+              <span style={{ fontSize: '13px', color: dangerColor }}>{addError}</span>
               <button onClick={() => setAddError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textMuted }}>✕</button>
             </div>
           )}
@@ -496,8 +498,8 @@ export default function PlanPage() {
         onClick={handleResetSnapshot}
         style={{
           display: 'block', width: '100%', padding: '12px', borderRadius: '10px', cursor: 'pointer',
-          border: `1px solid rgba(163,45,45,0.3)`, backgroundColor: 'rgba(163,45,45,0.04)',
-          color: '#A32D2D', fontSize: '13px', fontWeight: '500', marginBottom: '8px',
+          border: `1px solid ${isDark ? 'rgba(240,128,112,0.3)' : 'rgba(163,45,45,0.3)'}`, backgroundColor: dangerBg,
+          color: dangerColor, fontSize: '13px', fontWeight: '500', marginBottom: '8px',
         }}
       >
         Reset to current bills
