@@ -9,6 +9,8 @@ import { usersAPI } from '@/lib/api';
 import type { Bill } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import CategoryIcon from '@/components/CategoryIcon';
+import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import {
   TrendingUp,
   Receipt,
@@ -20,13 +22,6 @@ import {
  * Dashboard — PORTED FROM MOBILE DashboardScreen.tsx
  * Calculations match mobile exactly.
  */
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Housing: '#0C4A6E', Transport: '#38BDF8', Groceries: '#E67E22',
-  Dining: '#E74C3C', Subscriptions: '#7C3AED', Fun: '#F59E0B',
-  Insurance: '#2ECC71', Savings: '#1ABC9C', Utilities: '#E84393',
-  Other: '#95A5A6',
-};
 
 type ViewMode = 'paycheck' | 'nextcheck' | 'cycles' | 'monthly';
 
@@ -1072,7 +1067,7 @@ export default function DashboardPage() {
           {allocations.map(({ name, color, amt, amtMonthly, spent }) => (
             <Card key={name}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color }} />
+                <CategoryIcon category={name} size={30} isDark={isDark} />
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
                   {name}
                 </h3>
@@ -1193,7 +1188,7 @@ export default function DashboardPage() {
                         {/* Click-to-reveal category detail */}
                         {donutData[selectedDonutIdx] && (
                           <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem', padding: '0.6rem 1.2rem', backgroundColor: isDark ? '#332F28' : '#EAE7E0', borderRadius: '10px', gap: '0.6rem' }}>
-                            <div style={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: donutData[selectedDonutIdx].color, flexShrink: 0 }} />
+                            <CategoryIcon category={donutData[selectedDonutIdx].name} size={20} isDark={isDark} />
                             <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>{donutData[selectedDonutIdx].name}</span>
                             <span style={{ fontSize: '0.95rem', color: colors.textMuted, marginLeft: 'auto' }}>{fmt(donutData[selectedDonutIdx].amount)} ({donutData[selectedDonutIdx].pct.toFixed(1)}%)</span>
                           </div>
@@ -1372,7 +1367,7 @@ export default function DashboardPage() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: color }} />
+                            <CategoryIcon category={name} size={30} isDark={isDark} />
                             <div>
                               <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>{name}</p>
                               <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
@@ -1439,7 +1434,7 @@ export default function DashboardPage() {
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.electric)}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = colors.divider)}
               >
-                <span style={{ fontSize: '1.5rem' }}>💰</span>
+                <span style={{ fontSize: '1.5rem' }}>💵</span>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>Got a bonus or tax refund?</p>
                   <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
@@ -1543,7 +1538,7 @@ export default function DashboardPage() {
             <p style={{ fontSize: '0.75rem', fontWeight: 500, color: colors.textSub, margin: '0 0 0.6rem 0' }}>Top spending categories</p>
             {donutData.slice(0, 3).map((cat: any, i: number) => (
               <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: i < 2 ? '0.5rem' : 0 }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cat.color, flexShrink: 0 }} />
+                <CategoryIcon category={cat.name} size={22} isDark={isDark} />
                 <span style={{ fontSize: '0.9rem', color: colors.text, flex: 1 }}>{cat.name}</span>
                 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>{fmt(cat.amount)}</span>
                 <span style={{ fontSize: '0.8rem', color: colors.textMuted, width: '2.5rem', textAlign: 'right' }}>{Math.round(cat.pct)}%</span>

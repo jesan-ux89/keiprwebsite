@@ -7,10 +7,12 @@ import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { usersAPI, exportAPI, subscriptionsAPI } from '@/lib/api';
 import { getPayPeriods } from '@/lib/payPeriods';
+import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import CategoryIcon from '@/components/CategoryIcon';
 import {
   Settings,
   Moon,
@@ -90,7 +92,7 @@ const TIERS = [
 ];
 
 export default function SettingsPage() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
   const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra } = useApp();
   const { user, signOut } = useAuth();
@@ -1192,12 +1194,6 @@ export default function SettingsPage() {
         </button>
         {expandedSection === 'trends' && isPro && (() => {
           // Compute trends data
-          const CATEGORY_COLORS: Record<string, string> = {
-            Housing: '#0C4A6E', Transport: '#38BDF8', Groceries: '#E67E22',
-            Dining: '#E74C3C', Subscriptions: '#7C3AED', Fun: '#F59E0B',
-            Insurance: '#2ECC71', Savings: '#1ABC9C', Utilities: '#E84393',
-            Other: '#95A5A6',
-          };
           const DONUT_PALETTE = [
             '#0C4A6E', '#E67E22', '#2ECC71', '#E74C3C', '#7C3AED',
             '#F59E0B', '#E84393', '#1ABC9C', '#3498DB', '#95A5A6',
@@ -1312,7 +1308,7 @@ export default function SettingsPage() {
                 <div style={{ flex: 1 }}>
                   {donutData.map((cat) => (
                     <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cat.color, flexShrink: 0 }} />
+                      <CategoryIcon category={cat.name} size={22} isDark={isDark} />
                       <span style={{ fontSize: '0.85rem', color: colors.text, flex: 1 }}>{cat.name}</span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text }}>{fmt(cat.amount)}</span>
                       <span style={{ fontSize: '0.75rem', color: colors.textMuted, width: '2.5rem', textAlign: 'right' }}>{Math.round(cat.pct)}%</span>
@@ -1499,10 +1495,12 @@ export default function SettingsPage() {
                     borderRadius: '1rem',
                     fontSize: '0.7rem',
                     fontWeight: 600,
-                    backgroundColor: subStatus.subscriptionStatus === 'active' || subStatus.subscriptionStatus === 'trialing' ? '#22c55e20' : '#f59e0b20',
-                    color: subStatus.subscriptionStatus === 'active' || subStatus.subscriptionStatus === 'trialing' ? '#22c55e' : '#f59e0b',
+                    backgroundColor: subStatus.subscriptionStatus === 'active' || subStatus.subscriptionStatus === 'trialing' || subStatus.subscriptionStatus === 'free' ? '#22c55e20' : '#f59e0b20',
+                    color: subStatus.subscriptionStatus === 'active' || subStatus.subscriptionStatus === 'trialing' || subStatus.subscriptionStatus === 'free' ? '#22c55e' : '#f59e0b',
                   }}>
-                    {subStatus.subscriptionStatus === 'trialing' ? 'Trial' : subStatus.subscriptionStatus}
+                    {subStatus.subscriptionStatus === 'trialing' ? 'Trial'
+                      : subStatus.subscriptionStatus === 'free' ? 'active'
+                      : subStatus.subscriptionStatus}
                   </span>
                   {subStatus.subscriptionStatus === 'cancelled' && subStatus.subscriptionEndsAt && (
                     <span style={{ color: colors.textMuted, fontSize: '0.8rem', marginLeft: '0.5rem' }}>

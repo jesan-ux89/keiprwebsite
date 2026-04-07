@@ -1,348 +1,204 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { planAPI } from '@/lib/api';
 import { getPlanMonths } from '@/lib/payPeriods';
-import { Plus, Loader } from 'lucide-react';
+import { Plus, Loader, X, ChevronDown } from 'lucide-react';
 
 interface PlanBill {
   id: string;
-  bill_id: string;
-  plan_id: string;
+  source_bill_id: string | null;
   name: string;
-  expected_amount: number;
-  planned_amount: number;
+  category: string;
   due_day: number;
-}
-
-interface Plan {
-  id: string;
-  year: number;
-  month: number;
-  bills: PlanBill[];
+  amount: number;
+  is_split: boolean;
+  p1: number;
+  p2: number;
+  is_recurring: boolean;
+  is_auto_pay: boolean;
+  is_removed: boolean;
 }
 
 export default function PlanPage() {
   const { colors, isDark } = useTheme();
-  const { bills, fmt, isPro } = useApp();
+  const { fmt, isPro, categories = [], incomeSources = [] } = useApp();
   const [months, setMonths] = useState<any[]>([]);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
-  const [plan, setPlan] = useState<Plan | null>(null);
+  const [planBills, setPlanBills] = useState<PlanBill[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
+
+  // Add bill form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addAmount, setAddAmount] = useState('');
+  const [addDueDay, setAddDueDay] = useState('');
+  const [addCategory, setAddCategory] = useState('Other');
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addSaving, setAddSaving] = useState(false);
+
+  // Confirmation state for remove
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
+  const [actionStatus, setActionStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   useEffect(() => {
     setMonths(getPlanMonths(isPro));
     setSelectedMonthIndex(0);
   }, [isPro]);
 
-  useEffect(() => {
+  const loadPlanBills = useCallback(async () => {
     if (months.length === 0) return;
+    setLoading(true);
+    try {
+      const selectedMonth = months[selectedMonthIndex];
+      const res = await planAPI.getBills(selectedMonth.year, selectedMonth.month);
+      const bills = res.data?.planBills || [];
 
-    const loadPlan = async () => {
-      setLoading(true);
-      try {
-        const selectedMonth = months[selectedMonthIndex];
-        const res = await planAPI.get(selectedMonth.year, selectedMonth.month);
-        setPlan(res.data?.plan || null);
-      } catch (error) {
-        console.error('Failed to load plan:', error);
-        setPlan(null);
-      } finally {
-        setLoading(false);
+      if (bills.length === 0) {
+        // No snapshot yet — create one
+        const snapRes = await planAPI.snapshotBills(selectedMonth.year, selectedMonth.month);
+        setPlanBills(snapRes.data?.planBills || []);
+      } else {
+        setPlanBills(bills);
       }
-    };
-
-    loadPlan();
+    } catch (error) {
+      console.error('Failed to load plan bills:', error);
+      setPlanBills([]);
+    } finally {
+      setLoading(false);
+    }
   }, [selectedMonthIndex, months]);
 
-  const handleCreatePlan = async () => {
-    if (months.length === 0) return;
-    setLoading(true);
+  useEffect(() => {
+    loadPlanBills();
+  }, [loadPlanBills]);
+
+  const selectedMonth = months[selectedMonthIndex] || { label: '', year: 0, month: 0 };
+  const activeBills = planBills.filter(b => !b.is_removed);
+  const totalBillsAmt = activeBills.reduce((s, b) => s + b.amount, 0);
+
+  const primaryIncome = incomeSources.find((s: any) => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
+  const perPaycheck = primaryIncome ? primaryIncome.typicalAmount : 0;
+
+  // Save edit
+  const handleSaveEdit = async (bill: PlanBill) => {
+    const newAmount = parseFloat(editAmount);
+    if (isNaN(newAmount) || newAmount < 0) return;
+    setPlanBills(prev => prev.map(b => b.id === bill.id ? { ...b, amount: newAmount } : b));
+    setEditingId(null);
     try {
-      const selectedMonth = months[selectedMonthIndex];
-      const res = await planAPI.create({
-        year: selectedMonth.year,
-        month: selectedMonth.month,
-      });
-      setPlan(res.data?.plan || null);
-    } catch (error) {
-      console.error('Failed to create plan:', error);
-    } finally {
-      setLoading(false);
+      await planAPI.updatePlanBill(selectedMonth.year, selectedMonth.month, bill.id, { amount: newAmount });
+    } catch (err) {
+      console.error('Failed to update plan bill:', err);
     }
   };
 
-  const handleSnapshotBills = async () => {
-    if (months.length === 0) return;
+  // Remove bill
+  const handleRemove = async (bill: PlanBill) => {
+    setPlanBills(prev => prev.map(b => b.id === bill.id ? { ...b, is_removed: true } : b));
+    setConfirmingRemoveId(null);
+    try {
+      if (bill.source_bill_id) {
+        await planAPI.updatePlanBill(selectedMonth.year, selectedMonth.month, bill.id, { is_removed: true });
+      } else {
+        await planAPI.deletePlanBill(selectedMonth.year, selectedMonth.month, bill.id);
+        setPlanBills(prev => prev.filter(b => b.id !== bill.id));
+      }
+    } catch (err) {
+      console.error('Failed to remove plan bill:', err);
+    }
+  };
+
+  // Add bill
+  const handleAddBill = async () => {
+    setAddError(null);
+    const name = addName.trim();
+    const amount = parseFloat(addAmount);
+    const dueDay = parseInt(addDueDay) || 1;
+
+    if (!name) { setAddError('Bill name is required.'); return; }
+    if (isNaN(amount) || amount <= 0) { setAddError('Enter a valid amount.'); return; }
+    if (dueDay < 1 || dueDay > 31) { setAddError('Due day must be between 1 and 31.'); return; }
+
+    setAddSaving(true);
+    try {
+      const res = await planAPI.addPlanBill(selectedMonth.year, selectedMonth.month, {
+        name,
+        amount,
+        dueDay,
+        category: addCategory || 'Other',
+        isRecurring: true,
+      });
+      const newBill = res.data?.planBill;
+      if (newBill) {
+        setPlanBills(prev => [...prev, newBill]);
+      }
+      setAddName('');
+      setAddAmount('');
+      setAddDueDay('');
+      setAddCategory('Other');
+      setShowAddForm(false);
+      setActionStatus({ type: 'success', message: `"${name}" added to ${selectedMonth.label} plan.` });
+    } catch (err) {
+      setAddError('Failed to add bill. Please try again.');
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
+  // Reset snapshot
+  const handleResetSnapshot = async () => {
     setLoading(true);
     try {
-      const selectedMonth = months[selectedMonthIndex];
       const res = await planAPI.snapshotBills(selectedMonth.year, selectedMonth.month);
-      setPlan(res.data?.plan || null);
-    } catch (error) {
-      console.error('Failed to snapshot bills:', error);
+      setPlanBills(res.data?.planBills || []);
+    } catch (err) {
+      console.error('Failed to reset:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdatePlanBill = async (planBillId: string, newAmount: number) => {
-    if (months.length === 0 || !plan) return;
-    try {
-      const selectedMonth = months[selectedMonthIndex];
-      await planAPI.updatePlanBill(selectedMonth.year, selectedMonth.month, planBillId, {
-        amount: newAmount,
-      });
-      // Refresh plan
-      const res = await planAPI.get(selectedMonth.year, selectedMonth.month);
-      setPlan(res.data?.plan || null);
-      setEditingId(null);
-    } catch (error) {
-      console.error('Failed to update plan bill:', error);
-    }
-  };
+  const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
 
-  const handleDeletePlanBill = async (planBillId: string) => {
-    if (months.length === 0 || !plan) return;
-    try {
-      const selectedMonth = months[selectedMonthIndex];
-      await planAPI.deletePlanBill(selectedMonth.year, selectedMonth.month, planBillId);
-      // Refresh plan
-      const res = await planAPI.get(selectedMonth.year, selectedMonth.month);
-      setPlan(res.data?.plan || null);
-    } catch (error) {
-      console.error('Failed to delete plan bill:', error);
-    }
-  };
+  const categoryOptions = (categories || []).length > 0
+    ? (categories || []).map((c: any) => c.name)
+    : ['Housing', 'Utilities', 'Insurance', 'Transport', 'Food', 'Health', 'Other'];
 
-  const styles = {
-    container: {
-      padding: '20px',
-      maxWidth: '900px',
-      margin: '0 auto',
-    },
-    header: {
-      marginBottom: '24px',
-    },
-    title: {
-      fontSize: '28px',
-      fontWeight: '700',
-      color: colors.text,
-      marginBottom: '8px',
-    },
-    subtitle: {
-      fontSize: '13px',
-      color: colors.textMuted,
-      marginBottom: '16px',
-    },
-    monthSelector: {
-      display: 'flex',
-      gap: '8px',
-      marginBottom: '24px',
-      overflowX: 'auto' as const,
-      paddingBottom: '4px',
-    },
-    monthButton: {
-      padding: '8px 16px',
-      borderRadius: '8px',
-      border: `1px solid ${colors.inputBorder}`,
-      backgroundColor: colors.card,
-      color: colors.text,
-      fontSize: '13px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      whiteSpace: 'nowrap' as const,
-    },
-    monthButtonActive: {
-      backgroundColor: colors.midnight,
-      color: '#FFFFFF',
-      borderColor: colors.midnight,
-    },
-    monthButtonHover: {
-      borderColor: colors.electric,
-      backgroundColor: `${colors.electric}10`,
-    },
-    actionButtons: {
-      display: 'flex',
-      gap: '12px',
-      marginBottom: '24px',
-      flexWrap: 'wrap' as const,
-    },
-    button: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      padding: '10px 16px',
-      borderRadius: '8px',
-      border: 'none',
-      backgroundColor: colors.midnight,
-      color: '#FFFFFF',
-      fontSize: '13px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-    },
-    buttonSecondary: {
-      backgroundColor: colors.card,
-      color: colors.text,
-      border: `1px solid ${colors.inputBorder}`,
-    },
-    buttonHover: {
-      opacity: 0.9,
-      transform: 'translateY(-1px)',
-    },
-    planTable: {
-      width: '100%',
-      borderCollapse: 'collapse' as const,
-      marginBottom: '24px',
-    },
-    tableHead: {
-      backgroundColor: colors.card,
-      borderBottom: `1px solid ${colors.cardBorder}`,
-    },
-    tableHeaderCell: {
-      padding: '12px',
-      textAlign: 'left' as const,
-      fontSize: '12px',
-      fontWeight: '600',
-      color: colors.textMuted,
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.5px',
-    },
-    tableHeaderCellRight: {
-      textAlign: 'right' as const,
-    },
-    tableRow: {
-      borderBottom: `1px solid ${colors.cardBorder}`,
-      transition: 'background-color 0.2s ease',
-    },
-    tableRowHover: {
-      backgroundColor: `${colors.electric}05`,
-    },
-    tableCell: {
-      padding: '12px',
-      fontSize: '13px',
-      color: colors.text,
-    },
-    tableCellRight: {
-      textAlign: 'right' as const,
-    },
-    amountInput: {
-      width: '100px',
-      padding: '6px 8px',
-      borderRadius: '6px',
-      border: `1px solid ${colors.inputBorder}`,
-      backgroundColor: colors.inputBg,
-      color: colors.text,
-      fontSize: '13px',
-      fontFamily: 'inherit',
-    },
-    deleteButton: {
-      padding: '4px 8px',
-      fontSize: '12px',
-      backgroundColor: colors.red,
-      color: '#FFFFFF',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-    },
-    summary: {
-      backgroundColor: colors.card,
-      borderRadius: '12px',
-      padding: '16px',
-      border: `1px solid ${colors.cardBorder}`,
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr 1fr',
-      gap: '16px',
-    },
-    summaryItem: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '4px',
-    },
-    summaryLabel: {
-      fontSize: '11px',
-      fontWeight: '600',
-      color: colors.textMuted,
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.5px',
-    },
-    summaryValue: {
-      fontSize: '18px',
-      fontWeight: '700',
-      color: colors.text,
-    },
-    emptyState: {
-      textAlign: 'center' as const,
-      padding: '60px 20px',
-      color: colors.textMuted,
-    },
-    emptyStateTitle: {
-      fontSize: '16px',
-      fontWeight: '600',
-      color: colors.text,
-      marginBottom: '8px',
-    },
-    emptyStateDescription: {
-      fontSize: '13px',
-      marginBottom: '20px',
-    },
-  };
-
-  if (months.length === 0) {
+  if (months.length === 0 || loading) {
     return (
-      <div style={styles.emptyState}>
-        <Loader size={32} />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', color: colors.textMuted }}>
+        <Loader size={28} style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     );
   }
-
-  const selectedMonth = months[selectedMonthIndex];
-  const hasPlan = plan !== null;
-
-  if (loading) {
-    return (
-      <div style={styles.emptyState}>
-        <Loader size={32} />
-      </div>
-    );
-  }
-
-  const totalPlanned = plan?.bills?.reduce((sum, b) => sum + (b.planned_amount || b.expected_amount), 0) || 0;
-  const totalExpected = plan?.bills?.reduce((sum, b) => sum + b.expected_amount, 0) || 0;
-  const difference = totalPlanned - totalExpected;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Forward Planning</h1>
-        <p style={styles.subtitle}>Plan and forecast your bills for upcoming months</p>
+    <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Forward Planning</h1>
+        <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '16px' }}>Plan and adjust your bills for upcoming months</p>
       </div>
 
       {/* Month Selector */}
-      <div style={styles.monthSelector}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
         {months.map((month, idx) => (
           <button
             key={idx}
             style={{
-              ...styles.monthButton,
-              ...(selectedMonthIndex === idx ? styles.monthButtonActive : {}),
-            }}
-            onMouseEnter={(e) => {
-              if (selectedMonthIndex !== idx) {
-                Object.assign(e.currentTarget.style, styles.monthButtonHover);
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedMonthIndex !== idx) {
-                Object.assign(e.currentTarget.style, styles.monthButton);
-              }
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: `1px solid ${selectedMonthIndex === idx ? colors.midnight : colors.inputBorder}`,
+              backgroundColor: selectedMonthIndex === idx ? colors.midnight : colors.card,
+              color: selectedMonthIndex === idx ? '#FFFFFF' : colors.text,
+              fontSize: '13px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
             }}
             onClick={() => setSelectedMonthIndex(idx)}
           >
@@ -351,189 +207,319 @@ export default function PlanPage() {
         ))}
       </div>
 
-      {/* Action Buttons */}
-      {!hasPlan ? (
-        <div style={styles.actionButtons}>
+      {/* Action Status Banner */}
+      {actionStatus && (
+        <div style={{
+          backgroundColor: actionStatus.type === 'error' ? 'rgba(163,45,45,0.1)' : 'rgba(10,123,108,0.1)',
+          padding: '12px 16px',
+          borderRadius: '10px',
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span style={{ fontSize: '13px', color: actionStatus.type === 'error' ? '#A32D2D' : '#0A7B6C' }}>
+            {actionStatus.message}
+          </span>
           <button
-            style={styles.button}
-            onMouseEnter={(e) => Object.assign(e.currentTarget.style, { ...styles.button, ...styles.buttonHover })}
-            onMouseLeave={(e) => Object.assign(e.currentTarget.style, styles.button)}
-            onClick={handleCreatePlan}
+            onClick={() => setActionStatus(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textMuted, fontSize: '14px' }}
           >
-            <Plus size={16} /> Create Plan
-          </button>
-        </div>
-      ) : (
-        <div style={styles.actionButtons}>
-          <button
-            style={{ ...styles.button, ...styles.buttonSecondary }}
-            onMouseEnter={(e) => Object.assign(e.currentTarget.style, { ...styles.button, ...styles.buttonSecondary, ...styles.buttonHover })}
-            onMouseLeave={(e) => Object.assign(e.currentTarget.style, { ...styles.button, ...styles.buttonSecondary })}
-            onClick={handleSnapshotBills}
-          >
-            <Plus size={16} /> Snapshot Bills
+            ✕
           </button>
         </div>
       )}
 
-      {/* Plan Content */}
-      {!hasPlan ? (
-        <div style={styles.emptyState}>
-          <div style={styles.emptyStateTitle}>No plan for {selectedMonth.label}</div>
-          <p style={styles.emptyStateDescription}>
-            Create a plan to set expected bills and amounts for this month
-          </p>
+      {/* Summary Card */}
+      <div style={{
+        backgroundColor: colors.card,
+        borderRadius: '12px',
+        padding: '16px',
+        border: `1px solid ${colors.cardBorder}`,
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: '16px',
+        marginBottom: '24px',
+      }}>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bills</div>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: colors.text }}>{activeBills.length}</div>
         </div>
-      ) : (
-        <>
-          {plan.bills.length > 0 ? (
-            <>
-              {/* Bills Table */}
-              <table style={styles.planTable}>
-                <thead style={styles.tableHead}>
-                  <tr>
-                    <th style={styles.tableHeaderCell}>Bill Name</th>
-                    <th style={{ ...styles.tableHeaderCell, ...styles.tableHeaderCellRight }}>Due Day</th>
-                    <th style={{ ...styles.tableHeaderCell, ...styles.tableHeaderCellRight }}>Expected</th>
-                    <th style={{ ...styles.tableHeaderCell, ...styles.tableHeaderCellRight }}>Planned</th>
-                    <th style={styles.tableHeaderCell}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {plan.bills.map((planBill) => (
-                    <tr
-                      key={planBill.id}
-                      style={styles.tableRow}
-                      onMouseEnter={(e) => Object.assign(e.currentTarget.style, { ...styles.tableRow, ...styles.tableRowHover })}
-                      onMouseLeave={(e) => Object.assign(e.currentTarget.style, styles.tableRow)}
-                    >
-                      <td style={styles.tableCell}>{planBill.name}</td>
-                      <td style={{ ...styles.tableCell, ...styles.tableCellRight }}>{planBill.due_day}</td>
-                      <td style={{ ...styles.tableCell, ...styles.tableCellRight }}>{fmt(planBill.expected_amount)}</td>
-                      <td style={{ ...styles.tableCell, ...styles.tableCellRight }}>
-                        {editingId === planBill.id ? (
-                          <input
-                            type="number"
-                            value={editAmount}
-                            onChange={(e) => setEditAmount(e.target.value)}
-                            style={styles.amountInput}
-                            autoFocus
-                          />
-                        ) : (
-                          <span
-                            onClick={() => {
-                              setEditingId(planBill.id);
-                              setEditAmount(String(planBill.planned_amount || planBill.expected_amount));
-                            }}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            {fmt(planBill.planned_amount || planBill.expected_amount)}
-                          </span>
-                        )}
-                      </td>
-                      <td style={styles.tableCell}>
-                        {editingId === planBill.id ? (
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button
-                              style={{ ...styles.deleteButton, backgroundColor: colors.green }}
-                              onClick={() => {
-                                const val = parseFloat(editAmount);
-                                if (!isNaN(val) && val >= 0) handleUpdatePlanBill(planBill.id, val);
-                                else alert('Please enter a valid amount');
-                              }}
-                            >
-                              Save
-                            </button>
-                            <button
-                              style={styles.deleteButton}
-                              onClick={() => setEditingId(null)}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            style={styles.deleteButton}
-                            onClick={() => handleDeletePlanBill(planBill.id)}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Planned</div>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: colors.text }}>{fmt(totalBillsAmt)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Per Paycheck</div>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: colors.text }}>{fmt(perPaycheck)}</div>
+        </div>
+      </div>
 
-              {/* Summary Footer */}
-              <div style={styles.summary}>
-                <div style={styles.summaryItem}>
-                  <div style={styles.summaryLabel}>Total Expected</div>
-                  <div style={styles.summaryValue}>{fmt(totalExpected)}</div>
-                </div>
-                <div style={styles.summaryItem}>
-                  <div style={styles.summaryLabel}>Total Planned</div>
-                  <div style={styles.summaryValue}>{fmt(totalPlanned)}</div>
-                </div>
-                <div style={styles.summaryItem}>
-                  <div style={styles.summaryLabel}>Difference</div>
-                  <div style={{ ...styles.summaryValue, color: difference > 0 ? colors.amber : colors.green }}>
-                    {difference > 0 ? '+' : ''}{fmt(difference)}
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div style={styles.emptyState}>
-              <div style={styles.emptyStateTitle}>No bills in this plan</div>
-              <p style={styles.emptyStateDescription}>
-                Click "Snapshot Bills" to copy your current bills into this plan
-              </p>
-              <button
-                style={styles.button}
-                onMouseEnter={(e) => Object.assign(e.currentTarget.style, { ...styles.button, ...styles.buttonHover })}
-                onMouseLeave={(e) => Object.assign(e.currentTarget.style, styles.button)}
-                onClick={handleSnapshotBills}
-              >
-                <Plus size={16} /> Snapshot Bills
-              </button>
+      {/* Bills Table */}
+      {activeBills.length > 0 ? (
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
+              <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bill Name</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</th>
+              <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Due Day</th>
+              <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Amount</th>
+              <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {activeBills.sort((a, b) => (a.due_day || 1) - (b.due_day || 1)).map((bill) => (
+              <tr key={bill.id} style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
+                <td style={{ padding: '12px', fontSize: '13px', color: colors.text }}>
+                  {bill.name}
+                  {!bill.source_bill_id && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', fontWeight: '600', color: colors.electric, backgroundColor: `${colors.electric}15`, padding: '2px 6px', borderRadius: '4px' }}>NEW</span>
+                  )}
+                  {bill.is_split && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', fontWeight: '600', color: colors.electric, backgroundColor: `${colors.electric}15`, padding: '2px 6px', borderRadius: '4px' }}>SPLIT</span>
+                  )}
+                </td>
+                <td style={{ padding: '12px', fontSize: '13px', color: colors.textSub }}>{bill.category}</td>
+                <td style={{ padding: '12px', fontSize: '13px', color: colors.textSub, textAlign: 'right' }}>{bill.due_day}{suffix(bill.due_day)}</td>
+                <td style={{ padding: '12px', fontSize: '13px', color: colors.text, textAlign: 'right' }}>
+                  {editingId === bill.id ? (
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        value={editAmount}
+                        onChange={(e) => setEditAmount(e.target.value)}
+                        style={{
+                          width: '100px', padding: '6px 8px', borderRadius: '6px',
+                          border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.inputBg,
+                          color: colors.text, fontSize: '13px', fontFamily: 'inherit',
+                        }}
+                        autoFocus
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(bill); if (e.key === 'Escape') setEditingId(null); }}
+                      />
+                      <button
+                        onClick={() => handleSaveEdit(bill)}
+                        style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: colors.green, color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: colors.card, color: colors.textSub, border: `1px solid ${colors.inputBorder}`, borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <span
+                      onClick={() => { setEditingId(bill.id); setEditAmount(String(bill.amount)); }}
+                      style={{ cursor: 'pointer' }}
+                      title="Click to edit amount"
+                    >
+                      {fmt(bill.amount)}
+                    </span>
+                  )}
+                </td>
+                <td style={{ padding: '12px', textAlign: 'right' }}>
+                  {confirmingRemoveId === bill.id ? (
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => setConfirmingRemoveId(null)}
+                        style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: colors.card, color: colors.textSub, border: `1px solid ${colors.inputBorder}`, borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleRemove(bill)}
+                        style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: 'rgba(163,45,45,0.1)', color: '#A32D2D', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmingRemoveId(bill.id)}
+                      style={{ padding: '4px 10px', fontSize: '12px', backgroundColor: 'rgba(163,45,45,0.08)', color: '#A32D2D', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted, marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '8px' }}>No bills in this plan</div>
+          <p style={{ fontSize: '13px', marginBottom: '16px' }}>Add bills or reset to pull in your current bills.</p>
+        </div>
+      )}
+
+      {/* Add Bill Section */}
+      {showAddForm ? (
+        <div style={{
+          backgroundColor: colors.card,
+          borderRadius: '12px',
+          padding: '20px',
+          border: `1px solid ${colors.electric}30`,
+          marginBottom: '16px',
+        }}>
+          <div style={{ fontSize: '15px', fontWeight: '600', color: colors.text, marginBottom: '16px' }}>
+            Add a bill to {selectedMonth.label}
+          </div>
+
+          {addError && (
+            <div style={{
+              backgroundColor: 'rgba(163,45,45,0.1)', padding: '10px 14px', borderRadius: '8px', marginBottom: '12px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <span style={{ fontSize: '13px', color: '#A32D2D' }}>{addError}</span>
+              <button onClick={() => setAddError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textMuted }}>✕</button>
             </div>
           )}
-        </>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Bill Name</label>
+              <input
+                type="text"
+                value={addName}
+                onChange={(e) => setAddName(e.target.value)}
+                placeholder="e.g. Car Insurance"
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px',
+                  border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.inputBg,
+                  color: colors.text, fontSize: '13px', fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Amount</label>
+              <input
+                type="number"
+                value={addAmount}
+                onChange={(e) => setAddAmount(e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px',
+                  border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.inputBg,
+                  color: colors.text, fontSize: '13px', fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Due Day</label>
+              <input
+                type="number"
+                value={addDueDay}
+                onChange={(e) => setAddDueDay(e.target.value)}
+                placeholder="1–31"
+                min={1}
+                max={31}
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px',
+                  border: `1px solid ${colors.inputBorder}`, backgroundColor: colors.inputBg,
+                  color: colors.text, fontSize: '13px', fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Category chips */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '11px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>Category</label>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {categoryOptions.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setAddCategory(cat)}
+                  style={{
+                    padding: '6px 14px', borderRadius: '16px', fontSize: '12px', cursor: 'pointer',
+                    fontWeight: addCategory === cat ? '600' : '400',
+                    backgroundColor: addCategory === cat ? colors.midnight : colors.inputBg,
+                    color: addCategory === cat ? '#fff' : colors.textSub,
+                    border: `1px solid ${addCategory === cat ? colors.midnight : colors.inputBorder}`,
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleAddBill}
+              disabled={addSaving}
+              style={{
+                padding: '10px 20px', borderRadius: '8px', border: 'none',
+                backgroundColor: colors.midnight, color: '#fff',
+                fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                opacity: addSaving ? 0.6 : 1,
+              }}
+            >
+              {addSaving ? 'Adding...' : 'Add bill'}
+            </button>
+            <button
+              onClick={() => { setShowAddForm(false); setAddError(null); }}
+              style={{
+                padding: '10px 20px', borderRadius: '8px',
+                border: `1px solid ${colors.inputBorder}`,
+                backgroundColor: colors.card, color: colors.textSub,
+                fontSize: '13px', fontWeight: '500', cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowAddForm(true)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            width: '100%', padding: '14px', borderRadius: '12px', cursor: 'pointer',
+            backgroundColor: `${colors.electric}08`, border: `1px solid ${colors.electric}25`,
+            color: colors.electric, fontSize: '14px', fontWeight: '500',
+            marginBottom: '16px',
+          }}
+        >
+          <Plus size={18} /> Add a bill to this month
+        </button>
       )}
+
+      {/* Reset Button */}
+      <button
+        onClick={handleResetSnapshot}
+        style={{
+          display: 'block', width: '100%', padding: '12px', borderRadius: '10px', cursor: 'pointer',
+          border: `1px solid rgba(163,45,45,0.3)`, backgroundColor: 'rgba(163,45,45,0.04)',
+          color: '#A32D2D', fontSize: '13px', fontWeight: '500', marginBottom: '8px',
+        }}
+      >
+        Reset to current bills
+      </button>
+
+      <p style={{ fontSize: '11px', color: colors.textMuted, textAlign: 'center', marginTop: '8px' }}>
+        Click an amount to edit · Click Remove to take a bill out · Click + to add
+      </p>
 
       {/* Pro Nudge Tip */}
       {isPro && months.length >= 5 && (
         <div style={{
-          marginTop: '32px',
-          padding: '16px',
-          borderRadius: '8px',
-          backgroundColor: `${colors.electric}10`,
-          border: `1px solid ${colors.electric}30`,
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'flex-start',
+          marginTop: '32px', padding: '16px', borderRadius: '8px',
+          backgroundColor: `${colors.electric}10`, border: `1px solid ${colors.electric}30`,
+          display: 'flex', gap: '12px', alignItems: 'flex-start',
         }}>
-          <div style={{
-            fontSize: '18px',
-            marginTop: '2px',
-          }}>
-            💡
-          </div>
+          <div style={{ fontSize: '18px', marginTop: '2px' }}>💡</div>
           <div>
-            <div style={{
-              fontSize: '13px',
-              fontWeight: '600',
-              color: colors.text,
-              marginBottom: '4px',
-            }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: colors.text, marginBottom: '4px' }}>
               Pro feature: Plan further ahead
             </div>
-            <div style={{
-              fontSize: '12px',
-              color: colors.textMuted,
-              lineHeight: '1.4',
-            }}>
+            <div style={{ fontSize: '12px', color: colors.textMuted, lineHeight: '1.4' }}>
               As a Pro subscriber, you can plan 7 months in advance instead of just 4. Use these extra months to prepare for major expenses or seasonal changes.
             </div>
           </div>
