@@ -38,6 +38,7 @@ export default function DashboardPage() {
     incomeSources, categories, fmt, isBillPaid, isSplitPaid, markBillPaid, toggleSplitPaid, userName, userInitials,
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
+    isPro,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [refreshing, setRefreshing] = useState(false);
@@ -1421,9 +1422,9 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* One-Time Funds — prompt to create or show existing */}
+          {/* One-Time Funds — Pro feature: prompt to create or show existing */}
           {oneTimeFunds.length === 0 && (
-            <a href="/app/settings?section=income" style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
+            <a href={isPro ? "/app/settings?section=income" : "/app/settings"} style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
               <div style={{
                 padding: '1rem 1.25rem',
                 backgroundColor: colors.cardBg || colors.inputBg,
@@ -1441,13 +1442,15 @@ export default function DashboardPage() {
                 <span style={{ fontSize: '1.5rem' }}>💰</span>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>Got a bonus or tax refund?</p>
-                  <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>Track one-time funds and plan how to spend them.</p>
+                  <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                    {isPro ? 'Track one-time funds and plan how to spend them.' : 'Upgrade to Pro to track one-time funds.'}
+                  </p>
                 </div>
-                <span style={{ fontSize: '0.9rem', color: colors.electric, fontWeight: 600 }}>Add →</span>
+                <span style={{ fontSize: '0.9rem', color: colors.electric, fontWeight: 600 }}>{isPro ? 'Add →' : 'Pro →'}</span>
               </div>
             </a>
           )}
-          {oneTimeFunds.length > 0 && (
+          {isPro && oneTimeFunds.length > 0 && (
             <div style={{ marginTop: '1.5rem' }}>
               <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
                 One-Time Funds

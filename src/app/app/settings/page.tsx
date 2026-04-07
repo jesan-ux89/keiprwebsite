@@ -335,6 +335,10 @@ export default function SettingsPage() {
   };
 
   const handleAddFund = async () => {
+    if (!isPro) {
+      alert('One-time fund tracking requires Keipr Pro. Upgrade to unlock this feature.');
+      return;
+    }
     if (!fundName || !fundAmount) {
       alert('Please fill in all fields');
       return;
@@ -849,6 +853,7 @@ export default function SettingsPage() {
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
               One-Time Funds
             </h2>
+            {!isPro && <span style={{ backgroundColor: 'rgba(56,189,248,0.15)', color: '#38BDF8', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px' }}>PRO</span>}
           </div>
           <ChevronRight
             size={20}
@@ -862,6 +867,17 @@ export default function SettingsPage() {
 
         {expandedSection === 'funds' && (
           <>
+            {!isPro ? (
+              <div style={{ padding: '1rem', borderRadius: 12, border: `1px dashed ${colors.border}`, textAlign: 'center' }}>
+                <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>
+                  One-time fund tracking is available on the Pro plan.
+                </p>
+                <Button variant="primary" size="sm" onClick={() => toggleSection('subscription')}>
+                  Upgrade to Pro
+                </Button>
+              </div>
+            ) : (
+            <>
             {/* Info box */}
             <p style={{
               fontSize: '0.8rem',
@@ -1126,6 +1142,8 @@ export default function SettingsPage() {
               <Plus size={18} />
               Add One-Time Fund
             </Button>
+          </>
+            )}
           </>
         )}
       </Card>

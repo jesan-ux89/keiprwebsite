@@ -19,6 +19,7 @@ Next.js web app for Keipr, a paycheck-forward budgeting app. The website is a **
 ## Repository
 - **GitHub:** `https://github.com/jesan-ux89/keiprwebsite.git` (main branch)
 - **Live URL:** `https://keiprwebsite.vercel.app`
+- **Custom Domain:** `keipr.app` (Vercel + Cloudflare DNS)
 - **Backend:** `https://keipr-backend-production.up.railway.app/api` (shared with mobile app)
 - **Local Path:** `C:\Users\Jess\_keiprwebsite`
 
@@ -141,9 +142,26 @@ These website files are direct ports of mobile app files. When the mobile versio
 - Sidebar nav in `AppLayout.tsx` links to Dashboard, Bills, Tracker, Plan, Settings, Banking
 
 ## 3-Tier Pricing
-- **Free:** 1 income source, 1 split, 1 month planning
-- **Pro:** $7.99/mo — unlimited splits/income/planning, export, trends
-- **Ultra:** $11.99/mo — everything in Pro + connected banking via Plaid
+- **Free:** 1 income source, 1 split, 1 month planning, no one-time funds
+- **Pro:** $7.99/mo ($6.99/mo annual) — unlimited splits/income/planning, one-time fund tracking, export, trends
+- **Ultra:** $11.99/mo ($10.99/mo annual) — everything in Pro + connected banking via Plaid
+
+## Payments (Lemon Squeezy)
+- **Payment provider:** Lemon Squeezy (merchant of record, handles tax/billing/refunds)
+- **Custom domain:** `keipr.app` (Vercel + Cloudflare DNS)
+- **Subscription UI:** `src/app/app/settings/page.tsx` (Subscription section)
+  - Monthly/Annual billing toggle
+  - Plan cards (Free, Pro, Ultra) with dynamic button states
+  - "Start 7-day free trial" → opens LS checkout URL via `window.open()`
+  - Manage Billing / Cancel / Resume for active subscribers
+  - Upgrade/Downgrade between tiers via API
+- **Deep-linking:** Settings page reads `?section=income` query param via `useSearchParams` to auto-expand specific sections
+- **API client:** `subscriptionsAPI` in `src/lib/api.ts`
+  - `getStatus()`, `checkout(planKey)`, `getPortal()`, `cancel()`, `resume()`, `changePlan(planKey)`
+- **Plan keys:** `pro_monthly`, `pro_annual`, `ultra_monthly`, `ultra_annual`
+
+## Dashboard Features
+- **One-time fund discovery:** Monthly tab shows a dashed-border prompt ("Got a bonus or tax refund?") when user has no one-time funds configured. Links to `/app/settings?section=income` for direct navigation to income settings.
 
 ## Environment Variables (Vercel)
 - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
