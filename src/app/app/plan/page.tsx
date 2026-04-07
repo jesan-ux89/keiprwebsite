@@ -5,7 +5,8 @@ import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { planAPI } from '@/lib/api';
 import { getPlanMonths } from '@/lib/payPeriods';
-import { Plus, Loader, X, ChevronDown } from 'lucide-react';
+import { Plus, X, ChevronDown } from 'lucide-react';
+import { CardSkeleton } from '@/components/LoadingSkeleton';
 
 interface PlanBill {
   id: string;
@@ -178,8 +179,8 @@ export default function PlanPage() {
 
   if (months.length === 0 || loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', color: colors.textMuted }}>
-        <Loader size={28} style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
+        <CardSkeleton rows={6} />
       </div>
     );
   }

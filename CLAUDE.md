@@ -55,7 +55,11 @@ src/
 ├── components/
 │   ├── layout/AppLayout.tsx        ← Sidebar + top bar shell
 │   ├── ui/                         ← Button, Card, Input, Modal
-│   └── MFAModal.tsx
+│   ├── MFAModal.tsx
+│   ├── CategoryIcon.tsx            ← Lucide SVG icon in tinted rounded square
+│   ├── ErrorBoundary.tsx           ← Catches page crashes, shows reload button
+│   ├── LoadingSkeleton.tsx         ← Shimmer skeleton components per page type
+│   └── EmptyState.tsx              ← Illustrated empty states with action buttons
 ├── context/
 │   ├── AppContext.tsx               ← ** MIRRORED FROM MOBILE ** — bills, income, payments, categories
 │   ├── AuthContext.tsx              ← Firebase auth state
@@ -63,7 +67,8 @@ src/
 └── lib/
     ├── api.ts                      ← Axios client + all API endpoint definitions
     ├── firebase.ts                 ← Firebase config from env vars
-    └── payPeriods.ts               ← ** MIRRORED FROM MOBILE ** — pay period calculation engine
+    ├── payPeriods.ts               ← ** MIRRORED FROM MOBILE ** — pay period calculation engine
+    └── categoryIcons.ts            ← ** MIRRORED FROM MOBILE ** — category icon definitions
 ```
 
 ## Data Parity with Mobile App (CRITICAL)
@@ -79,6 +84,8 @@ These website files are direct ports of mobile app files. When the mobile versio
 | `src/lib/payPeriods.ts` | `src/utils/payPeriods.ts` | `getPayPeriods()`, `isBillInPeriod()`, `getMonthPayPeriods()`, `getPaycheckCount()` |
 | `src/app/app/page.tsx` | `src/screens/dashboard/DashboardScreen.tsx` | `billAmountForPaycheck()`, bill filtering, paycheck calculations |
 | `src/app/app/tracker/page.tsx` | `src/screens/tracker/TrackerScreen.tsx` | Per-paycheck payment tracking UI and logic |
+| `src/lib/categoryIcons.ts` | `src/utils/categoryIcons.ts` | Category icon definitions, colors, SVG paths |
+| `src/components/CategoryIcon.tsx` | `src/components/CategoryIcon.tsx` | Reusable category icon component |
 
 ### Key Data Mapping Rules (from `mapApiBill`)
 - Backend field `total_amount` → app field `total`

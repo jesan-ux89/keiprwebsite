@@ -11,6 +11,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import CategoryIcon from '@/components/CategoryIcon';
 import { CATEGORY_COLORS } from '@/lib/categoryIcons';
+import { DashboardSkeleton } from '@/components/LoadingSkeleton';
+import EmptyState from '@/components/EmptyState';
 import {
   TrendingUp,
   Receipt,
@@ -542,9 +544,7 @@ export default function DashboardPage() {
 
       {/* Content */}
       {isLoading ? (
-        <Card style={{ padding: '2rem', textAlign: 'center' }}>
-          <p style={{ color: colors.textMuted }}>Loading...</p>
-        </Card>
+        <DashboardSkeleton />
       ) : viewMode === 'paycheck' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* This paycheck bills */}

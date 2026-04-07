@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
+import { BillsSkeleton } from '@/components/LoadingSkeleton';
+import EmptyState from '@/components/EmptyState';
 import { Plus, Search, ChevronDown, ChevronUp, Split, Zap } from 'lucide-react';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
@@ -190,20 +192,15 @@ export default function BillsPage() {
 
       {/* Bills List */}
       {billsLoading ? (
-        <Card style={{ padding: '2rem', textAlign: 'center' }}>
-          <p style={{ color: colors.textMuted }}>Loading bills...</p>
-        </Card>
+        <BillsSkeleton />
       ) : filteredBills.length === 0 ? (
-        <Card style={{ padding: '2rem', textAlign: 'center' }}>
-          <p style={{ color: colors.textMuted, marginBottom: '1rem' }}>No bills found</p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowAddModal(true)}
-          >
-            Create your first bill
-          </Button>
-        </Card>
+        <EmptyState
+          icon="bills"
+          title="No bills yet"
+          description="Add your first bill to start tracking your budget."
+          actionLabel="Add a bill"
+          onAction={() => setShowAddModal(true)}
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {Object.entries(groupedFilteredBills).map(([category, categoryBills]) => (

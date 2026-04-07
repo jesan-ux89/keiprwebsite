@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { SkeletonStyles } from '@/components/LoadingSkeleton';
 
 export default function AuthAppLayout({
   children,
@@ -10,7 +12,10 @@ export default function AuthAppLayout({
 }) {
   return (
     <AppLayout>
-      {children}
+      <SkeletonStyles />
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
     </AppLayout>
   );
 }

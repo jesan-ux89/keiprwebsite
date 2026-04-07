@@ -5,7 +5,9 @@ import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
 import type { Bill } from '@/context/AppContext';
-import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrackerSkeleton } from '@/components/LoadingSkeleton';
+import EmptyState from '@/components/EmptyState';
 
 /**
  * Payment Tracker — PORTED FROM MOBILE TrackerScreen.tsx
@@ -30,19 +32,7 @@ export default function TrackerPage() {
   const loading = billsLoading || incomeLoading;
 
   if (loading) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-          color: colors.textMuted,
-        }}
-      >
-        <Loader size={32} />
-      </div>
-    );
+    return <TrackerSkeleton />;
   }
 
   if (!payPeriods || !primaryIncome) {
@@ -266,14 +256,7 @@ export default function TrackerPage() {
           })}
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
-          <div style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '8px' }}>
-            No bills this period
-          </div>
-          <p style={{ fontSize: '13px', marginTop: '4px' }}>
-            No bills are due during {period.label}
-          </p>
-        </div>
+        <EmptyState icon="tracker" title="No bills this period" message={`No bills are due during ${period.label}`} />
       )}
     </div>
   );
