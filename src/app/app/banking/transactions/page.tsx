@@ -215,7 +215,7 @@ export default function AllTransactionsPage() {
       {/* Category Tabs */}
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
         {CATEGORY_TABS.map(tab => {
-          const count = tab.key === 'all' ? totalCount : (counts as Record<string, number>)[tab.key] || 0;
+          const count = tab.key === 'all' ? totalCount : (counts as unknown as Record<string, number>)[tab.key] || 0;
           const isActive = selectedCategory === tab.key;
           return (
             <button
