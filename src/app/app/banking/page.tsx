@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
+import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -35,6 +36,7 @@ interface BankingStatus {
 
 export default function BankingPage() {
   const { colors } = useTheme();
+  const { isUltra } = useApp();
 
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [status, setStatus] = useState<BankingStatus | null>(null);
@@ -43,9 +45,11 @@ export default function BankingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchAccounts();
-    fetchStatus();
-  }, []);
+    if (isUltra) {
+      fetchAccounts();
+      fetchStatus();
+    }
+  }, [isUltra]);
 
   const fetchAccounts = async () => {
     setLoading(true);
@@ -109,6 +113,32 @@ export default function BankingPage() {
       alert('Failed to unlink account');
     }
   };
+
+  if (!isUltra) {
+    return (
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
+            Connected Banking
+          </h1>
+        </div>
+        <Card style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+          <Landmark size={48} style={{ color: colors.textMuted, marginBottom: '1rem' }} />
+          <h2 style={{ color: colors.text, margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>
+            Ultra Plan Required
+          </h2>
+          <p style={{ color: colors.textMuted, margin: '0 0 1.5rem 0', fontSize: '0.95rem', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
+            Connected banking lets you link your bank accounts, get automatic bill suggestions, and match transactions to your bills.
+          </p>
+          <Link href="/app/settings" style={{ textDecoration: 'none' }}>
+            <Button variant="primary" size="md">
+              Upgrade to Ultra
+            </Button>
+          </Link>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>

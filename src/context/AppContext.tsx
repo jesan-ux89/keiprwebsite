@@ -154,6 +154,8 @@ interface AppContextType {
   tier: 'free' | 'pro' | 'ultra';
   isPro: boolean;
   isUltra: boolean;
+  canSplit: (billId?: string) => boolean;
+  maxForwardMonths: number;
 
   // Secondary income allocations
   sideIncomeSummary: SideIncomeSummary[];
@@ -213,6 +215,8 @@ const AppContext = createContext<AppContextType>({
   tier: 'free',
   isPro: false,
   isUltra: false,
+  canSplit: () => false,
+  maxForwardMonths: 1,
 
   sideIncomeSummary: [],
   sideIncomeAllocations: [],
@@ -377,6 +381,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [tier, setTier] = useState<'free' | 'pro' | 'ultra'>('free');
   const isPro = tier === 'pro' || tier === 'ultra';
   const isUltra = tier === 'ultra';
+  const FREE_SPLIT_LIMIT = 1;
+  const maxForwardMonths = isPro ? 99 : 1;
+
+  function canSplit(billId?: string): boolean {
+    if (isPro) return true;
+    const existingSplits = bills.filter(b => b.isSplit);
+    if (billId && existingSplits.some(b => b.id === billId)) return true;
+    return existingSplits.length < FREE_SPLIT_LIMIT;
+  }
 
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
 
@@ -915,6 +928,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         tier,
         isPro,
         isUltra,
+        canSplit,
+        maxForwardMonths,
 
         userName,
         userInitials,

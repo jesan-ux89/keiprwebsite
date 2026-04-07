@@ -42,7 +42,7 @@ interface AddBillModalProps {
 
 export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillModalProps) {
   const { colors } = useTheme();
-  const { addBill, updateBill, fmt } = useApp();
+  const { addBill, updateBill, fmt, canSplit } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -335,15 +335,17 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
             <input
               type="checkbox"
               checked={isSplit}
+              disabled={!isSplit && !canSplit(billToEdit?.id)}
               onChange={(e) => setIsSplit(e.target.checked)}
               style={{
-                cursor: 'pointer',
+                cursor: canSplit(billToEdit?.id) || isSplit ? 'pointer' : 'not-allowed',
                 width: '18px',
                 height: '18px',
+                opacity: !isSplit && !canSplit(billToEdit?.id) ? 0.5 : 1,
               }}
             />
             <span style={{ fontSize: '0.875rem', color: colors.text, fontWeight: 500 }}>
-              Split
+              Split {!canSplit(billToEdit?.id) && !isSplit ? '(Pro)' : ''}
             </span>
           </label>
         </div>

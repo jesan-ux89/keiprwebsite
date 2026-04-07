@@ -90,7 +90,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt } = useApp();
+  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -218,6 +218,11 @@ export default function SettingsPage() {
   };
 
   const handleAddIncome = async () => {
+    const regularSources = incomeSources.filter(s => !s.isOneTime);
+    if (!isPro && regularSources.length >= 1) {
+      alert('Free accounts are limited to 1 income source. Upgrade to Pro for unlimited.');
+      return;
+    }
     if (!incomeForm.name || !incomeForm.amount || !incomeForm.nextPayDate) {
       alert('Please fill in all fields');
       return;
@@ -1543,19 +1548,32 @@ export default function SettingsPage() {
 
         {expandedSection === 'export' && (
           <div>
-            <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: '0 0 1rem 0' }}>
-              Download a backup of your data including all bills, income sources, and transactions.
-            </p>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handleExport}
-              loading={exportLoading}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Download size={18} />
-              Export Data
-            </Button>
+            {isPro ? (
+              <>
+                <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: '0 0 1rem 0' }}>
+                  Download a backup of your data including all bills, income sources, and transactions.
+                </p>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleExport}
+                  loading={exportLoading}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Download size={18} />
+                  Export Data
+                </Button>
+              </>
+            ) : (
+              <div style={{ padding: '1rem', borderRadius: 12, border: `1px dashed ${colors.border}`, textAlign: 'center' }}>
+                <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>
+                  Data export is available on the Pro plan.
+                </p>
+                <Button variant="primary" size="sm" onClick={() => toggleSection('subscription')}>
+                  Upgrade to Pro
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>
