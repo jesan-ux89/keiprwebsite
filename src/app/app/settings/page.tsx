@@ -872,7 +872,7 @@ export default function SettingsPage() {
         {expandedSection === 'funds' && (
           <>
             {!isPro ? (
-              <div style={{ padding: '1rem', borderRadius: 12, border: `1px dashed ${colors.border}`, textAlign: 'center' }}>
+              <div style={{ padding: '1rem', borderRadius: 12, border: `1px dashed ${colors.cardBorder}`, textAlign: 'center' }}>
                 <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>
                   One-time fund tracking is available on the Pro plan.
                 </p>
@@ -1829,7 +1829,7 @@ export default function SettingsPage() {
                 </Button>
               </>
             ) : (
-              <div style={{ padding: '1rem', borderRadius: 12, border: `1px dashed ${colors.border}`, textAlign: 'center' }}>
+              <div style={{ padding: '1rem', borderRadius: 12, border: `1px dashed ${colors.cardBorder}`, textAlign: 'center' }}>
                 <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: '0 0 0.5rem 0' }}>
                   Data export is available on the Pro plan.
                 </p>
