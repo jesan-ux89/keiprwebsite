@@ -19,7 +19,7 @@ interface ExpandedBills {
 }
 
 export default function BillsPage() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { bills, billsLoading, fmt, isUltra } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
@@ -300,8 +300,8 @@ export default function BillsPage() {
                               fontWeight: 600,
                               padding: '0.125rem 0.5rem',
                               borderRadius: '10px',
-                              backgroundColor: 'rgba(214,209,199,0.1)',
-                              color: '#D6D1C7',
+                              backgroundColor: isDark ? 'rgba(214,209,199,0.1)' : 'rgba(12,74,110,0.08)',
+                              color: isDark ? '#D6D1C7' : '#4A5568',
                               letterSpacing: '0.3px',
                             }}>Due the {bill.dueDay}{bill.dueDay === 1 ? 'st' : bill.dueDay === 2 ? 'nd' : bill.dueDay === 3 ? 'rd' : 'th'}</span>
                           </div>
