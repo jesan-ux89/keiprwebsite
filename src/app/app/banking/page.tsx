@@ -17,6 +17,7 @@ import {
   History,
   Ban,
   Plus,
+  Eye,
 } from 'lucide-react';
 
 interface BankAccount {
@@ -44,6 +45,13 @@ export default function BankingPage() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [syncCooldown, setSyncCooldown] = useState(0);
+
+  useEffect(() => {
+    if (syncCooldown <= 0) return;
+    const timer = setTimeout(() => setSyncCooldown(syncCooldown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [syncCooldown]);
 
   useEffect(() => {
     if (isUltra) {
@@ -100,6 +108,7 @@ export default function BankingPage() {
         ? `${r.added} transactions synced · ${r.matched} matched to bills`
         : 'Already up to date — no new transactions';
       setSyncResult(msg);
+      setSyncCooldown(30);
       await fetchAccounts();
       await fetchStatus();
     } catch (err: unknown) {
@@ -196,11 +205,11 @@ export default function BankingPage() {
             size="md"
             onClick={handleManualSync}
             loading={syncing}
-            disabled={accounts.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            disabled={accounts.length === 0 || syncCooldown > 0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: syncCooldown > 0 ? 0.5 : 1 }}
           >
             <RefreshCw size={18} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-            Sync Now
+            {syncCooldown > 0 ? `Sync Now (${syncCooldown}s)` : 'Sync Now'}
           </Button>
           <Button
             variant="secondary"
@@ -345,6 +354,32 @@ export default function BankingPage() {
 
       {/* Navigation Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+        <Link href="/app/banking/transactions" style={{ textDecoration: 'none' }}>
+          <Card
+            onClick={() => {}}
+            style={{
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minHeight: '120px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', height: '100%' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <Eye size={20} style={{ color: colors.electric }} />
+                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                    All Transactions
+                  </h3>
+                </div>
+                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: 0 }}>
+                  Review all synced transactions and their categories
+                </p>
+              </div>
+              <ChevronRight size={20} style={{ color: colors.textMuted }} />
+            </div>
+          </Card>
+        </Link>
+
         <Link href="/app/banking/suggestions" style={{ textDecoration: 'none' }}>
           <Card
             onClick={() => {}}

@@ -133,6 +133,11 @@ export const bankingAPI = {
   deleteExclusionRule: (id: string) => api.delete(`/banking-data/exclusion-rules/${id}`),
   triggerSync:         () => api.post('/banking-data/sync'),
   directSync:          () => api.post('/banking/sandbox/direct-sync'),
+  getAllTransactions:  (params?: Record<string, unknown>) => api.get('/banking-data/all-transactions', { params }),
+  transactionAction:   (id: string, data: Record<string, unknown>) => api.post(`/banking-data/transactions/${id}/action`, data),
+  getAutoExclusionSettings: () => api.get('/banking-data/auto-exclusion-settings'),
+  updateAutoExclusionSettings: (data: Record<string, unknown>) => api.post('/banking-data/auto-exclusion-settings', data),
+  scanSuggestions:     () => api.post('/banking-data/suggest/scan'),
 };
 
 // Rollover
