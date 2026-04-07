@@ -131,6 +131,7 @@ export const bankingAPI = {
   addExclusionRule:    (data: Record<string, unknown>) => api.post('/banking-data/exclusion-rules', data),
   deleteExclusionRule: (id: string) => api.delete(`/banking-data/exclusion-rules/${id}`),
   triggerSync:         () => api.post('/banking-data/sync'),
+  directSync:          () => api.post('/banking/sandbox/direct-sync'),
 };
 
 // Rollover

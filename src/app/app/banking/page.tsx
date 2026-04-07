@@ -43,6 +43,7 @@ export default function BankingPage() {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (isUltra) {
@@ -90,13 +91,21 @@ export default function BankingPage() {
 
   const handleManualSync = async () => {
     setSyncing(true);
+    setError(null);
+    setSyncResult(null);
     try {
-      await bankingAPI.triggerSync();
+      const res = await bankingAPI.directSync();
+      const r = res.data?.results || {};
+      const msg = r.added > 0
+        ? `${r.added} transactions synced · ${r.matched} matched to bills`
+        : 'Already up to date — no new transactions';
+      setSyncResult(msg);
+      await fetchAccounts();
       await fetchStatus();
-      alert('Sync triggered! Check back soon for updates.');
-    } catch (err) {
-      console.error('Failed to trigger sync:', err);
-      alert('Failed to trigger sync');
+    } catch (err: unknown) {
+      console.error('Failed to sync:', err);
+      const axiosErr = err as { response?: { data?: { details?: string; error?: string } } };
+      setError(axiosErr?.response?.data?.details || axiosErr?.response?.data?.error || 'Sync failed. Please try again.');
     } finally {
       setSyncing(false);
     }
@@ -191,7 +200,7 @@ export default function BankingPage() {
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <RefreshCw size={18} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-            Manual Sync
+            Sync Now
           </Button>
           <Button
             variant="secondary"
@@ -225,6 +234,30 @@ export default function BankingPage() {
           <p style={{ color: colors.red, margin: 0, fontSize: '0.95rem' }}>
             {error}
           </p>
+        </Card>
+      )}
+
+      {/* Sync Result Banner */}
+      {syncResult && (
+        <Card
+          style={{
+            backgroundColor: 'rgba(56,189,248,0.08)',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+          }}
+        >
+          <p style={{ color: '#38BDF8', margin: 0, fontSize: '0.95rem' }}>
+            {syncResult}
+          </p>
+          <button
+            onClick={() => setSyncResult(null)}
+            style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '1rem' }}
+          >
+            ✕
+          </button>
         </Card>
       )}
 
@@ -271,7 +304,7 @@ export default function BankingPage() {
                       {account.account_name} • {account.account_mask}
                     </p>
                     <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: 0 }}>
-                      Last synced: {account.last_sync && !isNaN(new Date(account.last_sync).getTime()) ? new Date(account.last_sync).toLocaleDateString() : 'Never'}
+                      Last synced: {account.last_sync && !isNaN(new Date(account.last_sync).getTime()) ? new Date(account.last_sync).toLocaleDateString() : 'Waiting for first sync…'}
                     </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
