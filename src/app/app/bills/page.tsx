@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { Plus, Search, ChevronDown, ChevronUp, Split, Zap, Landmark } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
 
@@ -249,65 +249,80 @@ export default function BillsPage() {
                         }}
                       >
                         <div style={{ flex: 1 }}>
-                          <div
+                          <h3
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.75rem',
-                              marginBottom: '0.5rem',
+                              fontSize: '1rem',
+                              fontWeight: 600,
+                              color: colors.text,
+                              margin: '0 0 0.375rem 0',
                             }}
                           >
-                            <h3
-                              style={{
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                color: colors.text,
-                                margin: 0,
-                              }}
-                            >
-                              {bill.name}
-                            </h3>
-                            {matchedBillIds.has(bill.id) && (
-                              <Landmark
-                                size={14}
-                                style={{
-                                  color: colors.electric,
-                                  flexShrink: 0,
-                                }}
-                                title="Matched to bank transaction"
-                              />
-                            )}
+                            {bill.name}
+                          </h3>
+
+                          {/* Pill badges */}
+                          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginBottom: '0.375rem' }}>
                             {bill.isSplit && (
-                              <Split
-                                size={16}
-                                style={{
-                                  color: colors.electric,
-                                  opacity: 0.7,
-                                }}
-                                aria-label="This bill is split across paychecks"
-                              />
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '10px',
+                                backgroundColor: 'rgba(168,130,255,0.15)',
+                                color: '#A882FF',
+                                letterSpacing: '0.3px',
+                              }}>Split</span>
                             )}
-                            {bill.isAutoPay && (
-                              <Zap
-                                size={16}
-                                style={{
-                                  color: colors.green,
-                                  opacity: 0.7,
-                                }}
-                                aria-label="AutoPay enabled"
-                              />
+                            {bill.isRecurring && (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '10px',
+                                backgroundColor: 'rgba(56,189,248,0.15)',
+                                color: '#38BDF8',
+                                letterSpacing: '0.3px',
+                              }}>Recurring</span>
+                            )}
+                            {matchedBillIds.has(bill.id) && (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '10px',
+                                backgroundColor: 'rgba(52,211,153,0.15)',
+                                color: '#34D399',
+                                letterSpacing: '0.3px',
+                              }}>Bank Synced</span>
                             )}
                           </div>
 
+                          {/* Split progress */}
+                          {bill.isSplit && (() => {
+                            const splits = [
+                              { amount: bill.p1, done: bill.p1done },
+                              { amount: bill.p2, done: bill.p2done },
+                              { amount: bill.p3, done: bill.p3done },
+                              { amount: bill.p4, done: bill.p4done },
+                            ].filter(s => s.amount > 0);
+                            const splitsTotal = splits.length;
+                            const splitsDone = splits.filter(s => s.done).length;
+                            const allDone = splitsDone === splitsTotal && splitsTotal > 0;
+                            return (
+                              <p style={{
+                                fontSize: '0.8rem',
+                                color: allDone ? '#34D399' : '#A882FF',
+                                margin: '0 0 0.25rem 0',
+                              }}>
+                                {allDone
+                                  ? `${splitsTotal} of ${splitsTotal} splits ✓ Fully saved!`
+                                  : `${splitsDone} of ${splitsTotal} splits ✓`}
+                              </p>
+                            );
+                          })()}
+
                           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem' }}>
                             <span style={{ color: colors.textMuted }}>Due: Day {bill.dueDay}</span>
-                            <span
-                              style={{
-                                color: colors.textMuted,
-                              }}
-                            >
-                              Frequency: {bill.isRecurring ? 'Recurring' : 'One-time'}
-                            </span>
                           </div>
                         </div>
 
@@ -315,9 +330,6 @@ export default function BillsPage() {
                           style={{
                             textAlign: 'right',
                             marginRight: '1rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-end',
                           }}
                         >
                           <p
@@ -329,15 +341,6 @@ export default function BillsPage() {
                             }}
                           >
                             {fmt(bill.total)}
-                          </p>
-                          <p
-                            style={{
-                              fontSize: '0.875rem',
-                              color: colors.textMuted,
-                              margin: '0.25rem 0 0 0',
-                            }}
-                          >
-                            {fmt(bill.funded)}/{fmt(bill.total)}
                           </p>
                         </div>
 
