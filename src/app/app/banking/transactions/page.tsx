@@ -65,7 +65,7 @@ export default function AllTransactionsPage() {
     if (selectedStatus === 'all') {
       setFilteredTransactions(transactions);
     } else {
-      setFilteredTransactions(transactions.filter((t) => t.status === selectedStatus));
+      setFilteredTransactions(transactions.filter((t) => (t.display_category || t.status) === selectedStatus));
     }
     setPage(1);
   }, [selectedStatus, transactions]);
