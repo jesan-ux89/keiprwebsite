@@ -268,8 +268,8 @@ export default function BillsPage() {
                                 fontWeight: 600,
                                 padding: '0.125rem 0.5rem',
                                 borderRadius: '10px',
-                                backgroundColor: 'rgba(168,130,255,0.15)',
-                                color: '#A882FF',
+                                backgroundColor: isDark ? 'rgba(168,130,255,0.15)' : 'rgba(109,40,217,0.1)',
+                                color: isDark ? '#A882FF' : '#6D28D9',
                                 letterSpacing: '0.3px',
                               }}>Split</span>
                             )}
@@ -279,8 +279,8 @@ export default function BillsPage() {
                                 fontWeight: 600,
                                 padding: '0.125rem 0.5rem',
                                 borderRadius: '10px',
-                                backgroundColor: 'rgba(56,189,248,0.15)',
-                                color: '#38BDF8',
+                                backgroundColor: isDark ? 'rgba(56,189,248,0.15)' : 'rgba(3,105,161,0.1)',
+                                color: isDark ? '#38BDF8' : '#0369A1',
                                 letterSpacing: '0.3px',
                               }}>Recurring</span>
                             )}
@@ -290,8 +290,8 @@ export default function BillsPage() {
                                 fontWeight: 600,
                                 padding: '0.125rem 0.5rem',
                                 borderRadius: '10px',
-                                backgroundColor: 'rgba(52,211,153,0.15)',
-                                color: '#34D399',
+                                backgroundColor: isDark ? 'rgba(52,211,153,0.15)' : 'rgba(4,120,87,0.1)',
+                                color: isDark ? '#34D399' : '#047857',
                                 letterSpacing: '0.3px',
                               }}>Bank Synced</span>
                             )}
@@ -320,7 +320,7 @@ export default function BillsPage() {
                             return (
                               <p style={{
                                 fontSize: '0.8rem',
-                                color: allDone ? '#34D399' : '#A882FF',
+                                color: allDone ? (isDark ? '#34D399' : '#047857') : (isDark ? '#A882FF' : '#6D28D9'),
                                 margin: '0 0 0.25rem 0',
                               }}>
                                 {allDone
