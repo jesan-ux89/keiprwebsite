@@ -1,98 +1,94 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, AlertCircle, Plus, Link as LinkIcon, Trash2, Eye } from 'lucide-react';
+import { ChevronLeft, AlertCircle, Eye } from 'lucide-react';
 import Link from 'next/link';
 
-type TransactionStatus = 'possible_bill' | 'matched' | 'likely_not_bill' | 'auto_excluded' | 'user_excluded';
+type TransactionCategory = 'all' | 'possible_bill' | 'matched' | 'likely_not_bill' | 'auto_excluded' | 'user_excluded';
 
 interface Transaction {
   id: string;
   merchant_name: string;
+  cleaned_name?: string;
   amount: number;
-  date: string;
-  status: TransactionStatus;
-  display_category?: TransactionStatus;
+  transaction_date?: string;
+  date?: string;
+  display_category?: TransactionCategory;
+  status?: string;
   confidence_score?: number;
-  linked_bill_id?: string;
-  linked_bill_name?: string;
-  exclusion_reason?: string;
+  matched_bill_id?: string;
+  matched_bill_name?: string;
+  exclusion_rule_value?: string;
 }
 
-interface SummaryStats {
-  total_transactions: number;
-  possible_bills: number;
+interface TransactionCounts {
   matched: number;
-  likely_not_bills: number;
+  possible_bill: number;
+  likely_not_bill: number;
   auto_excluded: number;
   user_excluded: number;
 }
 
-const STATUS_COLORS: Record<TransactionStatus, { bg: string; text: string; label: string }> = {
-  possible_bill: { bg: 'rgba(56,189,248,0.15)', text: '#38BDF8', label: 'Possible Bill' },
-  matched: { bg: 'rgba(52,211,153,0.15)', text: '#34D399', label: 'Matched' },
-  likely_not_bill: { bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', label: 'Likely Not Bill' },
-  auto_excluded: { bg: 'rgba(248,113,113,0.15)', text: '#F87171', label: 'Auto-Excluded' },
-  user_excluded: { bg: 'rgba(200,200,200,0.15)', text: '#999999', label: 'User-Excluded' },
-};
+const CATEGORY_TABS: Array<{ key: TransactionCategory; label: string }> = [
+  { key: 'all', label: 'All' },
+  { key: 'matched', label: 'Matched' },
+  { key: 'possible_bill', label: 'Possible' },
+  { key: 'likely_not_bill', label: 'Not Bills' },
+  { key: 'auto_excluded', label: 'Auto-Excl.' },
+  { key: 'user_excluded', label: 'User Excl.' },
+];
 
 export default function AllTransactionsPage() {
-  const { colors } = useTheme();
-  const { isUltra, fmt, bills } = useApp();
+  const { colors, isDark } = useTheme();
+  const { isUltra, fmt } = useApp();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [summary, setSummary] = useState<SummaryStats | null>(null);
+  const [counts, setCounts] = useState<TransactionCounts>({
+    matched: 0, possible_bill: 0, likely_not_bill: 0, auto_excluded: 0, user_excluded: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus | 'all'>('all');
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
-  const [page, setPage] = useState(1);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<TransactionCategory>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actioning, setActioning] = useState<string | null>(null);
-  const itemsPerPage = 50;
 
   useEffect(() => {
-    if (isUltra) {
-      fetchTransactions();
-    }
+    if (isUltra) fetchTransactions('all');
   }, [isUltra]);
 
-  useEffect(() => {
-    // Apply filter
-    if (selectedStatus === 'all') {
-      setFilteredTransactions(transactions);
-    } else {
-      setFilteredTransactions(transactions.filter((t) => (t.display_category || t.status) === selectedStatus));
-    }
-    setPage(1);
-  }, [selectedStatus, transactions]);
+  const onCategoryChange = useCallback((cat: TransactionCategory) => {
+    setSelectedCategory(cat);
+    setExpandedId(null);
+    fetchTransactions(cat);
+  }, []);
 
-  const fetchTransactions = async (isRetryAfterBackfill = false) => {
+  const fetchTransactions = async (category: TransactionCategory, isRetryAfterBackfill = false) => {
     setLoading(true);
     try {
-      const res = await bankingAPI.getAllTransactions();
+      const limit = category === 'all' ? 50 : 200;
+      const res = await bankingAPI.getAllTransactions({ category, limit, offset: 0 });
       const txns = Array.isArray(res.data?.transactions) ? res.data.transactions : [];
-      const counts = res.data?.counts || {};
-      const total = res.data?.total || 0;
+      const cts = res.data?.counts || { matched: 0, possible_bill: 0, likely_not_bill: 0, auto_excluded: 0, user_excluded: 0 };
 
-      // Auto-backfill: if all counts are 0 but total > 0, existing rows need categorizing
-      const countSum = Object.values(counts).reduce((a: number, b: unknown) => a + (Number(b) || 0), 0);
+      const total = res.data?.total || 0;
+      const countSum = Object.values(cts).reduce((a: number, b: unknown) => a + (Number(b) || 0), 0);
       if (countSum === 0 && total > 0 && !isRetryAfterBackfill) {
-        console.log('[AllTransactions] Detected uncategorized transactions, running backfill...');
         try {
           await bankingAPI.backfillCategories();
-          return fetchTransactions(true);
+          return fetchTransactions(category, true);
         } catch (bfErr) {
           console.error('Backfill failed:', bfErr);
         }
       }
 
       setTransactions(txns);
-      setSummary(res.data?.summary || null);
+      setCounts(cts);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch transactions:', err);
@@ -102,505 +98,287 @@ export default function AllTransactionsPage() {
     }
   };
 
-  const handleAddAsBill = async (transaction: Transaction) => {
-    setActioning(transaction.id);
+  // ── Helpers ──
+  function getCatColor(cat: string) {
+    const map: Record<string, { bg: string; text: string }> = {
+      matched:          { bg: isDark ? 'rgba(52,211,153,0.12)' : 'rgba(4,120,87,0.08)',   text: isDark ? '#34D399' : '#047857' },
+      possible_bill:    { bg: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(146,64,14,0.08)',   text: isDark ? '#F59E0B' : '#92400E' },
+      likely_not_bill:  { bg: isDark ? 'rgba(107,114,128,0.12)': 'rgba(107,114,128,0.08)', text: isDark ? '#9CA3AF' : '#6B7280' },
+      auto_excluded:    { bg: isDark ? 'rgba(248,113,113,0.12)': 'rgba(185,28,28,0.08)',   text: isDark ? '#F87171' : '#B91C1C' },
+      user_excluded:    { bg: isDark ? 'rgba(167,139,250,0.12)': 'rgba(126,34,206,0.08)',  text: isDark ? '#A78BFA' : '#7E22CE' },
+    };
+    return map[cat] || { bg: isDark ? 'rgba(232,229,220,0.06)' : 'rgba(0,0,0,0.04)', text: colors.textMuted };
+  }
+
+  function getCatLabel(cat: string) {
+    const map: Record<string, string> = {
+      matched: 'Matched', possible_bill: 'Possible', likely_not_bill: 'Not a Bill',
+      auto_excluded: 'Auto-Excl.', user_excluded: 'User Excl.',
+    };
+    return map[cat] || '';
+  }
+
+  function formatDate(dateStr?: string): string {
+    if (!dateStr) return '';
     try {
-      await bankingAPI.transactionAction(transaction.id, { action: 'add_as_bill' });
-      setTransactions(transactions.filter((t) => t.id !== transaction.id));
-      alert('Bill added! You can edit it in your bills list.');
-    } catch (err) {
-      console.error('Failed to add bill:', err);
-      alert('Failed to add bill');
-    } finally {
-      setActioning(null);
-    }
+      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch { return dateStr; }
+  }
+
+  // ── Actions ──
+  const handleAddAsBill = async (txn: Transaction) => {
+    setActioning(txn.id);
+    try {
+      await bankingAPI.transactionAction(txn.id, { action: 'add_as_bill' });
+      setTransactions(prev => prev.filter(t => t.id !== txn.id));
+      setSuccess('Bill added!');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch { setError('Failed to add bill'); }
+    finally { setActioning(null); }
   };
 
-  const handleLinkToExisting = async (transaction: Transaction) => {
-    if (bills.length === 0) {
-      alert('No bills to link to. Create a bill first.');
-      return;
-    }
-
-    const billId = window.prompt('Enter bill ID or select from your bills (feature: bill picker coming soon)');
-    if (!billId) return;
-
-    setActioning(transaction.id);
+  const handleIgnoreOnce = async (txn: Transaction) => {
+    setActioning(txn.id);
     try {
-      await bankingAPI.transactionAction(transaction.id, { action: 'link_to_bill', bill_id: billId });
-      const updated = transactions.map((t) =>
-        t.id === transaction.id
-          ? { ...t, status: 'matched' as TransactionStatus, linked_bill_id: billId }
-          : t
-      );
-      setTransactions(updated);
-      alert('Transaction linked to bill');
-    } catch (err) {
-      console.error('Failed to link transaction:', err);
-      alert('Failed to link transaction');
-    } finally {
-      setActioning(null);
-    }
+      await bankingAPI.transactionAction(txn.id, { action: 'ignore_once' });
+      setTransactions(prev => prev.filter(t => t.id !== txn.id));
+      setSuccess('Transaction ignored.');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch { setError('Failed to ignore transaction'); }
+    finally { setActioning(null); }
   };
 
-  const handleIgnoreOnce = async (transaction: Transaction) => {
-    setActioning(transaction.id);
+  const handleAlwaysIgnore = async (txn: Transaction) => {
+    setActioning(txn.id);
     try {
-      await bankingAPI.transactionAction(transaction.id, { action: 'ignore_once' });
-      setTransactions(transactions.filter((t) => t.id !== transaction.id));
-    } catch (err) {
-      console.error('Failed to ignore transaction:', err);
-      alert('Failed to ignore transaction');
-    } finally {
-      setActioning(null);
-    }
+      await bankingAPI.transactionAction(txn.id, { action: 'always_ignore' });
+      setTransactions(prev => prev.filter(t => t.id !== txn.id));
+      setSuccess('Exclusion rule created.');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch { setError('Failed to create exclusion rule'); }
+    finally { setActioning(null); }
   };
 
-  const handleAlwaysIgnore = async (transaction: Transaction) => {
-    setActioning(transaction.id);
-    try {
-      await bankingAPI.transactionAction(transaction.id, { action: 'always_ignore' });
-      const updated = transactions.map((t) =>
-        t.id === transaction.id ? { ...t, status: 'user_excluded' as TransactionStatus } : t
-      );
-      setTransactions(updated);
-    } catch (err) {
-      console.error('Failed to ignore transaction:', err);
-      alert('Failed to ignore transaction');
-    } finally {
-      setActioning(null);
-    }
-  };
-
-  const handleUnlink = async (transaction: Transaction) => {
+  const handleUnlink = async (txn: Transaction) => {
     if (!window.confirm('Unlink this transaction from its bill?')) return;
-
-    setActioning(transaction.id);
+    setActioning(txn.id);
     try {
-      await bankingAPI.transactionAction(transaction.id, { action: 'unlink' });
-      const updated = transactions.map((t) =>
-        t.id === transaction.id
-          ? { ...t, status: 'possible_bill' as TransactionStatus, linked_bill_id: undefined, linked_bill_name: undefined }
-          : t
-      );
-      setTransactions(updated);
-    } catch (err) {
-      console.error('Failed to unlink transaction:', err);
-      alert('Failed to unlink transaction');
-    } finally {
-      setActioning(null);
-    }
+      await bankingAPI.transactionAction(txn.id, { action: 'unlink' });
+      setTransactions(prev => prev.filter(t => t.id !== txn.id));
+      setSuccess('Transaction unlinked.');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch { setError('Failed to unlink transaction'); }
+    finally { setActioning(null); }
   };
 
-  const paginatedTransactions = filteredTransactions.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const handleRemoveRule = async (txn: Transaction) => {
+    setActioning(txn.id);
+    try {
+      await bankingAPI.transactionAction(txn.id, { action: 'remove_rule' });
+      setTransactions(prev => prev.filter(t => t.id !== txn.id));
+      setSuccess('Exclusion rule removed.');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch { setError('Failed to remove rule'); }
+    finally { setActioning(null); }
+  };
+
+  const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
 
   if (!isUltra) {
     return (
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link href="/app/banking" style={{ textDecoration: 'none' }}>
-            <Button variant="ghost" size="sm">
-              <ChevronLeft size={18} style={{ color: colors.text }} />
-            </Button>
+            <Button variant="ghost" size="sm"><ChevronLeft size={18} style={{ color: colors.text }} /></Button>
           </Link>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-              All Transactions
-            </h1>
-          </div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, margin: 0 }}>All Transactions</h1>
         </div>
         <Card style={{ textAlign: 'center', padding: '3rem 2rem' }}>
           <AlertCircle size={48} style={{ color: colors.textMuted, marginBottom: '1rem' }} />
-          <h2 style={{ color: colors.text, margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>
-            Ultra Plan Required
-          </h2>
-          <p style={{ color: colors.textMuted, margin: 0, fontSize: '0.95rem' }}>
-            View all transactions and their banking analysis with Ultra plan
-          </p>
+          <h2 style={{ color: colors.text, margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>Ultra Plan Required</h2>
+          <p style={{ color: colors.textMuted, margin: 0 }}>View all synced bank transactions with Ultra plan.</p>
         </Card>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <Link href="/app/banking" style={{ textDecoration: 'none' }}>
-          <Button variant="ghost" size="sm">
-            <ChevronLeft size={18} style={{ color: colors.text }} />
-          </Button>
+          <Button variant="ghost" size="sm"><ChevronLeft size={18} style={{ color: colors.text }} /></Button>
         </Link>
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-            All Transactions
-          </h1>
-          <p style={{ color: colors.textMuted, margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
-            Review and manage all synced transactions
-          </p>
-        </div>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, margin: 0 }}>All Transactions</h1>
       </div>
 
-      {/* Summary Bar */}
-      {summary && !loading && (
-        <Card style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.5rem' }}>
-            <div>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-                TOTAL
-              </p>
-              <p style={{ color: colors.text, fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-                {summary.total_transactions}
-              </p>
-            </div>
-            <div>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-                POSSIBLE BILLS
-              </p>
-              <p style={{ color: colors.electric, fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-                {summary.possible_bills}
-              </p>
-            </div>
-            <div>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-                MATCHED
-              </p>
-              <p style={{ color: colors.green, fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-                {summary.matched}
-              </p>
-            </div>
-            <div>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-                LIKELY NOT BILLS
-              </p>
-              <p style={{ color: colors.amber, fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-                {summary.likely_not_bills}
-              </p>
-            </div>
-            <div>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-                EXCLUDED
-              </p>
-              <p style={{ color: colors.red, fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
-                {summary.auto_excluded + summary.user_excluded}
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <Card
-          style={{
-            backgroundColor: `${colors.red}15`,
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-          }}
-        >
-          <AlertCircle size={20} style={{ color: colors.red, flexShrink: 0 }} />
-          <p style={{ color: colors.red, margin: 0, fontSize: '0.95rem' }}>
-            {error}
-          </p>
-        </Card>
-      )}
-
       {/* Category Tabs */}
-      {!loading && transactions.length > 0 && (
-        <Card style={{ marginBottom: '2rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Button
-            variant={selectedStatus === 'all' ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedStatus('all')}
-          >
-            All ({transactions.length})
-          </Button>
-          <Button
-            variant={selectedStatus === 'possible_bill' ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedStatus('possible_bill')}
-          >
-            Possible Bills ({summary?.possible_bills || 0})
-          </Button>
-          <Button
-            variant={selectedStatus === 'matched' ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedStatus('matched')}
-          >
-            Matched ({summary?.matched || 0})
-          </Button>
-          <Button
-            variant={selectedStatus === 'likely_not_bill' ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedStatus('likely_not_bill')}
-          >
-            Likely Not Bills ({summary?.likely_not_bills || 0})
-          </Button>
-          <Button
-            variant={selectedStatus === 'auto_excluded' ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedStatus('auto_excluded')}
-          >
-            Auto-Excluded ({summary?.auto_excluded || 0})
-          </Button>
-          <Button
-            variant={selectedStatus === 'user_excluded' ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedStatus('user_excluded')}
-          >
-            User-Excluded ({summary?.user_excluded || 0})
-          </Button>
-        </Card>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        {CATEGORY_TABS.map(tab => {
+          const count = tab.key === 'all' ? totalCount : (counts as Record<string, number>)[tab.key] || 0;
+          const isActive = selectedCategory === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => onCategoryChange(tab.key)}
+              style={{
+                padding: '0.4rem 0.75rem', borderRadius: '1rem', fontSize: '0.8rem', fontWeight: 600,
+                border: isActive ? 'none' : `1px solid ${colors.divider}`, cursor: 'pointer',
+                backgroundColor: isActive ? colors.electric : (isDark ? 'rgba(232,229,220,0.06)' : 'rgba(0,0,0,0.04)'),
+                color: isActive ? '#1A1814' : colors.textMuted,
+              }}
+            >
+              {tab.label} {count}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Banners */}
+      {error && (
+        <div style={{ padding: '0.6rem 1rem', marginBottom: '0.75rem', borderRadius: '0.5rem',
+          backgroundColor: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(185,28,28,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.8rem', color: isDark ? '#F87171' : '#B91C1C' }}>{error}</span>
+          <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textMuted }}>✕</button>
+        </div>
+      )}
+      {success && (
+        <div style={{ padding: '0.6rem 1rem', marginBottom: '0.75rem', borderRadius: '0.5rem',
+          backgroundColor: isDark ? 'rgba(52,211,153,0.1)' : 'rgba(4,120,87,0.08)' }}>
+          <span style={{ fontSize: '0.8rem', color: isDark ? '#34D399' : '#047857' }}>{success}</span>
+        </div>
       )}
 
-      {/* Loading State */}
+      {/* Content */}
       {loading ? (
         <Card style={{ padding: '2rem', textAlign: 'center' }}>
           <p style={{ color: colors.textMuted }}>Loading transactions...</p>
         </Card>
-      ) : filteredTransactions.length === 0 ? (
-        <Card
-          style={{
-            textAlign: 'center',
-            padding: '3rem 2rem',
-            backgroundColor: colors.background,
-          }}
-        >
+      ) : transactions.length === 0 ? (
+        <Card style={{ textAlign: 'center', padding: '3rem 2rem' }}>
           <Eye size={40} style={{ color: colors.textMuted, marginBottom: '1rem' }} />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, margin: '0 0 0.5rem 0' }}>
-            No transactions
-          </h2>
-          <p style={{ color: colors.textMuted, margin: 0 }}>
-            {selectedStatus === 'all'
-              ? 'Connect your bank account on the mobile app to sync transactions'
-              : `No transactions in this category yet`}
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.5rem 0' }}>No transactions</h2>
+          <p style={{ color: colors.textMuted, margin: 0, fontSize: '0.85rem' }}>
+            {selectedCategory === 'all' ? 'No transactions found yet.' : 'No transactions in this category.'}
           </p>
         </Card>
       ) : (
-        <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-            {paginatedTransactions.map((transaction) => {
-              const statusConfig = STATUS_COLORS[transaction.status];
-              const confidence = transaction.confidence_score
-                ? Math.round(transaction.confidence_score * 100)
-                : null;
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          {transactions.map((txn, idx) => {
+            const cat = (txn.display_category || 'likely_not_bill') as TransactionCategory;
+            const catStyle = getCatColor(cat);
+            const isExpanded = expandedId === txn.id;
+            const dateStr = txn.transaction_date || txn.date;
 
-              return (
-                <Card key={transaction.id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {/* Transaction Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-                          {transaction.merchant_name}
-                        </h3>
-                        <div
-                          style={{
-                            padding: '0.25rem 0.75rem',
-                            backgroundColor: statusConfig.bg,
-                            color: statusConfig.text,
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            borderRadius: '0.25rem',
-                          }}
-                        >
-                          {statusConfig.label}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.875rem' }}>
-                        <span style={{ color: colors.textMuted }}>
-                          {transaction.date && !isNaN(new Date(transaction.date).getTime())
-                            ? new Date(transaction.date).toLocaleDateString()
-                            : 'Unknown date'}
-                        </span>
-                        {confidence !== null && (
-                          <span style={{ color: colors.textMuted }}>
-                            Confidence: <strong>{confidence}%</strong>
-                          </span>
-                        )}
-                      </div>
+            return (
+              <div
+                key={txn.id}
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderBottom: idx < transactions.length - 1 ? `1px solid ${colors.divider}` : 'none',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setExpandedId(isExpanded ? null : txn.id)}
+              >
+                {/* Row: name + meta | amount */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {txn.merchant_name || txn.cleaned_name}
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                        {fmt(transaction.amount ?? 0)}
-                      </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>{formatDate(dateStr)}</span>
+                      {selectedCategory === 'all' && (
+                        <span style={{
+                          fontSize: '0.65rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px',
+                          backgroundColor: catStyle.bg, color: catStyle.text,
+                        }}>
+                          {getCatLabel(cat)}
+                        </span>
+                      )}
+                      {cat === 'matched' && txn.matched_bill_name && (
+                        <span style={{ fontSize: '0.7rem', color: getCatColor('matched').text }}>
+                          → {txn.matched_bill_name}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#38BDF8' : '#0369A1', flexShrink: 0, marginLeft: '0.75rem' }}>
+                    {fmt(txn.amount ?? 0)}
+                  </span>
+                </div>
 
-                  {/* Context Info */}
-                  {transaction.linked_bill_name && (
-                    <div
-                      style={{
-                        padding: '0.75rem',
-                        backgroundColor: colors.background,
-                        borderRadius: '0.5rem',
-                        borderLeft: `3px solid ${colors.green}`,
-                      }}
-                    >
-                      <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.25rem 0' }}>
-                        LINKED BILL
-                      </p>
-                      <p style={{ color: colors.text, fontSize: '0.9rem', margin: 0 }}>
-                        {transaction.linked_bill_name}
-                      </p>
-                    </div>
-                  )}
-
-                  {transaction.exclusion_reason && (
-                    <div
-                      style={{
-                        padding: '0.75rem',
-                        backgroundColor: colors.background,
-                        borderRadius: '0.5rem',
-                        borderLeft: `3px solid ${colors.red}`,
-                      }}
-                    >
-                      <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: '0 0 0.25rem 0' }}>
-                        EXCLUSION REASON
-                      </p>
-                      <p style={{ color: colors.text, fontSize: '0.9rem', margin: 0 }}>
-                        {transaction.exclusion_reason}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {transaction.status === 'possible_bill' && (
+                {/* Expanded actions */}
+                {isExpanded && (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {cat === 'possible_bill' && (
                       <>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleAddAsBill(transaction)}
-                          loading={actioning === transaction.id}
-                          disabled={actioning !== null}
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                        >
-                          <Plus size={14} />
-                          Add as Bill
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleLinkToExisting(transaction)}
-                          loading={actioning === transaction.id}
-                          disabled={actioning !== null}
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                        >
-                          <LinkIcon size={14} />
-                          Link to Existing
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleIgnoreOnce(transaction)}
-                          loading={actioning === transaction.id}
-                          disabled={actioning !== null}
-                        >
-                          Ignore Once
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleAlwaysIgnore(transaction)}
-                          loading={actioning === transaction.id}
-                          disabled={actioning !== null}
-                        >
-                          Always Ignore
-                        </Button>
+                        <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Add as Bill</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
                       </>
                     )}
-
-                    {transaction.status === 'matched' && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleUnlink(transaction)}
-                        loading={actioning === transaction.id}
-                        disabled={actioning !== null}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                      >
-                        <Trash2 size={14} />
-                        Unlink
-                      </Button>
+                    {cat === 'matched' && (
+                      <>
+                        {txn.matched_bill_id && (
+                          <Link href={`/app/bills`} style={{ textDecoration: 'none' }}>
+                            <ActionLink color={colors.electric}>View Bill</ActionLink>
+                          </Link>
+                        )}
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink color={isDark ? '#F87171' : '#B91C1C'} onClick={() => handleUnlink(txn)} disabled={actioning === txn.id}>Unlink</ActionLink>
+                      </>
                     )}
-
-                    {transaction.status === 'user_excluded' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleIgnoreOnce(transaction)}
-                        loading={actioning === transaction.id}
-                        disabled={actioning !== null}
-                      >
-                        Remove Exclusion
-                      </Button>
+                    {cat === 'likely_not_bill' && (
+                      <>
+                        <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Actually a Bill</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
+                      </>
                     )}
-
-                    {(transaction.status === 'likely_not_bill' || transaction.status === 'auto_excluded') && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleAddAsBill(transaction)}
-                        loading={actioning === transaction.id}
-                        disabled={actioning !== null}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                      >
-                        <Plus size={14} />
-                        Add as Bill
-                      </Button>
+                    {cat === 'auto_excluded' && (
+                      <>
+                        <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>This IS a Bill</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink>Keep Excluded</ActionLink>
+                      </>
+                    )}
+                    {cat === 'user_excluded' && (
+                      <>
+                        <ActionLink color={colors.electric} onClick={() => handleRemoveRule(txn)} disabled={actioning === txn.id}>Remove Rule</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink>Keep Excluded</ActionLink>
+                      </>
                     )}
                   </div>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const p = page - 2 + i;
-                return p > 0 && p <= totalPages ? (
-                  <Button
-                    key={p}
-                    variant={page === p ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setPage(p)}
-                  >
-                    {p}
-                  </Button>
-                ) : null;
-              })}
-
-              {totalPages > 5 && page < totalPages - 2 && (
-                <span style={{ color: colors.textMuted }}>...</span>
-              )}
-
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          )}
-        </>
+                )}
+              </div>
+            );
+          })}
+        </Card>
       )}
     </div>
+  );
+}
+
+function ActionLink({ children, color, onClick, disabled }: {
+  children: React.ReactNode; color?: string; onClick?: () => void; disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+      disabled={disabled}
+      style={{
+        background: 'none', border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
+        fontSize: '0.8rem', fontWeight: 600, padding: '2px 0',
+        color: color || '#9CA3AF', opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      {children}
+    </button>
   );
 }
