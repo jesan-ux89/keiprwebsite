@@ -17,6 +17,7 @@ interface Transaction {
   amount: number;
   date: string;
   status: TransactionStatus;
+  display_category?: TransactionStatus;
   confidence_score?: number;
   linked_bill_id?: string;
   linked_bill_name?: string;
