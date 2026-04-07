@@ -2031,12 +2031,16 @@ function SecuritySection({ colors, isDark, user, expandedSection, toggleSection 
   async function handleStartTotpSetup() {
     setTotpLoading(true);
     setTotpError('');
+    setSuccessMsg('');
     try {
       const res = await authAPI.totpSetup();
       setTotpSecret(res.data.secret);
       setShowTotpSetup(true);
-    } catch {
-      setTotpError('Failed to start authenticator setup.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'Failed to start authenticator setup. Make sure the backend is updated.';
+      setSuccessMsg('');
+      setTotpError(msg);
+      setShowTotpSetup(true); // Show the card so the error is visible
     } finally {
       setTotpLoading(false);
     }
