@@ -27,6 +27,11 @@ export default function PlanPage() {
   const { fmt, isPro, categories = [], incomeSources = [] } = useApp();
   const dangerColor = isDark ? '#F08070' : '#A32D2D';
   const dangerBg = isDark ? 'rgba(240,128,112,0.12)' : 'rgba(163,45,45,0.1)';
+  const MONTH_COLORS = ['#0E7490', '#7C3AED', '#B45309', '#0F766E', '#BE185D', '#1D4ED8'];
+
+  // Current month label for the locked pill
+  const now = new Date();
+  const currentMonthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const [months, setMonths] = useState<any[]>([]);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
   const [planBills, setPlanBills] = useState<PlanBill[]>([]);
@@ -187,26 +192,59 @@ export default function PlanPage() {
       </div>
 
       {/* Month Selector */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
-        {months.map((month, idx) => (
-          <button
-            key={idx}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: `1px solid ${selectedMonthIndex === idx ? colors.midnight : colors.inputBorder}`,
-              backgroundColor: selectedMonthIndex === idx ? colors.midnight : colors.card,
-              color: selectedMonthIndex === idx ? '#FFFFFF' : colors.text,
-              fontSize: '13px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-            onClick={() => setSelectedMonthIndex(idx)}
-          >
-            {month.label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px', alignItems: 'center' }}>
+        {/* Locked current month */}
+        <div
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: `1px solid ${colors.midnight}`,
+            backgroundColor: colors.midnight,
+            color: '#ffffff80',
+            fontSize: '13px',
+            fontWeight: '500',
+            whiteSpace: 'nowrap',
+            opacity: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'not-allowed',
+          }}
+        >
+          🔒 {currentMonthLabel}
+        </div>
+
+        {/* Future months with unique colors */}
+        {months.map((month, idx) => {
+          const mc = MONTH_COLORS[idx % MONTH_COLORS.length];
+          const isSelected = selectedMonthIndex === idx;
+          return (
+            <button
+              key={idx}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: `1px solid ${isSelected ? mc : colors.inputBorder}`,
+                backgroundColor: isSelected ? mc : colors.card,
+                color: isSelected ? '#FFFFFF' : colors.text,
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              onClick={() => setSelectedMonthIndex(idx)}
+            >
+              <span style={{
+                display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
+                backgroundColor: isSelected ? '#fff' : mc,
+              }} />
+              {month.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Action Status Banner */}
