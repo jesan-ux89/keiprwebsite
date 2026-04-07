@@ -256,7 +256,7 @@ export default function TrackerPage() {
           })}
         </div>
       ) : (
-        <EmptyState icon="tracker" title="No bills this period" message={`No bills are due during ${period.label}`} />
+        <EmptyState icon="tracker" title="No bills this period" description={`No bills are due during ${period.label}`} />
       )}
     </div>
   );
