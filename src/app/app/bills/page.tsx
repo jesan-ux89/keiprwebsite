@@ -295,6 +295,15 @@ export default function BillsPage() {
                                 letterSpacing: '0.3px',
                               }}>Bank Synced</span>
                             )}
+                            <span style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '10px',
+                              backgroundColor: 'rgba(214,209,199,0.1)',
+                              color: '#D6D1C7',
+                              letterSpacing: '0.3px',
+                            }}>Due the {bill.dueDay}{bill.dueDay === 1 ? 'st' : bill.dueDay === 2 ? 'nd' : bill.dueDay === 3 ? 'rd' : 'th'}</span>
                           </div>
 
                           {/* Split progress */}
@@ -321,9 +330,6 @@ export default function BillsPage() {
                             );
                           })()}
 
-                          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem' }}>
-                            <span style={{ color: colors.textMuted }}>Due: Day {bill.dueDay}</span>
-                          </div>
                         </div>
 
                         <div
