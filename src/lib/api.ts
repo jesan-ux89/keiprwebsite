@@ -22,6 +22,12 @@ export const authAPI = {
   me:            () => api.get('/auth/me'),
   sendMfaCode:   (email: string) => api.post('/auth/send-mfa-code', { email }),
   verifyMfaCode: (email: string, code: string) => api.post('/auth/verify-mfa-code', { email, code }),
+  // TOTP authenticator
+  totpSetup:          () => api.post('/auth/totp/setup'),
+  totpVerifySetup:    (code: string) => api.post('/auth/totp/verify-setup', { code }),
+  totpVerify:         (email: string, code: string) => api.post('/auth/totp/verify', { email, code }),
+  totpVerifyRecovery: (email: string, recoveryCode: string) => api.post('/auth/totp/verify-recovery', { email, recoveryCode }),
+  totpDisable:        () => api.post('/auth/totp/disable'),
 };
 
 // Paychecks

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { authAPI } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +17,21 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // After Firebase sign-in, check if user has TOTP enabled
+  async function checkTotpAndNavigate(userEmail: string) {
+    try {
+      const res = await authAPI.me();
+      const userData = res.data?.user || res.data;
+      if (userData?.totp_enabled) {
+        router.push(`/auth/totp-verify?email=${encodeURIComponent(userEmail)}`);
+        return;
+      }
+    } catch {
+      // If can't check, proceed normally
+    }
+    router.push('/app');
+  }
+
   const handleEmailSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
@@ -23,7 +39,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password);
-      router.push('/app');
+      await checkTotpAndNavigate(email);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign in';
       setError(errorMessage);
@@ -38,7 +54,10 @@ export default function LoginPage() {
 
     try {
       await signInWithGoogle();
-      router.push('/app');
+      // Get email from the signed-in user
+      const { auth: firebaseAuth } = await import('@/lib/firebase');
+      const userEmail = firebaseAuth.currentUser?.email || '';
+      await checkTotpAndNavigate(userEmail);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign in with Google';
       setError(errorMessage);

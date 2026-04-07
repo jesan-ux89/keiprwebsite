@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { usersAPI, exportAPI, subscriptionsAPI } from '@/lib/api';
+import { usersAPI, exportAPI, subscriptionsAPI, authAPI } from '@/lib/api';
 import { getPayPeriods } from '@/lib/payPeriods';
 import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import { Card } from '@/components/ui/Card';
@@ -28,6 +28,9 @@ import {
   ChevronRight,
   Check,
   TrendingUp,
+  Shield,
+  Key,
+  Copy,
 } from 'lucide-react';
 
 interface IncomeSourceForm {
@@ -1716,67 +1719,13 @@ export default function SettingsPage() {
       </Card>
 
       {/* Security Section */}
-      <Card style={{ marginBottom: '1.5rem' }}>
-        <button
-          onClick={() => toggleSection('security')}
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: 'transparent',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            marginBottom: expandedSection === 'security' ? '1.5rem' : 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Lock size={20} style={{ color: colors.electric }} />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-              Security
-            </h2>
-          </div>
-          <ChevronRight
-            size={20}
-            style={{
-              color: colors.textMuted,
-              transform: expandedSection === 'security' ? 'rotate(90deg)' : 'none',
-              transition: 'transform 0.2s ease',
-            }}
-          />
-        </button>
-
-        {expandedSection === 'security' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={async () => {
-                try {
-                  const { sendPasswordResetEmail } = await import('firebase/auth');
-                  const { auth } = await import('@/lib/firebase');
-                  if (user?.email) {
-                    await sendPasswordResetEmail(auth, user.email);
-                    alert('Password reset email sent! Check your inbox.');
-                  }
-                } catch (err) {
-                  alert('Failed to send password reset email. Please try again.');
-                }
-              }}
-            >
-              Change Password
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => alert('Two-factor authentication coming soon!')}
-            >
-              Enable Two-Factor Authentication
-            </Button>
-          </div>
-        )}
-      </Card>
+      <SecuritySection
+        colors={colors}
+        isDark={isDark}
+        user={user}
+        expandedSection={expandedSection}
+        toggleSection={toggleSection}
+      />
 
       {/* Export Section */}
       <Card style={{ marginBottom: '1.5rem' }}>
@@ -2045,5 +1994,274 @@ export default function SettingsPage() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+// ── Security Section Component ──
+function SecuritySection({ colors, isDark, user, expandedSection, toggleSection }: {
+  colors: any; isDark: boolean; user: any; expandedSection: string | null;
+  toggleSection: (s: string) => void;
+}) {
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [totpLoading, setTotpLoading] = useState(false);
+  const [showTotpSetup, setShowTotpSetup] = useState(false);
+  const [totpSecret, setTotpSecret] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [totpError, setTotpError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
+  const [authProvider, setAuthProvider] = useState<string>('email');
+
+  useEffect(() => {
+    loadSecurityStatus();
+  }, []);
+
+  async function loadSecurityStatus() {
+    try {
+      const res = await authAPI.me();
+      const userData = res.data?.user || res.data;
+      setTotpEnabled(!!userData?.totp_enabled);
+      if (userData?.auth_provider) setAuthProvider(userData.auth_provider);
+    } catch {}
+  }
+
+  const isEmailUser = authProvider === 'email';
+
+  async function handleStartTotpSetup() {
+    setTotpLoading(true);
+    setTotpError('');
+    try {
+      const res = await authAPI.totpSetup();
+      setTotpSecret(res.data.secret);
+      setShowTotpSetup(true);
+    } catch {
+      setTotpError('Failed to start authenticator setup.');
+    } finally {
+      setTotpLoading(false);
+    }
+  }
+
+  async function handleVerifyTotp() {
+    if (totpCode.length !== 6) { setTotpError('Enter a 6-digit code.'); return; }
+    setTotpLoading(true);
+    setTotpError('');
+    try {
+      const res = await authAPI.totpVerifySetup(totpCode);
+      setTotpEnabled(true);
+      setShowTotpSetup(false);
+      setTotpCode('');
+      if (res.data?.recoveryCodes?.length) {
+        setRecoveryCodes(res.data.recoveryCodes);
+        setShowRecoveryCodes(true);
+      } else {
+        setSuccessMsg('Authenticator app enabled.');
+      }
+    } catch (err: any) {
+      setTotpError(err?.response?.data?.error || 'Invalid code. Try again.');
+    } finally {
+      setTotpLoading(false);
+    }
+  }
+
+  async function handleDisableTotp() {
+    if (!confirm('Disable authenticator app? You will no longer need it to sign in.')) return;
+    try {
+      await authAPI.totpDisable();
+      setTotpEnabled(false);
+      setSuccessMsg('Authenticator app disabled.');
+    } catch {
+      setTotpError('Failed to disable authenticator.');
+    }
+  }
+
+  const cardBg = colors.card;
+  const inputBg = colors.inputBg;
+  const greenColor = isDark ? '#6EE7A8' : '#0A7B6C';
+
+  return (
+    <Card style={{ marginBottom: '1.5rem' }}>
+      <button
+        onClick={() => toggleSection('security')}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          backgroundColor: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+          marginBottom: expandedSection === 'security' ? '1.5rem' : 0,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Lock size={20} style={{ color: colors.electric }} />
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Security</h2>
+        </div>
+        <ChevronRight size={20} style={{ color: colors.textMuted, transform: expandedSection === 'security' ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s ease' }} />
+      </button>
+
+      {expandedSection === 'security' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Success message */}
+          {successMsg && (
+            <div style={{ backgroundColor: `${greenColor}15`, borderRadius: '8px', padding: '10px 12px', fontSize: '13px', color: greenColor, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{successMsg}</span>
+              <button onClick={() => setSuccessMsg('')} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '14px' }}>✕</button>
+            </div>
+          )}
+
+          {/* Authenticator app */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '10px', backgroundColor: inputBg, border: `1px solid ${colors.cardBorder}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${greenColor}15` }}>
+                <Shield size={16} color={greenColor} />
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: colors.text }}>Authenticator app</div>
+                <div style={{ fontSize: '12px', color: colors.textMuted }}>{totpEnabled ? 'Enabled' : 'Not set up'}</div>
+              </div>
+            </div>
+            <button
+              onClick={totpEnabled ? handleDisableTotp : handleStartTotpSetup}
+              disabled={totpLoading}
+              style={{
+                background: 'none', border: 'none', fontSize: '13px', fontWeight: '500', cursor: 'pointer',
+                color: totpEnabled ? colors.red : colors.electric, opacity: totpLoading ? 0.5 : 1,
+              }}
+            >
+              {totpEnabled ? 'Disable' : 'Set up ›'}
+            </button>
+          </div>
+
+          {/* TOTP Setup Card */}
+          {showTotpSetup && (
+            <div style={{ backgroundColor: inputBg, borderRadius: '12px', padding: '16px', border: `1px solid ${colors.electric}` }}>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: colors.text, marginBottom: '12px' }}>Set up authenticator app</div>
+              <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '12px', lineHeight: '1.6' }}>
+                Open any authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.) and add this key manually:
+              </p>
+              <div style={{ backgroundColor: colors.background, borderRadius: '8px', padding: '12px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <code style={{ fontSize: '13px', color: colors.electric, letterSpacing: '1px', userSelect: 'all' }}>{totpSecret}</code>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(totpSecret); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
+                  title="Copy"
+                >
+                  <Copy size={14} color={colors.textMuted} />
+                </button>
+              </div>
+              <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '14px' }}>Enter the 6-digit code from your app:</p>
+              <input
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                placeholder="000000"
+                inputMode="numeric"
+                maxLength={6}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${colors.inputBorder}`,
+                  backgroundColor: colors.background, color: colors.text, fontSize: '20px', fontWeight: '600',
+                  textAlign: 'center', letterSpacing: '8px', fontFamily: 'monospace', boxSizing: 'border-box', outline: 'none', marginBottom: '12px',
+                }}
+              />
+              {totpError && <p style={{ fontSize: '12px', color: colors.red, textAlign: 'center', marginBottom: '8px' }}>{totpError}</p>}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => { setShowTotpSetup(false); setTotpCode(''); setTotpError(''); }}
+                  style={{ flex: 1, padding: '10px', borderRadius: '8px', backgroundColor: colors.background, border: 'none', color: colors.textMuted, fontSize: '13px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleVerifyTotp}
+                  disabled={totpLoading}
+                  style={{ flex: 1, padding: '10px', borderRadius: '8px', backgroundColor: colors.midnight, border: 'none', color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer', opacity: totpLoading ? 0.6 : 1 }}
+                >
+                  {totpLoading ? 'Verifying...' : 'Verify & Enable'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Recovery Codes Card */}
+          {showRecoveryCodes && recoveryCodes.length > 0 && (
+            <div style={{ backgroundColor: inputBg, borderRadius: '12px', padding: '16px', border: `1px solid ${greenColor}` }}>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: colors.text, marginBottom: '4px' }}>Save your recovery codes</div>
+              <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '14px', lineHeight: '1.6' }}>
+                If you lose access to your authenticator app, use one of these codes to sign in. Each code can only be used once. Save them somewhere safe.
+              </p>
+              <div style={{ backgroundColor: colors.background, borderRadius: '8px', padding: '14px', marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                {recoveryCodes.map((code, i) => (
+                  <code key={i} style={{ fontSize: '14px', color: colors.electric, letterSpacing: '2px', lineHeight: '1.8', userSelect: 'all' }}>{code}</code>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(recoveryCodes.join('\n'));
+                }}
+                style={{ width: '100%', padding: '8px', borderRadius: '8px', backgroundColor: colors.background, border: `1px solid ${colors.cardBorder}`, color: colors.textMuted, fontSize: '12px', cursor: 'pointer', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <Copy size={12} /> Copy all codes
+              </button>
+              <button
+                onClick={() => { setShowRecoveryCodes(false); setRecoveryCodes([]); setSuccessMsg('Authenticator app enabled. Recovery codes saved.'); }}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: colors.midnight, border: 'none', color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                I've saved my codes
+              </button>
+            </div>
+          )}
+
+          {/* Change Password — email users only */}
+          {isEmailUser && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '10px', backgroundColor: inputBg, border: `1px solid ${colors.cardBorder}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.electric}15` }}>
+                  <Key size={16} color={colors.electric} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: colors.text }}>Change password</div>
+                  <div style={{ fontSize: '12px', color: colors.textMuted }}>Send a password reset email</div>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    const { sendPasswordResetEmail } = await import('firebase/auth');
+                    const { auth } = await import('@/lib/firebase');
+                    if (user?.email) {
+                      await sendPasswordResetEmail(auth, user.email);
+                      setSuccessMsg('Password reset link sent to ' + user.email);
+                    }
+                  } catch {
+                    setTotpError('Failed to send password reset email.');
+                  }
+                }}
+                style={{ background: 'none', border: 'none', fontSize: '13px', color: colors.electric, cursor: 'pointer' }}
+              >
+                Send ›
+              </button>
+            </div>
+          )}
+
+          {/* Sign-in method */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '10px', backgroundColor: inputBg, border: `1px solid ${colors.cardBorder}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: authProvider === 'google' ? '#E8F0FE' : `${colors.electric}15` }}>
+                {authProvider === 'google' ? (
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#4285F4' }}>G</span>
+                ) : (
+                  <Lock size={14} color={colors.electric} />
+                )}
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: colors.text }}>
+                  {authProvider === 'google' ? 'Google account' : authProvider === 'apple' ? 'Apple account' : 'Email & password'}
+                </div>
+                <div style={{ fontSize: '12px', color: colors.textMuted }}>
+                  {authProvider === 'google' ? 'Signed in with Google' : authProvider === 'apple' ? 'Signed in with Apple' : user?.email || 'Email sign-in'}
+                </div>
+              </div>
+            </div>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: greenColor }}>Active</span>
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
