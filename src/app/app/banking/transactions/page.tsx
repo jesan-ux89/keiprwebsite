@@ -70,11 +70,26 @@ export default function AllTransactionsPage() {
     setPage(1);
   }, [selectedStatus, transactions]);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (isRetryAfterBackfill = false) => {
     setLoading(true);
     try {
       const res = await bankingAPI.getAllTransactions();
       const txns = Array.isArray(res.data?.transactions) ? res.data.transactions : [];
+      const counts = res.data?.counts || {};
+      const total = res.data?.total || 0;
+
+      // Auto-backfill: if all counts are 0 but total > 0, existing rows need categorizing
+      const countSum = Object.values(counts).reduce((a: number, b: unknown) => a + (Number(b) || 0), 0);
+      if (countSum === 0 && total > 0 && !isRetryAfterBackfill) {
+        console.log('[AllTransactions] Detected uncategorized transactions, running backfill...');
+        try {
+          await bankingAPI.backfillCategories();
+          return fetchTransactions(true);
+        } catch (bfErr) {
+          console.error('Backfill failed:', bfErr);
+        }
+      }
+
       setTransactions(txns);
       setSummary(res.data?.summary || null);
       setError(null);

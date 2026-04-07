@@ -138,6 +138,7 @@ export const bankingAPI = {
   getAutoExclusionSettings: () => api.get('/banking-data/auto-exclusion-settings'),
   updateAutoExclusionSettings: (data: Record<string, unknown>) => api.post('/banking-data/auto-exclusion-settings', data),
   scanSuggestions:     () => api.post('/banking-data/suggest/scan'),
+  backfillCategories:  () => api.post('/banking-data/backfill-categories'),
 };
 
 // Rollover
