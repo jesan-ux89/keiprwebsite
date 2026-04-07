@@ -1422,7 +1422,7 @@ export default function DashboardPage() {
             <a href={isPro ? "/app/settings?section=income" : "/app/settings"} style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
               <div style={{
                 padding: '1rem 1.25rem',
-                backgroundColor: colors.cardBg || colors.inputBg,
+                backgroundColor: colors.card || colors.inputBg,
                 borderRadius: '0.75rem',
                 border: `1px dashed ${colors.divider}`,
                 display: 'flex',
