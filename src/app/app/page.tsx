@@ -1514,6 +1514,59 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ── TRENDS SUMMARY (Pro only) ───────────────────── */}
+      {isPro && bills.length > 0 && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Trends & insights</h3>
+            <a href="/app/settings?section=trends" style={{ fontSize: '0.85rem', fontWeight: 500, color: '#38BDF8', textDecoration: 'none' }}>See all →</a>
+          </div>
+
+          {/* Snapshot row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <Card style={{ padding: '0.75rem' }}>
+              <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: '0 0 0.25rem 0' }}>Monthly bills</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>{fmt(totalBillsMonthly)}</p>
+            </Card>
+            <Card style={{ padding: '0.75rem' }}>
+              <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: '0 0 0.25rem 0' }}>Monthly income</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>{fmt(monthlyIncome)}</p>
+            </Card>
+            <Card style={{ padding: '0.75rem' }}>
+              <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: '0 0 0.25rem 0' }}>Savings rate</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: savingsPct >= 20 ? '#0A7B6C' : '#854F0B', margin: 0 }}>{savingsPct}%</p>
+            </Card>
+          </div>
+
+          {/* Top 3 categories */}
+          <Card style={{ padding: '0.75rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: 500, color: colors.textSub, margin: '0 0 0.6rem 0' }}>Top spending categories</p>
+            {donutData.slice(0, 3).map((cat: any, i: number) => (
+              <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: i < 2 ? '0.5rem' : 0 }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cat.color, flexShrink: 0 }} />
+                <span style={{ fontSize: '0.9rem', color: colors.text, flex: 1 }}>{cat.name}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>{fmt(cat.amount)}</span>
+                <span style={{ fontSize: '0.8rem', color: colors.textMuted, width: '2.5rem', textAlign: 'right' }}>{Math.round(cat.pct)}%</span>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      {/* Pro upsell for trends (free users) */}
+      {!isPro && bills.length > 0 && (
+        <a href="/app/settings" style={{ textDecoration: 'none', display: 'block', marginTop: '1.5rem' }}>
+          <Card style={{ padding: '1rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '1.5rem' }}>📈</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text, margin: 0 }}>Trends & insights</p>
+              <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: '0.15rem 0 0 0' }}>Upgrade to Pro for spending charts & category analysis</p>
+            </div>
+            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#38BDF8' }}>Pro →</span>
+          </Card>
+        </a>
+      )}
+
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }

@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { usersAPI, exportAPI, subscriptionsAPI } from '@/lib/api';
+import { getPayPeriods } from '@/lib/payPeriods';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -24,6 +25,7 @@ import {
   AlertTriangle,
   ChevronRight,
   Check,
+  TrendingUp,
 } from 'lucide-react';
 
 interface IncomeSourceForm {
@@ -90,7 +92,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra } = useApp();
+  const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -1146,6 +1148,252 @@ export default function SettingsPage() {
             )}
           </>
         )}
+      </Card>
+
+      {/* Trends & Insights Section */}
+      <Card style={{ marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => {
+            if (!isPro) {
+              alert('Trends & Insights is available on the Pro plan. Upgrade to unlock spending analysis and charts.');
+              return;
+            }
+            toggleSection('trends');
+          }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            marginBottom: expandedSection === 'trends' ? '1.5rem' : 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <TrendingUp size={20} style={{ color: colors.electric }} />
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+              Trends & insights
+            </h2>
+            {!isPro && (
+              <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.1)', padding: '2px 8px', borderRadius: '10px' }}>PRO</span>
+            )}
+          </div>
+          <ChevronRight
+            size={16}
+            style={{
+              color: colors.textMuted,
+              transition: 'transform 0.2s',
+              transform: expandedSection === 'trends' ? 'rotate(90deg)' : 'none',
+            }}
+          />
+        </button>
+        {expandedSection === 'trends' && isPro && (() => {
+          // Compute trends data
+          const CATEGORY_COLORS: Record<string, string> = {
+            Housing: '#0C4A6E', Transport: '#38BDF8', Groceries: '#E67E22',
+            Dining: '#E74C3C', Subscriptions: '#7C3AED', Fun: '#F59E0B',
+            Insurance: '#2ECC71', Savings: '#1ABC9C', Utilities: '#E84393',
+            Other: '#95A5A6',
+          };
+          const DONUT_PALETTE = [
+            '#0C4A6E', '#E67E22', '#2ECC71', '#E74C3C', '#7C3AED',
+            '#F59E0B', '#E84393', '#1ABC9C', '#3498DB', '#95A5A6',
+          ];
+
+          const regularIncome = incomeSources.filter((s: any) => !s.isOneTime);
+          const primaryIncome = regularIncome.find((s: any) => s.isPrimary) || (regularIncome.length > 0 ? regularIncome[0] : null);
+          const totalPaycheck = regularIncome.reduce((sum: number, s: any) => sum + (s.typicalAmount || 0), 0);
+          const freq = primaryIncome?.frequency || '';
+          const payPeriods = getPayPeriods(primaryIncome?.nextPayDate, freq, new Date());
+          const { periodsPerMonth } = payPeriods;
+          const monthlyIncome = totalPaycheck * periodsPerMonth;
+          const totalBillsMonthly = bills.reduce((s: number, b: any) => s + (b.total || 0), 0);
+          const totalSpentMonthly = bills.reduce((s: number, b: any) => s + (b.funded || 0), 0);
+
+          const savingsCategory = categories.find((c: any) => c.name.toLowerCase() === 'savings');
+          const savingsAmt = savingsCategory
+            ? bills.filter((b: any) => b.category === savingsCategory.name).reduce((s: number, b: any) => s + (b.total || 0), 0)
+            : 0;
+          const savingsPct = monthlyIncome > 0 ? Math.round((savingsAmt / monthlyIncome) * 100) : 0;
+
+          // Category breakdown
+          const allCategoryNames = Array.from(new Set([
+            ...categories.map((c: any) => c.name),
+            ...bills.map((b: any) => b.category || 'Other'),
+          ]));
+          const categoryData = allCategoryNames.map((catName: string) => {
+            const dbCat = categories.find((c: any) => c.name === catName);
+            const amtMonthly = bills.filter((b: any) => b.category === catName).reduce((s: number, b: any) => s + (b.total || 0), 0);
+            return { name: catName, amtMonthly, color: dbCat?.color || CATEGORY_COLORS[catName] || '#6B7280' };
+          }).filter(a => a.amtMonthly > 0).sort((a, b) => b.amtMonthly - a.amtMonthly);
+
+          const donutData = categoryData.map((a, i) => ({
+            name: a.name,
+            amount: a.amtMonthly,
+            color: DONUT_PALETTE[i % DONUT_PALETTE.length],
+            pct: totalBillsMonthly > 0 ? (a.amtMonthly / totalBillsMonthly) * 100 : 0,
+          }));
+
+          // Bill insights
+          const recurringBills = bills.filter((b: any) => b.isRecurring);
+          const splitBills = bills.filter((b: any) => b.isSplit);
+          const autoPayBills = bills.filter((b: any) => b.isAutoPay);
+          const topBills = [...bills].sort((a: any, b: any) => (b.total || 0) - (a.total || 0)).slice(0, 5);
+
+          // Monthly trend (6 months)
+          const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const now = new Date();
+          const trendData = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+            const billsTotal = (5 - i) === 0
+              ? totalBillsMonthly
+              : recurringBills.reduce((s: number, b: any) => s + (b.total || 0), 0);
+            return { label: MONTH_LABELS[d.getMonth()], bills: billsTotal, income: monthlyIncome };
+          });
+          const trendMax = Math.max(...trendData.map(d => Math.max(d.income, d.bills)), 1);
+
+          return (
+            <div>
+              {/* Snapshot cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: '0 0 0.25rem 0' }}>Monthly bills</p>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.text, margin: 0 }}>{fmt(totalBillsMonthly)}</p>
+                </div>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: '0 0 0.25rem 0' }}>Monthly income</p>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>{fmt(monthlyIncome)}</p>
+                </div>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: '0 0 0.25rem 0' }}>Savings rate</p>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: savingsPct >= 20 ? '#0A7B6C' : '#854F0B', margin: 0 }}>{savingsPct}%</p>
+                </div>
+              </div>
+
+              {/* Category donut + legend */}
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text, margin: '0 0 0.75rem 0' }}>Spending by category</h3>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                {/* SVG donut */}
+                <svg viewBox="0 0 120 120" width="140" height="140" style={{ flexShrink: 0 }}>
+                  {donutData.length === 0 ? (
+                    <circle cx="60" cy="60" r="48" fill="none" stroke={colors.cardBorder} strokeWidth="16" />
+                  ) : (
+                    donutData.map((seg, i) => {
+                      const startAngle = donutData.slice(0, i).reduce((sum, s) => sum + (s.pct / 100) * 360, 0) - 90;
+                      const sweepAngle = (seg.pct / 100) * 360;
+                      const r = 48;
+                      const cx = 60, cy = 60;
+                      const startRad = (startAngle * Math.PI) / 180;
+                      const endRad = ((startAngle + sweepAngle) * Math.PI) / 180;
+                      const x1 = cx + r * Math.cos(startRad);
+                      const y1 = cy + r * Math.sin(startRad);
+                      const x2 = cx + r * Math.cos(endRad);
+                      const y2 = cy + r * Math.sin(endRad);
+                      const large = sweepAngle > 180 ? 1 : 0;
+                      return (
+                        <path
+                          key={seg.name}
+                          d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`}
+                          fill="none"
+                          stroke={seg.color}
+                          strokeWidth="16"
+                        />
+                      );
+                    })
+                  )}
+                  <text x="60" y="56" textAnchor="middle" fontSize="12" fontWeight="700" fill={colors.text}>{fmt(totalBillsMonthly)}</text>
+                  <text x="60" y="72" textAnchor="middle" fontSize="8" fill={colors.textMuted}>total/mo</text>
+                </svg>
+
+                {/* Legend */}
+                <div style={{ flex: 1 }}>
+                  {donutData.map((cat) => (
+                    <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cat.color, flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.85rem', color: colors.text, flex: 1 }}>{cat.name}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text }}>{fmt(cat.amount)}</span>
+                      <span style={{ fontSize: '0.75rem', color: colors.textMuted, width: '2.5rem', textAlign: 'right' }}>{Math.round(cat.pct)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Monthly spending trend bar chart */}
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text, margin: '0 0 0.75rem 0' }}>Monthly spending trend</h3>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '120px', marginBottom: '0.5rem', padding: '0 0.25rem' }}>
+                {trendData.map((d) => (
+                  <div key={d.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', height: '100%', justifyContent: 'flex-end' }}>
+                    <div style={{
+                      width: '100%',
+                      maxWidth: '40px',
+                      height: `${Math.max(4, (d.bills / trendMax) * 100)}%`,
+                      backgroundColor: '#0C4A6E',
+                      borderRadius: '4px 4px 0 0',
+                      position: 'relative',
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        top: '-1.2rem',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: '0.6rem',
+                        color: colors.textMuted,
+                        whiteSpace: 'nowrap',
+                      }}>{fmt(d.bills)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', padding: '0 0.25rem' }}>
+                {trendData.map((d) => (
+                  <div key={d.label} style={{ flex: 1, textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', color: colors.textMuted }}>{d.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bill insights */}
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text, margin: '1.5rem 0 0.75rem 0' }}>Bill insights</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.text, margin: '0 0 0.15rem 0' }}>{bills.length}</p>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: 0 }}>Total bills</p>
+                </div>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.text, margin: '0 0 0.15rem 0' }}>{recurringBills.length}</p>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: 0 }}>Recurring</p>
+                </div>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.text, margin: '0 0 0.15rem 0' }}>{splitBills.length}</p>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: 0 }}>Split across paychecks</p>
+                </div>
+                <div style={{ backgroundColor: colors.background, borderRadius: '0.5rem', padding: '0.75rem', border: `0.5px solid ${colors.cardBorder}` }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.text, margin: '0 0 0.15rem 0' }}>{autoPayBills.length}</p>
+                  <p style={{ fontSize: '0.7rem', color: colors.textSub, margin: 0 }}>Auto-pay enabled</p>
+                </div>
+              </div>
+
+              {/* Top bills */}
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text, margin: '0 0 0.75rem 0' }}>Top bills</h3>
+              {topBills.map((bill: any, i: number) => (
+                <div key={bill.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.5rem 0',
+                  borderBottom: i < topBills.length - 1 ? `0.5px solid ${colors.cardBorder}` : 'none',
+                }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.textMuted, width: '1.25rem' }}>{i + 1}</span>
+                  <span style={{ fontSize: '0.9rem', color: colors.text, flex: 1 }}>{bill.name}</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>{fmt(bill.total)}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </Card>
 
       {/* Subscription Section */}
