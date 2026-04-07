@@ -1,11 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { authAPI } from '@/lib/api';
 
 export default function TOTPVerifyPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>Loading...</div>}>
+      <TOTPVerifyContent />
+    </Suspense>
+  );
+}
+
+function TOTPVerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
