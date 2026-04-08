@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
@@ -34,6 +34,12 @@ interface TransactionCounts {
   user_excluded: number;
 }
 
+interface DateGroup {
+  dateKey: string;
+  label: string;
+  transactions: Transaction[];
+}
+
 const CATEGORY_TABS: Array<{ key: TransactionCategory; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'matched', label: 'Matched' },
@@ -42,6 +48,69 @@ const CATEGORY_TABS: Array<{ key: TransactionCategory; label: string }> = [
   { key: 'auto_excluded', label: 'Auto-Excl.' },
   { key: 'user_excluded', label: 'User Excl.' },
 ];
+
+// ── Merchant name cleanup ──
+function cleanMerchantName(raw: string): string {
+  if (!raw) return 'Unknown';
+
+  let name = raw;
+
+  // Remove trailing reference numbers (long alphanumeric/mixed strings)
+  name = name.replace(/\s+[A-Z0-9]{8,}$/i, '');
+
+  // Remove trailing numeric IDs after # or No.
+  name = name.replace(/\s*[#][\d]+$/i, '');
+  name = name.replace(/\s*No\.?\s*[\d]+$/i, '');
+
+  // Remove common payment method suffixes
+  name = name.replace(/\s+(MOBILE PMT|ONLINE PMT|AUTO PAY|AUTOPAY|PAYMENT|ACH|DEBIT|CREDIT|POS|CHECKCARD)$/i, '');
+
+  // Remove trailing state/location codes (2-letter state)
+  name = name.replace(/\s+[A-Z]{2}\s*$/i, '');
+
+  // Remove trailing city/state patterns
+  name = name.replace(/\s+\w+\s+[A-Z]{2}$/i, '');
+
+  // Remove asterisks and clean up spaces
+  name = name.replace(/\*/g, ' ').trim();
+  name = name.replace(/\s{2,}/g, ' ');
+
+  // Title-case
+  name = name
+    .toLowerCase()
+    .split(' ')
+    .map(word => {
+      if (word.length <= 2 && word !== 'at') return word.toUpperCase();
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+
+  if (name.length > 30) {
+    name = name.substring(0, 28).trimEnd() + '\u2026';
+  }
+
+  return name || 'Unknown';
+}
+
+// ── Format section header date ──
+function formatSectionDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr + 'T12:00:00');
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const isSameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+    if (isSameDay(d, today)) return 'Today';
+    if (isSameDay(d, yesterday)) return 'Yesterday';
+
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
 
 export default function AllTransactionsPage() {
   const { colors, isDark } = useTheme();
@@ -59,6 +128,24 @@ export default function AllTransactionsPage() {
   const [actioning, setActioning] = useState<string | null>(null);
   const [billPickerTxn, setBillPickerTxn] = useState<Transaction | null>(null);
   const [linkLoading, setLinkLoading] = useState(false);
+
+  // ── Group transactions by date ──
+  const dateGroups: DateGroup[] = useMemo(() => {
+    const grouped: Record<string, Transaction[]> = {};
+    for (const txn of transactions) {
+      const dateStr = txn.transaction_date || txn.date || '';
+      const dateKey = dateStr.split('T')[0] || 'unknown';
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(txn);
+    }
+    return Object.keys(grouped)
+      .sort((a, b) => b.localeCompare(a))
+      .map(dateKey => ({
+        dateKey,
+        label: formatSectionDate(dateKey),
+        transactions: grouped[dateKey],
+      }));
+  }, [transactions]);
 
   useEffect(() => {
     if (isUltra) fetchTransactions('all');
@@ -120,11 +207,16 @@ export default function AllTransactionsPage() {
     return map[cat] || '';
   }
 
-  function formatDate(dateStr?: string): string {
-    if (!dateStr) return '';
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch { return dateStr; }
+  // ── Amount color by category ──
+  function amountColor(cat: string): string {
+    switch (cat) {
+      case 'matched': return isDark ? '#34D399' : '#047857';
+      case 'possible_bill': return isDark ? '#FBBF24' : '#B45309';
+      case 'likely_not_bill':
+      case 'auto_excluded':
+      case 'user_excluded': return isDark ? '#6B7280' : '#9CA3AF';
+      default: return isDark ? '#38BDF8' : '#0369A1';
+    }
   }
 
   // ── Actions ──
@@ -282,107 +374,165 @@ export default function AllTransactionsPage() {
           </p>
         </Card>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          {transactions.map((txn, idx) => {
-            const cat = (txn.display_category || 'likely_not_bill') as TransactionCategory;
-            const catStyle = getCatColor(cat);
-            const isExpanded = expandedId === txn.id;
-            const dateStr = txn.transaction_date || txn.date;
-
-            return (
-              <div
-                key={txn.id}
-                style={{
-                  padding: '0.75rem 1rem',
-                  borderBottom: idx < transactions.length - 1 ? `1px solid ${colors.divider}` : 'none',
-                  cursor: 'pointer',
-                }}
-                onClick={() => setExpandedId(isExpanded ? null : txn.id)}
-              >
-                {/* Row: name + meta | amount */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {txn.merchant_name || txn.cleaned_name}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>{formatDate(dateStr)}</span>
-                      {selectedCategory === 'all' && (
-                        <span style={{
-                          fontSize: '0.65rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px',
-                          backgroundColor: catStyle.bg, color: catStyle.text,
-                        }}>
-                          {getCatLabel(cat)}
-                        </span>
-                      )}
-                      {cat === 'matched' && txn.matched_bill_name && (
-                        <span style={{ fontSize: '0.7rem', color: getCatColor('matched').text }}>
-                          → {txn.matched_bill_name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#38BDF8' : '#0369A1', flexShrink: 0, marginLeft: '0.75rem' }}>
-                    {fmt(txn.amount ?? 0)}
-                  </span>
-                </div>
-
-                {/* Expanded actions */}
-                {isExpanded && (
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                    {cat === 'possible_bill' && (
-                      <>
-                        <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Add as Bill</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink color={colors.electric} onClick={() => handleLinkToExisting(txn)}>Link to Existing</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
-                      </>
-                    )}
-                    {cat === 'matched' && (
-                      <>
-                        {txn.matched_bill_id && (
-                          <Link href={`/app/bills`} style={{ textDecoration: 'none' }}>
-                            <ActionLink color={colors.electric}>View Bill</ActionLink>
-                          </Link>
-                        )}
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink color={isDark ? '#F87171' : '#B91C1C'} onClick={() => handleUnlink(txn)} disabled={actioning === txn.id}>Unlink</ActionLink>
-                      </>
-                    )}
-                    {cat === 'likely_not_bill' && (
-                      <>
-                        <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Actually a Bill</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink color={colors.electric} onClick={() => handleLinkToExisting(txn)}>Link to Existing</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
-                      </>
-                    )}
-                    {cat === 'auto_excluded' && (
-                      <>
-                        <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>This IS a Bill</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink>Keep Excluded</ActionLink>
-                      </>
-                    )}
-                    {cat === 'user_excluded' && (
-                      <>
-                        <ActionLink color={colors.electric} onClick={() => handleRemoveRule(txn)} disabled={actioning === txn.id}>Remove Rule</ActionLink>
-                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
-                        <ActionLink>Keep Excluded</ActionLink>
-                      </>
-                    )}
-                  </div>
-                )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {dateGroups.map(group => (
+            <div key={group.dateKey}>
+              {/* Date section header */}
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '0.5rem 0', marginBottom: '0.25rem',
+                position: 'sticky', top: 0, zIndex: 10,
+                backgroundColor: colors.background,
+              }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: colors.text, letterSpacing: '0.2px' }}>
+                  {group.label}
+                </span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted }}>
+                  {group.transactions.length}
+                </span>
               </div>
-            );
-          })}
-        </Card>
+
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                {group.transactions.map((txn, idx) => {
+                  const cat = (txn.display_category || 'likely_not_bill') as TransactionCategory;
+                  const catStyle = getCatColor(cat);
+                  const isExpanded = expandedId === txn.id;
+                  const isPossible = cat === 'possible_bill';
+
+                  return (
+                    <div
+                      key={txn.id}
+                      style={{
+                        display: 'flex',
+                        borderBottom: idx < group.transactions.length - 1 ? `1px solid ${colors.divider}` : 'none',
+                        cursor: 'pointer',
+                        backgroundColor: isPossible
+                          ? (isDark ? 'rgba(245,158,11,0.04)' : 'rgba(245,158,11,0.03)')
+                          : 'transparent',
+                      }}
+                      onClick={() => setExpandedId(isExpanded ? null : txn.id)}
+                    >
+                      {/* Possible bill accent bar */}
+                      {isPossible && (
+                        <div style={{
+                          width: '3px', flexShrink: 0,
+                          backgroundColor: isDark ? '#F59E0B' : '#D97706',
+                          borderRadius: '2px 0 0 2px',
+                        }} />
+                      )}
+
+                      <div style={{ flex: 1, padding: '0.75rem 1rem' }}>
+                        {/* Row: name + amount */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '0.9rem', fontWeight: 600,
+                              color: isPossible ? (isDark ? '#FCD34D' : '#92400E') : colors.text,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              {cleanMerchantName(txn.merchant_name || txn.cleaned_name || '')}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px', flexWrap: 'wrap' }}>
+                              {selectedCategory === 'all' && (
+                                <span style={{
+                                  fontSize: '0.65rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px',
+                                  backgroundColor: catStyle.bg, color: catStyle.text,
+                                }}>
+                                  {getCatLabel(cat)}
+                                </span>
+                              )}
+                              {cat === 'matched' && txn.matched_bill_name && (
+                                <span style={{ fontSize: '0.7rem', color: getCatColor('matched').text }}>
+                                  → {txn.matched_bill_name}
+                                </span>
+                              )}
+                              {isPossible && txn.matched_bill_name && (
+                                <span style={{
+                                  fontSize: '0.7rem', fontWeight: 500, fontStyle: 'italic',
+                                  color: isDark ? '#FBBF24' : '#B45309',
+                                }}>
+                                  Could be &ldquo;{txn.matched_bill_name}&rdquo;?
+                                </span>
+                              )}
+                              {isPossible && !txn.matched_bill_name && (
+                                <span style={{
+                                  fontSize: '0.7rem', fontWeight: 500, fontStyle: 'italic',
+                                  color: isDark ? '#FBBF24' : '#B45309',
+                                }}>
+                                  Click to review
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: '0.9rem', fontWeight: 700,
+                            color: amountColor(cat),
+                            flexShrink: 0, marginLeft: '0.75rem',
+                          }}>
+                            {fmt(txn.amount ?? 0)}
+                          </span>
+                        </div>
+
+                        {/* Expanded actions */}
+                        {isExpanded && (
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {cat === 'possible_bill' && (
+                              <>
+                                <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Add as Bill</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink color={colors.electric} onClick={() => handleLinkToExisting(txn)}>Link to Existing</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
+                              </>
+                            )}
+                            {cat === 'matched' && (
+                              <>
+                                {txn.matched_bill_id && (
+                                  <Link href={`/app/bills`} style={{ textDecoration: 'none' }}>
+                                    <ActionLink color={colors.electric}>View Bill</ActionLink>
+                                  </Link>
+                                )}
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink color={isDark ? '#F87171' : '#B91C1C'} onClick={() => handleUnlink(txn)} disabled={actioning === txn.id}>Unlink</ActionLink>
+                              </>
+                            )}
+                            {cat === 'likely_not_bill' && (
+                              <>
+                                <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Actually a Bill</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink color={colors.electric} onClick={() => handleLinkToExisting(txn)}>Link to Existing</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
+                              </>
+                            )}
+                            {cat === 'auto_excluded' && (
+                              <>
+                                <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>This IS a Bill</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink>Keep Excluded</ActionLink>
+                              </>
+                            )}
+                            {cat === 'user_excluded' && (
+                              <>
+                                <ActionLink color={colors.electric} onClick={() => handleRemoveRule(txn)} disabled={actioning === txn.id}>Remove Rule</ActionLink>
+                                <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                                <ActionLink>Keep Excluded</ActionLink>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </Card>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Bill Picker Modal */}
@@ -417,7 +567,7 @@ export default function AllTransactionsPage() {
             </div>
             <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${colors.divider}` }}>
               <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted }}>
-                Linking: <strong style={{ color: colors.text }}>{billPickerTxn.merchant_name}</strong> — {fmt(billPickerTxn.amount ?? 0)}
+                Linking: <strong style={{ color: colors.text }}>{cleanMerchantName(billPickerTxn.merchant_name || '')}</strong> — {fmt(billPickerTxn.amount ?? 0)}
               </p>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
