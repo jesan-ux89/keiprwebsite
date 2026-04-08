@@ -45,7 +45,7 @@ const CATEGORY_TABS: Array<{ key: TransactionCategory; label: string }> = [
 
 export default function AllTransactionsPage() {
   const { colors, isDark } = useTheme();
-  const { isUltra, fmt } = useApp();
+  const { isUltra, fmt, bills } = useApp();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [counts, setCounts] = useState<TransactionCounts>({
@@ -57,6 +57,8 @@ export default function AllTransactionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<TransactionCategory>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actioning, setActioning] = useState<string | null>(null);
+  const [billPickerTxn, setBillPickerTxn] = useState<Transaction | null>(null);
+  const [linkLoading, setLinkLoading] = useState(false);
 
   useEffect(() => {
     if (isUltra) fetchTransactions('all');
@@ -180,6 +182,23 @@ export default function AllTransactionsPage() {
       setTimeout(() => setSuccess(null), 2000);
     } catch { setError('Failed to remove rule'); }
     finally { setActioning(null); }
+  };
+
+  const handleLinkToExisting = (txn: Transaction) => {
+    setBillPickerTxn(txn);
+  };
+
+  const handleBillSelected = async (billId: string, billName: string) => {
+    if (!billPickerTxn) return;
+    setLinkLoading(true);
+    try {
+      await bankingAPI.transactionAction(billPickerTxn.id, { action: 'link_bill', bill_id: billId });
+      setTransactions(prev => prev.filter(t => t.id !== billPickerTxn.id));
+      setBillPickerTxn(null);
+      setSuccess(`Linked to ${billName}`);
+      setTimeout(() => setSuccess(null), 2000);
+    } catch { setError('Failed to link transaction to bill.'); }
+    finally { setLinkLoading(false); }
   };
 
   const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -315,6 +334,8 @@ export default function AllTransactionsPage() {
                       <>
                         <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Add as Bill</ActionLink>
                         <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink color={colors.electric} onClick={() => handleLinkToExisting(txn)}>Link to Existing</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
                         <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
                         <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
                         <ActionLink onClick={() => handleAlwaysIgnore(txn)} disabled={actioning === txn.id}>Always Ignore</ActionLink>
@@ -334,6 +355,8 @@ export default function AllTransactionsPage() {
                     {cat === 'likely_not_bill' && (
                       <>
                         <ActionLink color={colors.electric} onClick={() => handleAddAsBill(txn)} disabled={actioning === txn.id}>Actually a Bill</ActionLink>
+                        <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
+                        <ActionLink color={colors.electric} onClick={() => handleLinkToExisting(txn)}>Link to Existing</ActionLink>
                         <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
                         <ActionLink onClick={() => handleIgnoreOnce(txn)} disabled={actioning === txn.id}>Ignore</ActionLink>
                         <span style={{ color: colors.textMuted, fontSize: '0.75rem' }}>·</span>
@@ -360,6 +383,82 @@ export default function AllTransactionsPage() {
             );
           })}
         </Card>
+      )}
+
+      {/* Bill Picker Modal */}
+      {billPickerTxn && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+          }}
+          onClick={() => setBillPickerTxn(null)}
+        >
+          <div
+            style={{
+              backgroundColor: colors.background, borderRadius: '12px',
+              width: '90%', maxWidth: '500px', maxHeight: '70vh',
+              display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              padding: '1rem', borderBottom: `1px solid ${colors.divider}`,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: colors.text }}>
+                Link to Bill
+              </h3>
+              <button
+                onClick={() => setBillPickerTxn(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: colors.textMuted }}
+              >✕</button>
+            </div>
+            <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${colors.divider}` }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted }}>
+                Linking: <strong style={{ color: colors.text }}>{billPickerTxn.merchant_name}</strong> — {fmt(billPickerTxn.amount ?? 0)}
+              </p>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {linkLoading ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  <p style={{ color: colors.textMuted }}>Linking...</p>
+                </div>
+              ) : bills.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  <p style={{ color: colors.textMuted }}>No bills found. Add a bill first.</p>
+                </div>
+              ) : (
+                bills
+                  .sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
+                  .map((bill: any) => (
+                    <div
+                      key={bill.id}
+                      onClick={() => handleBillSelected(bill.id, bill.name)}
+                      style={{
+                        padding: '0.75rem 1rem', cursor: 'pointer',
+                        borderBottom: `1px solid ${colors.divider}`,
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      }}
+                      onMouseEnter={(e) => { (e.target as HTMLElement).style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'; }}
+                      onMouseLeave={(e) => { (e.target as HTMLElement).style.backgroundColor = 'transparent'; }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>{bill.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                          Due {bill.dueDay}{bill.dueDay === 1 ? 'st' : bill.dueDay === 2 ? 'nd' : bill.dueDay === 3 ? 'rd' : 'th'} · {bill.category || 'Other'}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#38BDF8' : '#0369A1' }}>
+                        {fmt(bill.total)}
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
