@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
@@ -11,6 +11,14 @@ type ActionMode = 'verifyEmail' | 'resetPassword' | 'recoverEmail' | null;
 type Status = 'loading' | 'success' | 'error' | 'resetForm';
 
 export default function AuthActionPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>Loading...</div>}>
+      <AuthActionContent />
+    </Suspense>
+  );
+}
+
+function AuthActionContent() {
   const searchParams = useSearchParams();
   const { colors, isDark } = useTheme();
 
