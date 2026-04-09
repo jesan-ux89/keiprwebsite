@@ -102,6 +102,15 @@ const ICONS: Record<string, CategoryIconDef> = {
       'M13 2 3 14h9l-1 8 10-12h-9l1-8z',
     ],
   },
+  Shopping: {
+    lightStroke: '#D97706', darkStroke: '#FCD34D',
+    lightBg: 'rgba(217,119,6,0.14)', darkBg: 'rgba(252,211,77,0.22)',
+    paths: [
+      'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z',
+      'M3 6h18',
+      'M16 10a4 4 0 0 1-8 0',
+    ],
+  },
   Loans: {
     lightStroke: '#92400E', darkStroke: '#FCD34D',
     lightBg: 'rgba(146,64,14,0.14)', darkBg: 'rgba(252,211,77,0.22)',
