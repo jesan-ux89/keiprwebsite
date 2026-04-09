@@ -102,6 +102,20 @@ const ICONS: Record<string, CategoryIconDef> = {
       'M13 2 3 14h9l-1 8 10-12h-9l1-8z',
     ],
   },
+  Loans: {
+    lightStroke: '#92400E', darkStroke: '#FCD34D',
+    lightBg: 'rgba(146,64,14,0.14)', darkBg: 'rgba(252,211,77,0.22)',
+    paths: [
+      'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+    ],
+  },
+  'Personal Care': {
+    lightStroke: '#7C3AED', darkStroke: '#C4B5FD',
+    lightBg: 'rgba(124,58,237,0.13)', darkBg: 'rgba(196,181,253,0.22)',
+    paths: [
+      'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+    ],
+  },
   Other: {
     lightStroke: '#525252', darkStroke: '#A8A8A8',
     lightBg: 'rgba(82,82,82,0.12)', darkBg: 'rgba(160,160,160,0.20)',
