@@ -20,7 +20,7 @@ interface ExpandedBills {
 
 export default function BillsPage() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, dismissDetectedBill } = useApp();
+  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -242,19 +242,16 @@ export default function BillsPage() {
                           backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
                           fontSize: '0.8rem', cursor: 'pointer',
                         }}
-                      >Confirm</button>
+                      >Recurring bill</button>
                       <button
-                        onClick={() => {
-                          if (window.confirm(`Remove "${bill.name}" and stop detecting it?`)) {
-                            dismissDetectedBill(bill.id);
-                          }
-                        }}
+                        onClick={() => confirmAsOneTime(bill.id)}
                         style={{
                           flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                          backgroundColor: 'rgba(163,45,45,0.1)', color: '#A32D2D', fontWeight: 600,
+                          backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
+                          color: colors.textSub, fontWeight: 600,
                           fontSize: '0.8rem', cursor: 'pointer',
                         }}
-                      >Dismiss</button>
+                      >One-time expense</button>
                     </div>
                   </Card>
                 ))}

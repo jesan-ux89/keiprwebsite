@@ -157,6 +157,7 @@ interface AppContextType {
   detectedBills: Bill[];
   detectedCount: number;
   confirmDetectedBill: (billId: string, overrides?: Record<string, unknown>) => Promise<void>;
+  confirmAsOneTime: (billId: string) => Promise<void>;
   dismissDetectedBill: (billId: string) => Promise<void>;
 
   // Subscription
@@ -224,6 +225,7 @@ const AppContext = createContext<AppContextType>({
   detectedBills: [],
   detectedCount: 0,
   confirmDetectedBill: async () => {},
+  confirmAsOneTime: async () => {},
   dismissDetectedBill: async () => {},
 
   tier: 'free',
@@ -865,6 +867,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const confirmAsOneTime = async (billId: string) => {
+    try {
+      await billsAPI.confirmDetected(billId, { oneTime: true });
+      await refreshBills();
+      await refreshPayments();
+    } catch (err) {
+      console.log('confirmAsOneTime failed:', (err as Error)?.message);
+    }
+  };
+
   const dismissDetectedBill = async (billId: string) => {
     setBills(prev => prev.filter(b => b.id !== billId));
     try {
@@ -930,6 +942,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         detectedBills,
         detectedCount,
         confirmDetectedBill,
+        confirmAsOneTime,
         dismissDetectedBill,
 
         billPayments,

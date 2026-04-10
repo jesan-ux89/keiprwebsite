@@ -35,7 +35,7 @@ export default function DashboardPage() {
     incomeSources, categories, fmt, isBillPaid, isSplitPaid, markBillPaid, toggleSplitPaid, userName, userInitials,
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
-    isPro, detectedBills, detectedCount, confirmDetectedBill, dismissDetectedBill,
+    isPro, detectedBills, detectedCount,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [refreshing, setRefreshing] = useState(false);
