@@ -230,7 +230,7 @@ export default function BillsPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ flex: 1 }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>{bill.name}</h3>
-                        <p style={{ fontSize: '0.8rem', color: colors.textSecondary, margin: 0 }}>{bill.category} · Due day {bill.dueDay}</p>
+                        <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>{bill.category} · Due day {bill.dueDay}</p>
                       </div>
                       <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: '0 1rem 0 0' }}>{fmt(bill.total)}/mo</p>
                     </div>
