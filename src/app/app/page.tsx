@@ -472,44 +472,47 @@ export default function DashboardPage() {
           marginBottom: '1.5rem',
           borderColor: 'transparent',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <p style={{
-              fontSize: '0.85rem',
-              opacity: 0.85,
-              margin: 0,
-            }}>AVAILABLE TO SPEND</p>
-            <button
-              onClick={() => setExpenseModalOpen(true)}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                borderRadius: 20,
-                padding: '6px 14px',
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              + Log expense
-            </button>
-          </div>
+          <p style={{
+            fontSize: '0.85rem',
+            opacity: 0.85,
+            margin: '0 0 0.5rem 0',
+            textAlign: 'center',
+          }}>AVAILABLE TO SPEND</p>
           <p style={{
             fontSize: '2.5rem',
             fontWeight: 700,
             color: availableNumber < 0 ? '#EF4444' : '#fff',
             margin: '0 0 0.75rem 0',
+            textAlign: 'center',
           }}>
             {fmt(availableNumber)}
           </p>
           <p style={{
             fontSize: '0.75rem',
             opacity: 0.7,
-            margin: 0,
+            margin: '0 0 1rem 0',
             lineHeight: 1.5,
+            textAlign: 'center',
           }}>
             {fmt(availableBreakdown?.paycheckIncome || 0)} income − {fmt(availableBreakdown?.totalBills || 0)} bills − {fmt(availableBreakdown?.totalSpending || 0)} spent
           </p>
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={() => setExpenseModalOpen(true)}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: 24,
+                padding: '10px 24px',
+                color: '#fff',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              + Quick spend
+            </button>
+          </div>
         </Card>
       )}
 
@@ -1721,7 +1724,7 @@ export default function DashboardPage() {
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: colors.text }}>Log expense</h3>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: colors.text }}>Quick spend</h3>
               <button onClick={() => { setExpenseModalOpen(false); setExpenseName(''); setExpenseAmount(''); setExpenseCategory(''); }}
                 style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: colors.textMuted, cursor: 'pointer' }}>✕</button>
             </div>
@@ -1781,7 +1784,7 @@ export default function DashboardPage() {
                 color: '#fff', fontSize: '1rem', fontWeight: 700,
               }}
             >
-              {expenseSaving ? 'Saving...' : 'Log expense'}
+              {expenseSaving ? 'Saving...' : 'Quick spend'}
             </button>
           </div>
         </div>
