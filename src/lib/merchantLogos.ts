@@ -3,7 +3,8 @@
  * Website mirror of mobile _KeiprApp/src/utils/merchantLogos.ts
  *
  * Maps common bill/subscription merchant names to their domains.
- * Used with Clearbit Logo API: https://logo.clearbit.com/:domain
+ * Logos are served from our own backend cache at /api/logos/:domain
+ * (backed by Google's Favicon API, stored in Supabase).
  */
 
 const MERCHANT_DOMAINS: Record<string, string> = {
@@ -168,12 +169,12 @@ export function getMerchantLogoUrl(billName: string): string | null {
   const normalized = billName.toLowerCase().trim();
 
   if (MERCHANT_DOMAINS[normalized]) {
-    return `https://logo.clearbit.com/${MERCHANT_DOMAINS[normalized]}`;
+    return `https://keipr-backend-production.up.railway.app/api/logos/${MERCHANT_DOMAINS[normalized]}`;
   }
 
   for (const [keyword, domain] of Object.entries(MERCHANT_DOMAINS)) {
     if (normalized.includes(keyword)) {
-      return `https://logo.clearbit.com/${domain}`;
+      return `https://keipr-backend-production.up.railway.app/api/logos/${domain}`;
     }
   }
 
