@@ -57,6 +57,7 @@ export const billsAPI = {
   getDetectedSummary: () => api.get('/bills/detected/summary'),
   confirmDetected:    (id: string, data?: Record<string, unknown>) => api.patch(`/bills/${id}/confirm-detected`, data || {}),
   dismissDetected:    (id: string) => api.patch(`/bills/${id}/dismiss-detected`),
+  linkDuplicate:      (id: string, targetBillId: string) => api.post(`/bills/${id}/link-duplicate`, { targetBillId }),
 };
 
 // Allocations

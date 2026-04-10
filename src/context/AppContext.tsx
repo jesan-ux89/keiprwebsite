@@ -45,6 +45,8 @@ export interface Bill {
   status: 'regular' | 'detected' | 'confirmed'; // detected = auto-found, confirmed = user approved
   detectedMerchant?: string;
   detectedAt?: string;
+  possibleDuplicateOf?: string;
+  possibleDuplicateName?: string;
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -159,6 +161,7 @@ interface AppContextType {
   confirmDetectedBill: (billId: string, overrides?: Record<string, unknown>) => Promise<void>;
   confirmAsOneTime: (billId: string) => Promise<void>;
   dismissDetectedBill: (billId: string) => Promise<void>;
+  linkDuplicateBill: (billId: string, targetBillId: string) => Promise<void>;
 
   // Subscription
   tier: 'free' | 'pro' | 'ultra';
@@ -227,6 +230,7 @@ const AppContext = createContext<AppContextType>({
   confirmDetectedBill: async () => {},
   confirmAsOneTime: async () => {},
   dismissDetectedBill: async () => {},
+  linkDuplicateBill: async () => {},
 
   tier: 'free',
   isPro: false,
@@ -307,6 +311,8 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     status: (raw.status as Bill['status']) || 'regular',
     detectedMerchant: raw.detected_merchant ? String(raw.detected_merchant) : undefined,
     detectedAt: raw.detected_at ? String(raw.detected_at) : undefined,
+    possibleDuplicateOf: raw.possible_duplicate_of || undefined,
+    possibleDuplicateName: raw.possible_duplicate_name || undefined,
   };
 }
 
@@ -887,6 +893,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const linkDuplicateBill = async (billId: string, targetBillId: string) => {
+    setBills(prev => prev.filter(b => b.id !== billId));
+    try {
+      await billsAPI.linkDuplicate(billId, targetBillId);
+    } catch (err) {
+      console.log('linkDuplicateBill failed:', (err as Error)?.message);
+      await refreshBills();
+    }
+  };
+
   // ── Income source CRUD ────────────────────────────────────
   const addIncomeSource = async (data: Record<string, unknown>): Promise<IncomeSource> => {
     const res = await usersAPI.addIncomeSource(data);
@@ -944,6 +960,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         confirmDetectedBill,
         confirmAsOneTime,
         dismissDetectedBill,
+        linkDuplicateBill,
 
         billPayments,
         paymentsLoading,

@@ -21,7 +21,7 @@ interface ExpandedBills {
 
 export default function BillsPage() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime } = useApp();
+  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -217,14 +217,49 @@ export default function BillsPage() {
           {/* Detected Transactions Section */}
           {detectedCount > 0 && (
             <div>
-              <h2 style={{
-                fontSize: '1.1rem', fontWeight: 600, color: colors.electric,
-                margin: '0 0 1rem 0', paddingBottom: '0.75rem',
-                borderBottom: `1px solid rgba(56,189,248,0.25)`,
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-              }}>
-                <span>🔔</span> New transactions detected ({detectedCount})
-              </h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{
+                  fontSize: '1.1rem', fontWeight: 600, color: colors.electric,
+                  margin: 0, paddingBottom: '0.75rem',
+                  borderBottom: `1px solid rgba(56,189,248,0.25)`,
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  flex: 1,
+                }}>
+                  <span>🔔</span> New transactions detected ({detectedCount})
+                </h2>
+              </div>
+
+              {/* Bulk Actions Bar */}
+              {detectedCount >= 3 && (
+                <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1rem' }}>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Confirm all ${detectedCount} as recurring bills?`)) {
+                        detectedBills.forEach(b => confirmDetectedBill(b.id));
+                      }
+                    }}
+                    style={{
+                      flex: 1, padding: '0.625rem', borderRadius: '0.5rem', border: 'none',
+                      backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
+                      fontSize: '0.8rem', cursor: 'pointer',
+                    }}
+                  >Confirm all recurring</button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Dismiss all ${detectedCount} detected bills?`)) {
+                        detectedBills.forEach(b => dismissDetectedBill(b.id));
+                      }
+                    }}
+                    style={{
+                      flex: 1, padding: '0.625rem', borderRadius: '0.5rem', border: 'none',
+                      backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
+                      color: colors.textSub, fontWeight: 600,
+                      fontSize: '0.8rem', cursor: 'pointer',
+                    }}
+                  >Dismiss all</button>
+                </div>
+              )}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {detectedBills.map((bill) => (
                   <Card key={bill.id} style={{ borderLeft: `3px solid ${colors.electric}` }}>
@@ -238,25 +273,49 @@ export default function BillsPage() {
                       </div>
                       <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: '0 1rem 0 0' }}>{fmt(bill.total)}/mo</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.75rem' }}>
-                      <button
-                        onClick={() => confirmDetectedBill(bill.id)}
-                        style={{
-                          flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                          backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
-                          fontSize: '0.8rem', cursor: 'pointer',
-                        }}
-                      >Recurring bill</button>
-                      <button
-                        onClick={() => confirmAsOneTime(bill.id)}
-                        style={{
-                          flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                          backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
-                          color: colors.textSub, fontWeight: 600,
-                          fontSize: '0.8rem', cursor: 'pointer',
-                        }}
-                      >One-time expense</button>
-                    </div>
+
+                    {/* Duplicate Prompt */}
+                    {bill.possibleDuplicateOf && bill.possibleDuplicateName ? (
+                      <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.75rem' }}>
+                        <button
+                          onClick={() => linkDuplicateBill(bill.id, bill.possibleDuplicateOf!)}
+                          style={{
+                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
+                            backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
+                            fontSize: '0.8rem', cursor: 'pointer',
+                          }}
+                        >Yes, same bill</button>
+                        <button
+                          onClick={() => confirmDetectedBill(bill.id)}
+                          style={{
+                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
+                            backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
+                            color: colors.textSub, fontWeight: 600,
+                            fontSize: '0.8rem', cursor: 'pointer',
+                          }}
+                        >No, keep both</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.75rem' }}>
+                        <button
+                          onClick={() => confirmDetectedBill(bill.id)}
+                          style={{
+                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
+                            backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
+                            fontSize: '0.8rem', cursor: 'pointer',
+                          }}
+                        >Recurring bill</button>
+                        <button
+                          onClick={() => confirmAsOneTime(bill.id)}
+                          style={{
+                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
+                            backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
+                            color: colors.textSub, fontWeight: 600,
+                            fontSize: '0.8rem', cursor: 'pointer',
+                          }}
+                        >One-time expense</button>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
