@@ -583,7 +583,7 @@ function AllocateContent() {
               We split your remaining {fmt(afterBills)} across common categories. You can adjust these later.
             </div>
             {suggestedCats.map(cat => (
-              <div key={cat.id} style={[styles.catRow, styles.suggestedRow]}>
+              <div key={cat.id} style={{ ...styles.catRow, ...styles.suggestedRow }}>
                 <div style={styles.catLeft}>
                   <CategoryIcon category={cat.name} size={28} isDark={isDark} />
                   <span style={styles.catName}>{cat.name}</span>
@@ -610,7 +610,7 @@ function AllocateContent() {
         ) : (
           <div style={styles.remainingRow}>
             <span style={styles.remainingLabel}>Remaining</span>
-            <span style={[styles.remainingAmt, remaining < 0 && styles.remainingAmtNegative]}>
+            <span style={{ ...styles.remainingAmt, ...(remaining < 0 ? styles.remainingAmtNegative : {}) }}>
               {fmt(Math.abs(remaining))}
             </span>
           </div>
