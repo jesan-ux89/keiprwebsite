@@ -336,7 +336,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     detectedAt: raw.detected_at ? String(raw.detected_at) : undefined,
     possibleDuplicateOf: raw.possible_duplicate_of ? String(raw.possible_duplicate_of) : undefined,
     possibleDuplicateName: raw.possible_duplicate_name ? String(raw.possible_duplicate_name) : undefined,
-    paidWith: raw.paid_with || null,
+    paidWith: typeof raw.paid_with === 'string' ? raw.paid_with : null,
   };
 }
 
