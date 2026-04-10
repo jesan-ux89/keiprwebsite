@@ -15,7 +15,7 @@ function BankImportContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { colors } = useTheme();
-  const { refreshSubscription } = useApp();
+  const { refreshBills } = useApp();
 
   // Url params from previous step
   const schedule = searchParams.get('schedule') || 'biweekly';
@@ -64,7 +64,7 @@ function BankImportContent() {
         const plan = res.data?.plan;
         if (status === 'trialing' || status === 'active' || plan === 'ultra' || plan === 'pro') {
           // Trial activated! Refresh app state and move to Plaid
-          if (refreshSubscription) await refreshSubscription();
+          await refreshBills();
           setLoading(false);
           setStep('connecting');
           return;
