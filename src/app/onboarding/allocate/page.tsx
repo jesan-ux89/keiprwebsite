@@ -187,7 +187,7 @@ function AllocateContent() {
           const month = today.getMonth() + 1;
           const year = today.getFullYear();
           const freq = SCHEDULE_TO_FREQ[schedule] || schedule;
-          const periods = getPayPeriods(nextPayday ? new Date(nextPayday) : today, freq, today);
+          const periods = getPayPeriods(nextPayday || today.toISOString().split('T')[0], freq, today);
           const currentPeriod = periods.current;
 
           for (const bill of onboardingBills) {
