@@ -15,6 +15,7 @@ import {
   Plus,
   Settings,
   CheckCircle2,
+  BarChart3,
 } from 'lucide-react';
 
 /* ─── Types ──────────────────────────────────────── */
@@ -42,6 +43,7 @@ export default function BankingPage() {
 
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [status, setStatus] = useState<BankingStatus | null>(null);
+  const [txnCounts, setTxnCounts] = useState<{ matched: number; unmatched: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,12 +71,25 @@ export default function BankingPage() {
       if (accountsRes.status === 'fulfilled') setAccounts(Array.isArray(accountsRes.value.data?.accounts) ? accountsRes.value.data.accounts : []);
       if (statusRes.status === 'fulfilled') setStatus(statusRes.value.data?.status || null);
       setError(null);
+      // Fetch transaction counts for preview
+      fetchTxnCounts();
     } catch (err) {
       console.error('Failed to load banking data:', err);
       setError('Failed to load banking data');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function fetchTxnCounts() {
+    try {
+      const res = await bankingAPI.getAllTransactions({ category: 'all', limit: 1, offset: 0 });
+      const cts = res.data?.counts || {};
+      const matched = Number(cts.matched) || 0;
+      const unmatched = (Number(cts.possible_bill) || 0) + (Number(cts.likely_not_bill) || 0)
+        + (Number(cts.auto_excluded) || 0) + (Number(cts.user_excluded) || 0);
+      setTxnCounts({ matched, unmatched });
+    } catch (_) { /* non-critical */ }
   }
 
   /* ─── Account actions ──────────────────────────── */
@@ -267,8 +282,26 @@ export default function BankingPage() {
         )}
       </Card>
 
-      {/* ─── Tools (Exclusion Rules) ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+      {/* ─── Tools ─── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+        <Link href="/app/banking/transactions" style={{ textDecoration: 'none' }}>
+          <Card onClick={() => {}} style={{ cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '100px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', height: '100%' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <BarChart3 size={20} style={{ color: colors.electric }} />
+                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>All Transactions</h3>
+                </div>
+                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: 0 }}>
+                  {txnCounts
+                    ? `${txnCounts.matched} matched · ${txnCounts.unmatched} unmatched`
+                    : 'View synced transactions & their status'}
+                </p>
+              </div>
+              <ChevronRight size={20} style={{ color: colors.textMuted }} />
+            </div>
+          </Card>
+        </Link>
         <Link href="/app/banking/exclusions" style={{ textDecoration: 'none' }}>
           <Card onClick={() => {}} style={{ cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', height: '100%' }}>
