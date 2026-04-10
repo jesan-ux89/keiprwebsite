@@ -388,6 +388,9 @@ function FirstBillContent() {
       display: 'flex',
       gap: '12px',
       flexDirection: 'column' as const,
+      maxWidth: '500px',
+      width: '100%',
+      margin: '20px auto 0',
     },
     buttonPrimary: {
       padding: '14px 24px',
