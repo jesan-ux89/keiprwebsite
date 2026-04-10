@@ -50,7 +50,7 @@ export default function SignupPage() {
 
     try {
       await signUpWithEmail(email, password, fullName);
-      router.push('/app');
+      router.push('/onboarding/pay-schedule');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create account';
       setError(errorMessage);
@@ -65,7 +65,7 @@ export default function SignupPage() {
 
     try {
       await signInWithGoogle();
-      router.push('/app');
+      router.push('/onboarding/pay-schedule');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign up with Google';
       setError(errorMessage);

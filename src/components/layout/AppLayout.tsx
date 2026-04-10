@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import {
   LayoutDashboard,
   Receipt,
@@ -34,6 +35,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { colors } = useTheme();
   const { user, loading, signOut } = useAuth();
+  const { incomeSources, incomeLoading } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -43,6 +45,15 @@ export function AppLayout({ children }: AppLayoutProps) {
       router.push('/auth/login');
     }
   }, [user, loading, router]);
+
+  // Redirect to onboarding if user has no income sources (not already on onboarding page)
+  useEffect(() => {
+    if (!loading && !incomeLoading && user && !pathname.startsWith('/onboarding')) {
+      if (incomeSources.length === 0) {
+        router.push('/onboarding/pay-schedule');
+      }
+    }
+  }, [user, loading, incomeLoading, incomeSources, pathname, router]);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
