@@ -199,6 +199,9 @@ interface AppContextType {
   fetchSpendingSummary: () => Promise<void>;
   fetchAvailableNumber: () => Promise<void>;
   fetchCreditCards: () => Promise<void>;
+
+  // Quick expense
+  logQuickExpense: (name: string, amount: number, category?: string) => Promise<void>;
 }
 
 const defaultCurrency = CURRENCIES[0];
@@ -274,6 +277,9 @@ const AppContext = createContext<AppContextType>({
   fetchSpendingSummary: async () => {},
   fetchAvailableNumber: async () => {},
   fetchCreditCards: async () => {},
+
+  // Quick expense
+  logQuickExpense: async () => {},
 });
 
 // ── Map API response to app Bill type (MATCHES MOBILE mapApiBill) ──
@@ -713,6 +719,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // ── Log quick expense ────────────────────────────────────
+  const logQuickExpense = useCallback(async (name: string, amount: number, category?: string) => {
+    if (!user) return;
+    try {
+      await billsAPI.quickExpense({ name, amount, category });
+      await Promise.all([fetchBills(), fetchAvailableNumber()]);
+    } catch (err) {
+      console.log('logQuickExpense error:', (err as any)?.message);
+      throw err;
+    }
+  }, [user, fetchBills, fetchAvailableNumber]);
+
   // ── Initial fetch + sync user profile ─────────────────────
   useEffect(() => {
     if (!user) return;
@@ -1113,6 +1131,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchSpendingSummary,
         fetchAvailableNumber,
         fetchCreditCards,
+
+        logQuickExpense,
       }}
     >
       {children}

@@ -60,6 +60,8 @@ export const billsAPI = {
   linkDuplicate:      (id: string, targetBillId: string) => api.post(`/bills/${id}/link-duplicate`, { targetBillId }),
   // Credit cards
   getCreditCards: () => api.get('/bills/credit-cards'),
+  // Quick expense
+  quickExpense: (data: { name: string; amount: number; category?: string }) => api.post('/bills/quick-expense', data),
 };
 
 // Allocations

@@ -38,10 +38,18 @@ export default function DashboardPage() {
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
     isPro, detectedBills, detectedCount,
     availableNumber, availableBreakdown, spendingSummary, fetchAvailableNumber, fetchSpendingSummary,
+    logQuickExpense,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedSide, setExpandedSide] = useState<Record<string, boolean>>({});
+
+  // Quick expense modal state
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [expenseName, setExpenseName] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState('');
+  const [expenseSaving, setExpenseSaving] = useState(false);
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
   // Exclude one-time funds from paycheck calculations
@@ -282,6 +290,22 @@ export default function DashboardPage() {
     }
   };
 
+  const handleLogExpense = async () => {
+    if (!expenseName.trim() || !expenseAmount.trim()) return;
+    setExpenseSaving(true);
+    try {
+      await logQuickExpense(expenseName.trim(), parseFloat(expenseAmount), expenseCategory || undefined);
+      setExpenseName('');
+      setExpenseAmount('');
+      setExpenseCategory('');
+      setExpenseModalOpen(false);
+    } catch (err) {
+      console.error('Log expense failed:', err);
+    } finally {
+      setExpenseSaving(false);
+    }
+  };
+
   const isLoading = billsLoading;
 
   return (
@@ -448,11 +472,28 @@ export default function DashboardPage() {
           marginBottom: '1.5rem',
           borderColor: 'transparent',
         }}>
-          <p style={{
-            fontSize: '0.85rem',
-            opacity: 0.85,
-            margin: '0 0 0.5rem 0',
-          }}>Available to spend</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <p style={{
+              fontSize: '0.85rem',
+              opacity: 0.85,
+              margin: 0,
+            }}>AVAILABLE TO SPEND</p>
+            <button
+              onClick={() => setExpenseModalOpen(true)}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: 20,
+                padding: '6px 14px',
+                color: '#fff',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              + Log expense
+            </button>
+          </div>
           <p style={{
             fontSize: '2.5rem',
             fontWeight: 700,
@@ -1666,6 +1707,84 @@ export default function DashboardPage() {
             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#38BDF8' }}>Pro →</span>
           </Card>
         </a>
+      )}
+
+      {/* Quick Expense Modal */}
+      {expenseModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000,
+        }} onClick={() => setExpenseModalOpen(false)}>
+          <div style={{
+            backgroundColor: colors.card, borderRadius: 16, padding: '2rem', width: '90%', maxWidth: 420,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: colors.text }}>Log expense</h3>
+              <button onClick={() => { setExpenseModalOpen(false); setExpenseName(''); setExpenseAmount(''); setExpenseCategory(''); }}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: colors.textMuted, cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px', marginBottom: '0.375rem', display: 'block' }}>WHAT DID YOU SPEND ON?</label>
+            <input
+              type="text"
+              placeholder="e.g. Dinner, Gas, Coffee"
+              value={expenseName}
+              onChange={e => setExpenseName(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%', padding: '0.875rem', borderRadius: 10, border: `0.5px solid ${colors.cardBorder}`,
+                backgroundColor: colors.inputBg, color: colors.text, fontSize: '1rem', marginBottom: '1rem',
+                outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+
+            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px', marginBottom: '0.375rem', display: 'block' }}>HOW MUCH?</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={expenseAmount}
+              onChange={e => setExpenseAmount(e.target.value)}
+              style={{
+                width: '100%', padding: '0.875rem', borderRadius: 10, border: `0.5px solid ${colors.cardBorder}`,
+                backgroundColor: colors.inputBg, color: colors.text, fontSize: '1rem', marginBottom: '1rem',
+                outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+
+            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px', marginBottom: '0.375rem', display: 'block' }}>CATEGORY (OPTIONAL)</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              {['Dining', 'Groceries', 'Shopping', 'Transport', 'Entertainment', 'Healthcare', 'Other'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setExpenseCategory(expenseCategory === cat ? '' : cat)}
+                  style={{
+                    padding: '0.5rem 0.875rem', borderRadius: 20, fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
+                    backgroundColor: expenseCategory === cat ? '#38BDF8' : colors.inputBg,
+                    color: expenseCategory === cat ? '#fff' : colors.text,
+                    border: expenseCategory === cat ? 'none' : `0.5px solid ${colors.cardBorder}`,
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleLogExpense}
+              disabled={expenseSaving || !expenseName.trim() || !expenseAmount.trim()}
+              style={{
+                width: '100%', padding: '1rem', borderRadius: 12, border: 'none', cursor: 'pointer',
+                backgroundColor: (!expenseName.trim() || !expenseAmount.trim()) ? colors.cardBorder : '#38BDF8',
+                color: '#fff', fontSize: '1rem', fontWeight: 700,
+              }}
+            >
+              {expenseSaving ? 'Saving...' : 'Log expense'}
+            </button>
+          </div>
+        </div>
       )}
 
       <style>{`
