@@ -115,6 +115,22 @@ const MERCHANT_DOMAINS: Record<string, string> = {
   'barclays': 'barclays.com',
   'sheffield financial': 'sheffieldfinancial.com',
   'ally': 'ally.com',
+  'affirm': 'affirm.com',
+  'klarna': 'klarna.com',
+  'afterpay': 'afterpay.com',
+  'bread financial': 'breadfinancial.com',
+  'bread pay': 'breadfinancial.com',
+  'breadpay': 'breadfinancial.com',
+  'paypal': 'paypal.com',
+  'venmo': 'venmo.com',
+  'zelle': 'zellepay.com',
+  'cash app': 'cash.app',
+  'marcus': 'marcus.com',
+  'lending club': 'lendingclub.com',
+  'upstart': 'upstart.com',
+  'prosper': 'prosper.com',
+  'avant': 'avant.com',
+  'greenlight': 'greenlight.com',
 
   // ── Software / Cloud ──
   'microsoft': 'microsoft.com',
@@ -205,19 +221,54 @@ const MERCHANT_DOMAINS: Record<string, string> = {
   'ea': 'ea.com',
 };
 
+const LOGO_BASE_URL = 'https://keipr-backend-production.up.railway.app/api/logos';
+
+/**
+ * Try to guess a domain from a bill name.
+ * Strips common suffixes (LLC, Inc, Corp, etc.), joins words, appends .com.
+ * Returns null for names that are too short or generic to guess.
+ */
+function guessDomain(name: string): string | null {
+  let cleaned = name
+    .replace(/\b(llc|inc|corp|ltd|co|lp|llp|plc|group|holdings?|services?|solutions?|platforms?|payments?)\b/gi, '')
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim();
+
+  if (cleaned.length < 3) return null;
+
+  const domain = cleaned.replace(/\s+/g, '').toLowerCase() + '.com';
+  return domain;
+}
+
+/**
+ * Get the logo URL for a merchant/bill name.
+ *
+ * Lookup order:
+ * 1. Exact match in MERCHANT_DOMAINS
+ * 2. Partial keyword match in MERCHANT_DOMAINS
+ * 3. Dynamic domain guess (e.g. "Bagel Nosh" → bagelnosh.com)
+ *
+ * If the backend doesn't have the logo cached, it auto-fetches on first request.
+ * If that also fails, MerchantLogo's onError falls back to CategoryIcon.
+ */
 export function getMerchantLogoUrl(billName: string): string | null {
   if (!billName) return null;
 
   const normalized = billName.toLowerCase().trim();
 
   if (MERCHANT_DOMAINS[normalized]) {
-    return `https://keipr-backend-production.up.railway.app/api/logos/${MERCHANT_DOMAINS[normalized]}`;
+    return `${LOGO_BASE_URL}/${MERCHANT_DOMAINS[normalized]}`;
   }
 
   for (const [keyword, domain] of Object.entries(MERCHANT_DOMAINS)) {
     if (normalized.includes(keyword)) {
-      return `https://keipr-backend-production.up.railway.app/api/logos/${domain}`;
+      return `${LOGO_BASE_URL}/${domain}`;
     }
+  }
+
+  const guessed = guessDomain(normalized);
+  if (guessed) {
+    return `${LOGO_BASE_URL}/${guessed}`;
   }
 
   return null;
