@@ -311,8 +311,8 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     status: (raw.status as Bill['status']) || 'regular',
     detectedMerchant: raw.detected_merchant ? String(raw.detected_merchant) : undefined,
     detectedAt: raw.detected_at ? String(raw.detected_at) : undefined,
-    possibleDuplicateOf: raw.possible_duplicate_of || undefined,
-    possibleDuplicateName: raw.possible_duplicate_name || undefined,
+    possibleDuplicateOf: raw.possible_duplicate_of ? String(raw.possible_duplicate_of) : undefined,
+    possibleDuplicateName: raw.possible_duplicate_name ? String(raw.possible_duplicate_name) : undefined,
   };
 }
 
