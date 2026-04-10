@@ -537,7 +537,7 @@ function AllocateContent() {
         </div>
         <div style={styles.amountSub}>Assign every dollar before you spend it</div>
         <div style={styles.allocTrack}>
-          <div style={[styles.allocFill, { width: percent + '%' }]} />
+          <div style={{ ...styles.allocFill, width: percent + '%' }} />
         </div>
         <div style={styles.allocLabels}>
           <span style={styles.allocLabelText}>Allocated</span>
