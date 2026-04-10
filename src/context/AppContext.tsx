@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI } from '../lib/api';
+import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
 
 /**
@@ -47,6 +47,7 @@ export interface Bill {
   detectedAt?: string;
   possibleDuplicateOf?: string;
   possibleDuplicateName?: string;
+  paidWith?: string | null; // Credit card name or null for bank account (direct)
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -187,6 +188,17 @@ interface AppContextType {
   // User info
   userName: string;
   userInitials: string;
+
+  // Spending budgets (Full Dollar Tracking)
+  spendingBudgets: any[];
+  spendingSummary: any[];
+  availableNumber: number | null;
+  availableBreakdown: any;
+  creditCards: any[];
+  fetchSpendingBudgets: () => Promise<void>;
+  fetchSpendingSummary: () => Promise<void>;
+  fetchAvailableNumber: () => Promise<void>;
+  fetchCreditCards: () => Promise<void>;
 }
 
 const defaultCurrency = CURRENCIES[0];
@@ -251,6 +263,17 @@ const AppContext = createContext<AppContextType>({
 
   userName: '',
   userInitials: '',
+
+  // Spending budgets (Full Dollar Tracking)
+  spendingBudgets: [],
+  spendingSummary: [],
+  availableNumber: null,
+  availableBreakdown: null,
+  creditCards: [],
+  fetchSpendingBudgets: async () => {},
+  fetchSpendingSummary: async () => {},
+  fetchAvailableNumber: async () => {},
+  fetchCreditCards: async () => {},
 });
 
 // ── Map API response to app Bill type (MATCHES MOBILE mapApiBill) ──
@@ -313,6 +336,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     detectedAt: raw.detected_at ? String(raw.detected_at) : undefined,
     possibleDuplicateOf: raw.possible_duplicate_of ? String(raw.possible_duplicate_of) : undefined,
     possibleDuplicateName: raw.possible_duplicate_name ? String(raw.possible_duplicate_name) : undefined,
+    paidWith: raw.paid_with || null,
   };
 }
 
@@ -401,6 +425,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [sideIncomeLoading, setSideIncomeLoading] = useState(false);
   const [currentRollover, setCurrentRollover] = useState<MonthlyRollover | null>(null);
   const [rolloverLoading, setRolloverLoading] = useState(false);
+
+  // Spending budgets (Full Dollar Tracking)
+  const [spendingBudgets, setSpendingBudgets] = useState<any[]>([]);
+  const [spendingSummary, setSpendingSummary] = useState<any[]>([]);
+  const [availableNumber, setAvailableNumber] = useState<number | null>(null);
+  const [availableBreakdown, setAvailableBreakdown] = useState<any>(null);
+  const [creditCards, setCreditCards] = useState<any[]>([]);
 
   const [currencyCode, setCurrencyCodeState] = useState('USD');
   const [tier, setTier] = useState<'free' | 'pro' | 'ultra'>('free');
@@ -624,6 +655,64 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ── Fetch spending budgets (Full Dollar Tracking) ─────────
+  const fetchSpendingBudgets = useCallback(async () => {
+    if (!user) {
+      setSpendingBudgets([]);
+      return;
+    }
+    try {
+      const res = await spendingAPI.getBudgets();
+      setSpendingBudgets(res.data?.budgets || []);
+    } catch (err) {
+      console.log('fetchSpendingBudgets error:', (err as any)?.message);
+    }
+  }, [user]);
+
+  // ── Fetch spending summary ───────────────────────────────
+  const fetchSpendingSummary = useCallback(async () => {
+    if (!user) {
+      setSpendingSummary([]);
+      return;
+    }
+    try {
+      const res = await spendingAPI.getSummary();
+      setSpendingSummary(res.data?.categories || []);
+    } catch (err) {
+      console.log('fetchSpendingSummary error:', (err as any)?.message);
+    }
+  }, [user]);
+
+  // ── Fetch available number ───────────────────────────────
+  const fetchAvailableNumber = useCallback(async () => {
+    if (!user) {
+      setAvailableNumber(null);
+      setAvailableBreakdown(null);
+      return;
+    }
+    try {
+      const res = await spendingAPI.getAvailable();
+      setAvailableNumber(res.data?.available?.availableNumber ?? null);
+      setAvailableBreakdown(res.data?.available || null);
+    } catch (err) {
+      console.log('fetchAvailableNumber error:', (err as any)?.message);
+    }
+  }, [user]);
+
+  // ── Fetch credit cards ───────────────────────────────────
+  const fetchCreditCards = useCallback(async () => {
+    if (!user) {
+      setCreditCards([]);
+      return;
+    }
+    try {
+      const res = await billsAPI.getCreditCards();
+      setCreditCards(res.data?.creditCards || []);
+    } catch (err) {
+      console.log('fetchCreditCards error:', (err as any)?.message);
+    }
+  }, [user]);
+
   // ── Initial fetch + sync user profile ─────────────────────
   useEffect(() => {
     if (!user) return;
@@ -662,7 +751,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Fetch data
-      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome()]);
+      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards()]);
     }
 
     syncAndFetch();
@@ -684,6 +773,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       categoryId: matchedCat?.id || null,
       categoryName: (data.category as string) || null,
       isAutoPay: data.isAutoPay || false,
+      paidWith: data.paidWith || null,
     };
     const res = await billsAPI.create(apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
@@ -727,6 +817,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       apiData.categoryId = matchedCat?.id || null;
       apiData.categoryName = (data.category as string) || null;
     }
+    if (data.paidWith !== undefined) apiData.paidWith = data.paidWith;
     const res = await billsAPI.update(id, apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
     setBills(prev => prev.map((b) => (b.id === id ? bill : b)));
@@ -745,6 +836,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           console.warn('Failed to set splits:', e);
         }
       }
+    }
+
+    // Refresh credit cards if paidWith changed
+    if (data.paidWith !== undefined) {
+      fetchCreditCards().catch(() => {});
     }
 
     return bill;
@@ -1007,6 +1103,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         userName,
         userInitials,
+
+        spendingBudgets,
+        spendingSummary,
+        availableNumber,
+        availableBreakdown,
+        creditCards,
+        fetchSpendingBudgets,
+        fetchSpendingSummary,
+        fetchAvailableNumber,
+        fetchCreditCards,
       }}
     >
       {children}

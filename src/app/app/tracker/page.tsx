@@ -18,7 +18,7 @@ export default function TrackerPage() {
   const { colors } = useTheme();
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
-    isBillPaid, isSplitPaid, toggleSplitPaid, categories,
+    isBillPaid, isSplitPaid, toggleSplitPaid, categories, creditCards,
   } = useApp();
   const [showNext, setShowNext] = useState(false);
 
@@ -257,6 +257,53 @@ export default function TrackerPage() {
         </div>
       ) : (
         <EmptyState icon="tracker" title="No bills this period" description={`No bills are due during ${period.label}`} />
+      )}
+
+      {/* Credit Card Summary (Full Dollar Tracking) */}
+      {creditCards.length > 0 && (
+        <div style={{ marginTop: '24px' }}>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textMuted, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Credit Cards
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {creditCards.map((cc: any) => {
+              const ccBills = (cc.bills || []).filter((b: any) => billsInPeriod.some(bp => bp.id === b.id));
+              const ccTotal = ccBills.reduce((sum: number, b: any) => sum + (b.total_amount || 0), 0);
+              const ccPaid = ccBills.filter((b: any) => {
+                const bill = billsInPeriod.find(bp => bp.id === b.id);
+                if (!bill) return false;
+                return bill.isSplit ? isSplitPaid(bill.id, paycheckNumber) : isBillPaid(bill.id);
+              }).length;
+
+              return (
+                <div
+                  key={cc.cardName}
+                  style={{
+                    backgroundColor: colors.card,
+                    borderRadius: '12px',
+                    padding: '12px',
+                    border: `1px solid ${colors.cardBorder}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: colors.text, marginBottom: '4px' }}>
+                      💳 {cc.cardName}
+                    </div>
+                    <div style={{ fontSize: '12px', color: colors.textMuted }}>
+                      {ccPaid} of {ccBills.length} charged
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: colors.text }}>
+                    {fmt(ccTotal)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

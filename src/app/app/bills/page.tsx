@@ -21,11 +21,12 @@ interface ExpandedBills {
 
 export default function BillsPage() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill } = useApp();
+  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedBills, setExpandedBills] = useState<ExpandedBills>({});
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [matchedBillIds, setMatchedBillIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -214,6 +215,59 @@ export default function BillsPage() {
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Credit Cards Visualizer (Full Dollar Tracking) */}
+          {creditCards.length > 0 && (
+            <div>
+              <h2 style={{
+                fontSize: '1.1rem', fontWeight: 600, color: colors.text,
+                margin: '0 0 1rem 0', paddingBottom: '0.75rem',
+                borderBottom: `1px solid ${colors.divider}`,
+              }}>Bills paid by credit card</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {creditCards.map((cc: any) => (
+                  <Card
+                    key={cc.cardName}
+                    onClick={() => setExpandedCard(expandedCard === cc.cardName ? null : cc.cardName)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                          💳 {cc.cardName}
+                        </h3>
+                        <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                          {cc.paidCount} of {cc.totalCount} charged
+                        </p>
+                      </div>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
+                        {fmt(cc.totalAmount)}
+                      </p>
+                    </div>
+                    {expandedCard === cc.cardName && cc.bills && cc.bills.length > 0 && (
+                      <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${colors.divider}` }}>
+                        {cc.bills.map((b: any) => (
+                          <div
+                            key={b.id}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              padding: '0.625rem 0',
+                              fontSize: '0.875rem',
+                              color: colors.textMuted,
+                            }}
+                          >
+                            <span>{b.name}</span>
+                            <span style={{ color: colors.text, fontWeight: 600 }}>{fmt(b.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Detected Transactions Section */}
           {detectedCount > 0 && (
             <div>
@@ -405,6 +459,17 @@ export default function BillsPage() {
                                 color: isDark ? '#34D399' : '#047857',
                                 letterSpacing: '0.3px',
                               }}>Bank Synced</span>
+                            )}
+                            {bill.paidWith && (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '10px',
+                                backgroundColor: isDark ? 'rgba(251,146,60,0.15)' : 'rgba(194,102,2,0.1)',
+                                color: isDark ? '#FB923C' : '#B45309',
+                                letterSpacing: '0.3px',
+                              }}>💳 {bill.paidWith}</span>
                             )}
                             <span style={{
                               fontSize: '0.7rem',

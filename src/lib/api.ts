@@ -58,6 +58,8 @@ export const billsAPI = {
   confirmDetected:    (id: string, data?: Record<string, unknown>) => api.patch(`/bills/${id}/confirm-detected`, data || {}),
   dismissDetected:    (id: string) => api.patch(`/bills/${id}/dismiss-detected`),
   linkDuplicate:      (id: string, targetBillId: string) => api.post(`/bills/${id}/link-duplicate`, { targetBillId }),
+  // Credit cards
+  getCreditCards: () => api.get('/bills/credit-cards'),
 };
 
 // Allocations
@@ -161,6 +163,18 @@ export const secondaryIncomeAPI = {
   allocate:       (data: Record<string, unknown>) => api.post('/secondary-income/allocate', data),
   removeAllocation: (id: string) => api.delete(`/secondary-income/allocations/${id}`),
   getSummary:     (month: number, year: number) => api.get('/secondary-income/summary', { params: { month, year } }),
+};
+
+// Spending budgets (Full Dollar Tracking)
+export const spendingAPI = {
+  getBudgets:      () => api.get('/spending/budgets'),
+  createBudget:    (data: Record<string, unknown>) => api.post('/spending/budgets', data),
+  updateBudget:    (id: string, data: Record<string, unknown>) => api.patch(`/spending/budgets/${id}`, data),
+  deleteBudget:    (id: string) => api.delete(`/spending/budgets/${id}`),
+  getSummary:      () => api.get('/spending/summary'),
+  getPace:         (category: string) => api.get('/spending/pace', { params: { category } }),
+  getAvailable:    () => api.get('/spending/available'),
+  getSuggested:    () => api.get('/spending/budgets/suggested'),
 };
 
 export default api;

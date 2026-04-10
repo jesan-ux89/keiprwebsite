@@ -37,6 +37,7 @@ interface AddBillModalProps {
     p2?: number;
     p3?: number;
     p4?: number;
+    paidWith?: string | null;
   };
 }
 
@@ -55,6 +56,7 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
   const [isRecurring, setIsRecurring] = useState(true);
   const [isAutoPay, setIsAutoPay] = useState(false);
   const [isSplit, setIsSplit] = useState(false);
+  const [paidWith, setPaidWith] = useState('');
 
   const [p1, setP1] = useState('');
   const [p2, setP2] = useState('');
@@ -71,6 +73,7 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
       setIsRecurring(billToEdit.isRecurring);
       setIsAutoPay(billToEdit.isAutoPay);
       setIsSplit(billToEdit.isSplit);
+      setPaidWith(billToEdit.paidWith || '');
 
       if (billToEdit.isSplit) {
         setP1(billToEdit.p1?.toString() || '');
@@ -87,6 +90,7 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
       setIsRecurring(true);
       setIsAutoPay(false);
       setIsSplit(false);
+      setPaidWith('');
       setP1('');
       setP2('');
       setP3('');
@@ -148,6 +152,7 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
         isRecurring,
         isAutoPay,
         isSplit,
+        paidWith: paidWith || null,
       };
 
       if (isSplit) {
@@ -349,6 +354,15 @@ export default function AddBillModal({ isOpen, onClose, billToEdit }: AddBillMod
             </span>
           </label>
         </div>
+
+        {/* Paid With (Credit Card) */}
+        <Input
+          label="Paid With (Optional)"
+          type="text"
+          placeholder="e.g., Chase Sapphire, Capital One"
+          value={paidWith}
+          onChange={(e) => setPaidWith(e.target.value)}
+        />
 
         {/* Split amounts */}
         {isSplit && (

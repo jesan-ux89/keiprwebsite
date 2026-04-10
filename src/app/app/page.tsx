@@ -37,6 +37,7 @@ export default function DashboardPage() {
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
     isPro, detectedBills, detectedCount,
+    availableNumber, availableBreakdown, spendingSummary, fetchAvailableNumber, fetchSpendingSummary,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [refreshing, setRefreshing] = useState(false);
@@ -436,6 +437,39 @@ export default function DashboardPage() {
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.electric }}>Review →</span>
           </div>
         </a>
+      )}
+
+      {/* Available to Spend Card */}
+      {availableNumber !== null && (
+        <Card style={{
+          background: `linear-gradient(135deg, ${colors.midnight}, #0E6494)`,
+          color: '#fff',
+          textAlign: 'center',
+          marginBottom: '1.5rem',
+          borderColor: 'transparent',
+        }}>
+          <p style={{
+            fontSize: '0.85rem',
+            opacity: 0.85,
+            margin: '0 0 0.5rem 0',
+          }}>Available to spend</p>
+          <p style={{
+            fontSize: '2.5rem',
+            fontWeight: 700,
+            color: availableNumber < 0 ? '#EF4444' : '#fff',
+            margin: '0 0 0.75rem 0',
+          }}>
+            {fmt(availableNumber)}
+          </p>
+          <p style={{
+            fontSize: '0.75rem',
+            opacity: 0.7,
+            margin: 0,
+            lineHeight: 1.5,
+          }}>
+            {fmt(availableBreakdown?.paycheckIncome || 0)} income − {fmt(availableBreakdown?.totalBills || 0)} bills − {fmt(availableBreakdown?.totalSpending || 0)} spent
+          </p>
+        </Card>
       )}
 
       {/* Summary Cards — Paycheck View */}
@@ -1380,6 +1414,38 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
+          {/* Spending section (Full Dollar Tracking) */}
+          {spendingSummary.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
+                Spending
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {spendingSummary.map((cat: any) => (
+                  <div key={cat.category} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text }}>{cat.category}</span>
+                        <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>
+                          {fmt(cat.spentAmount)} / {fmt(cat.budgetAmount)}
+                        </span>
+                      </div>
+                      <div style={{ height: '6px', borderRadius: '3px', backgroundColor: colors.divider, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          borderRadius: '3px',
+                          width: `${Math.min(100, (cat.spentAmount / cat.budgetAmount) * 100)}%`,
+                          backgroundColor: cat.spentAmount > cat.budgetAmount ? '#EF4444' : colors.electric,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Category breakdown */}
           <div>
