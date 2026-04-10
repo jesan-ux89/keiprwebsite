@@ -3,7 +3,7 @@
  * MerchantLogo — shows a real company logo if available, falls back to CategoryIcon.
  * Website mirror of mobile _KeiprApp/src/components/MerchantLogo.tsx
  *
- * Uses Clearbit Logo API for high-quality logos.
+ * Uses self-hosted logo cache (Google Favicon → Supabase → backend serves as PNG).
  * Graceful fallback: no internet, no domain mapping, or image fails → CategoryIcon.
  */
 import { useState } from 'react';
@@ -44,7 +44,7 @@ export default function MerchantLogo({ billName, category, size = 30, iconScale,
     }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={logoUrl}
+        src={`${logoUrl}?v=2`}
         alt={`${billName} logo`}
         width={imgSize}
         height={imgSize}

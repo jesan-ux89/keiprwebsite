@@ -10,6 +10,7 @@ import type { Bill } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import CategoryIcon from '@/components/CategoryIcon';
+import MerchantLogo from '@/components/MerchantLogo';
 import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import { DashboardSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
@@ -770,9 +771,12 @@ export default function DashboardPage() {
                                   fontSize: '0.8rem', color: colors.text,
                                 }}
                               >
-                                <div>
-                                  <span>{b.name}</span>
-                                  <span style={{ display: 'block', fontSize: '0.65rem', color: colors.textMuted, marginTop: '0.125rem' }}>Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <MerchantLogo billName={b.name} category={b.category} size={24} isDark={isDark} />
+                                  <div>
+                                    <span>{b.name}</span>
+                                    <span style={{ display: 'block', fontSize: '0.65rem', color: colors.textMuted, marginTop: '0.125rem' }}>Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}</span>
+                                  </div>
                                 </div>
                                 <span style={{ fontWeight: 600, color: '#38BDF8' }}>{fmt(billAmountForPaycheck(b, currentPeriod.paycheckNumber as number))}</span>
                               </button>
@@ -1037,9 +1041,12 @@ export default function DashboardPage() {
                                   fontSize: '0.8rem', color: colors.text,
                                 }}
                               >
-                                <div>
-                                  <span>{b.name}</span>
-                                  <span style={{ display: 'block', fontSize: '0.65rem', color: colors.textMuted, marginTop: '0.125rem' }}>Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <MerchantLogo billName={b.name} category={b.category} size={24} isDark={isDark} />
+                                  <div>
+                                    <span>{b.name}</span>
+                                    <span style={{ display: 'block', fontSize: '0.65rem', color: colors.textMuted, marginTop: '0.125rem' }}>Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}</span>
+                                  </div>
                                 </div>
                                 <span style={{ fontWeight: 600, color: '#38BDF8' }}>{fmt(billAmountForPaycheck(b, nextPeriod.paycheckNumber as number))}</span>
                               </button>
@@ -1111,7 +1118,10 @@ export default function DashboardPage() {
                       borderRadius: '0.375rem',
                     }}
                   >
-                    <span style={{ color: colors.text, fontWeight: 500 }}>{bill.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MerchantLogo billName={bill.name} category={bill.category} size={24} isDark={isDark} />
+                      <span style={{ color: colors.text, fontWeight: 500 }}>{bill.name}</span>
+                    </div>
                     <span style={{ color: colors.text, fontWeight: 600 }}>{fmt(bill.total)}</span>
                   </div>
                 ))}
@@ -1425,11 +1435,14 @@ export default function DashboardPage() {
                                   borderLeft: `3px solid ${color}`,
                                 }}
                               >
-                                <div>
-                                  <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>{b.name}</p>
-                                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
-                                    Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}
-                                  </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <MerchantLogo billName={b.name} category={b.category} size={24} isDark={isDark} />
+                                  <div>
+                                    <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>{b.name}</p>
+                                    <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                                      Due the {b.dueDay || 1}{suffix(b.dueDay || 1)}
+                                    </p>
+                                  </div>
                                 </div>
                                 <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(b.total)}</span>
                               </div>

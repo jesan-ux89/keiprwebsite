@@ -11,6 +11,7 @@ import AddBillModal from './AddBillModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
 import { Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import MerchantLogo from '@/components/MerchantLogo';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
 
@@ -228,9 +229,12 @@ export default function BillsPage() {
                 {detectedBills.map((bill) => (
                   <Card key={bill.id} style={{ borderLeft: `3px solid ${colors.electric}` }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>{bill.name}</h3>
-                        <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>{bill.category} · Due day {bill.dueDay}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
+                        <MerchantLogo billName={bill.name} category={bill.category} size={32} isDark={isDark} />
+                        <div>
+                          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>{bill.name}</h3>
+                          <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>{bill.category} · Due day {bill.dueDay}</p>
+                        </div>
                       </div>
                       <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: '0 1rem 0 0' }}>{fmt(bill.total)}/mo</p>
                     </div>
@@ -294,7 +298,9 @@ export default function BillsPage() {
                           alignItems: 'center',
                         }}
                       >
-                        <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', flex: 1 }}>
+                          <MerchantLogo billName={bill.name} category={bill.category} size={32} isDark={isDark} />
+                          <div style={{ flex: 1 }}>
                           <h3
                             style={{
                               fontSize: '1rem',
@@ -376,6 +382,7 @@ export default function BillsPage() {
                             );
                           })()}
 
+                        </div>
                         </div>
 
                         <div
