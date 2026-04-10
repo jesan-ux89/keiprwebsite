@@ -61,7 +61,7 @@ src/
 │   ├── LoadingSkeleton.tsx         ← Shimmer skeleton components per page type
 │   └── EmptyState.tsx              ← Illustrated empty states with action buttons
 ├── context/
-│   ├── AppContext.tsx               ← ** MIRRORED FROM MOBILE ** — bills, income, payments, categories
+│   ├── AppContext.tsx               ← ** MIRRORED FROM MOBILE ** — bills, income, payments, categories, detected transactions
 │   ├── AuthContext.tsx              ← Firebase auth state
 │   └── ThemeContext.tsx             ← Dark/light/system theme
 └── lib/
@@ -169,6 +169,28 @@ These website files are direct ports of mobile app files. When the mobile versio
 
 ## Dashboard Features
 - **One-time fund discovery:** Monthly tab shows a dashed-border prompt ("Got a bonus or tax refund?") when user has no one-time funds configured. Links to `/app/settings?section=income` for direct navigation to income settings.
+- **Detected transactions alert:** When detected bills exist, an alert card appears at top of dashboard showing count and merchant preview, linking to `/app/bills?showDetected=true`.
+
+## Detected Transactions (Mirrored from Mobile)
+Auto-discovered recurring charges from Plaid appear as `detected` bills. Website mirrors the mobile app's handling exactly.
+
+### Bill Status
+- `regular` → `detected` → `confirmed` (same lifecycle as mobile)
+- `bill.status`, `bill.detectedMerchant`, `bill.detectedAt` fields in `mapApiBill()`
+
+### UI
+- **Dashboard:** Alert card at top: "N new transactions detected" → links to Bills page
+- **Bills page:** Detected section at top with "Recurring bill" / "One-time expense" buttons per bill
+- Recurring bill = keeps tracking monthly; One-time expense = confirms as non-recurring, auto-paid this month, drops off next month
+
+### AppContext Methods (mirrored from mobile)
+- `detectedBills`, `detectedCount` — computed from bills state
+- `confirmDetectedBill(billId, overrides?)` — confirms as recurring
+- `confirmAsOneTime(billId)` — confirms as one-time expense
+- `dismissDetectedBill(billId)` — soft-deletes + exclusion rule
+
+### API Methods (in `src/lib/api.ts`)
+- `billsAPI.getDetectedSummary()`, `billsAPI.confirmDetected(id, data)`, `billsAPI.dismissDetected(id)`
 
 ## Environment Variables (Vercel)
 - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
