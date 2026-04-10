@@ -55,6 +55,7 @@ src/
 │   ├── ui/                         ← Button, Card, Input, Modal
 │   ├── MFAModal.tsx
 │   ├── CategoryIcon.tsx            ← Lucide SVG icon in tinted rounded square
+│   ├── MerchantLogo.tsx            ← ** MIRRORED FROM MOBILE ** — real company logo with CategoryIcon fallback
 │   ├── ErrorBoundary.tsx           ← Catches page crashes, shows reload button
 │   ├── LoadingSkeleton.tsx         ← Shimmer skeleton components per page type
 │   └── EmptyState.tsx              ← Illustrated empty states with action buttons
@@ -66,7 +67,8 @@ src/
     ├── api.ts                      ← Axios client + all API endpoint definitions
     ├── firebase.ts                 ← Firebase config from env vars
     ├── payPeriods.ts               ← ** MIRRORED FROM MOBILE ** — pay period calculation engine
-    └── categoryIcons.ts            ← ** MIRRORED FROM MOBILE ** — category icon definitions
+    ├── categoryIcons.ts            ← ** MIRRORED FROM MOBILE ** — category icon definitions
+    └── merchantLogos.ts            ← ** MIRRORED FROM MOBILE ** — merchant domain map + getMerchantLogoUrl()
 ```
 
 ## Data Parity with Mobile App (CRITICAL)
@@ -84,6 +86,8 @@ These website files are direct ports of mobile app files. When the mobile versio
 | `src/app/app/tracker/page.tsx` | `src/screens/tracker/TrackerScreen.tsx` | Per-paycheck payment tracking UI and logic |
 | `src/lib/categoryIcons.ts` | `src/utils/categoryIcons.ts` | Category icon definitions, colors, SVG paths |
 | `src/components/CategoryIcon.tsx` | `src/components/CategoryIcon.tsx` | Reusable category icon component |
+| `src/lib/merchantLogos.ts` | `src/utils/merchantLogos.ts` | Merchant domain map, `getMerchantLogoUrl()`, `guessDomain()` |
+| `src/components/MerchantLogo.tsx` | `src/components/MerchantLogo.tsx` | Logo display with CategoryIcon fallback |
 
 ### Key Data Mapping Rules (from `mapApiBill`)
 - Backend field `total_amount` → app field `total`
@@ -189,6 +193,21 @@ Auto-discovered recurring charges from Plaid appear as `detected` bills. Website
 
 ### API Methods (in `src/lib/api.ts`)
 - `billsAPI.getDetectedSummary()`, `billsAPI.confirmDetected(id, data)`, `billsAPI.dismissDetected(id)`
+
+## Merchant Logos (Mirrored from Mobile)
+Real company logos display on bill rows. Logos served from Keipr's own backend cache at `/api/logos/:domain`.
+
+### Key Files
+- `src/lib/merchantLogos.ts` — **MIRRORED FROM MOBILE** — merchant domain map (150+) + `getMerchantLogoUrl()` with 3-tier lookup: exact match → partial keyword → dynamic domain guess (`guessDomain()`)
+- `src/components/MerchantLogo.tsx` — **MIRRORED FROM MOBILE** — `<img>` with `onError` fallback to `CategoryIcon`
+
+### Where MerchantLogo Is Used
+- **Dashboard** (`src/app/app/page.tsx`): expanded bill sub-rows in all 4 tabs (Monthly, This Check, Next Check, Cycles)
+- **Bills** (`src/app/app/bills/page.tsx`): detected bill rows + regular bill rows
+- Category-level headers (donut chart, category cards) remain as `CategoryIcon`
+
+### Graceful Fallback
+Logo URL includes `?v=2` cache-bust param. If logo fails to load (no cache, domain doesn't exist, no internet), `onError` silently renders `CategoryIcon`.
 
 ## Environment Variables (Vercel)
 - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
