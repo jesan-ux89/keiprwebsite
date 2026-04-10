@@ -47,11 +47,9 @@ src/
 │       ├── plan/page.tsx           ← Forward month planning
 │       ├── settings/page.tsx       ← Settings hub (income, currency, theme, subscription)
 │       └── banking/                ← Connected banking (Ultra tier)
-│           ├── page.tsx            ← Banking hub
-│           ├── suggestions/page.tsx
-│           ├── confirmations/page.tsx
-│           ├── history/page.tsx
-│           └── exclusions/page.tsx
+│           ├── page.tsx            ← Banking hub (accounts, sync, disconnect, exclusion rules)
+│           └── exclusions/page.tsx ← Manage ignored merchants
+│           (suggestions/ and confirmations/ deprecated — replaced by detection engine)
 ├── components/
 │   ├── layout/AppLayout.tsx        ← Sidebar + top bar shell
 │   ├── ui/                         ← Button, Card, Input, Modal
