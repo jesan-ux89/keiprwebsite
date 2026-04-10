@@ -20,7 +20,7 @@ interface ExpandedBills {
 
 export default function BillsPage() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra } = useApp();
+  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, dismissDetectedBill } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -213,6 +213,55 @@ export default function BillsPage() {
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Detected Transactions Section */}
+          {detectedCount > 0 && (
+            <div>
+              <h2 style={{
+                fontSize: '1.1rem', fontWeight: 600, color: colors.electric,
+                margin: '0 0 1rem 0', paddingBottom: '0.75rem',
+                borderBottom: `1px solid rgba(56,189,248,0.25)`,
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+              }}>
+                <span>🔔</span> New transactions detected ({detectedCount})
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {detectedBills.map((bill) => (
+                  <Card key={bill.id} style={{ borderLeft: `3px solid ${colors.electric}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>{bill.name}</h3>
+                        <p style={{ fontSize: '0.8rem', color: colors.textSecondary, margin: 0 }}>{bill.category} · Due day {bill.dueDay}</p>
+                      </div>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: '0 1rem 0 0' }}>{fmt(bill.total)}/mo</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.75rem' }}>
+                      <button
+                        onClick={() => confirmDetectedBill(bill.id)}
+                        style={{
+                          flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
+                          backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
+                          fontSize: '0.8rem', cursor: 'pointer',
+                        }}
+                      >Confirm</button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Remove "${bill.name}" and stop detecting it?`)) {
+                            dismissDetectedBill(bill.id);
+                          }
+                        }}
+                        style={{
+                          flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
+                          backgroundColor: 'rgba(163,45,45,0.1)', color: '#A32D2D', fontWeight: 600,
+                          fontSize: '0.8rem', cursor: 'pointer',
+                        }}
+                      >Dismiss</button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {Object.entries(groupedFilteredBills).map(([category, categoryBills]) => (
             <div key={category}>
               <h2

@@ -53,6 +53,10 @@ export const billsAPI = {
   getPayments: (year: number, month: number) => api.get(`/bills/payments/${year}/${month}`),
   markPaid:    (data: Record<string, unknown>) => api.post('/bills/payments', data),
   unmarkPaid:  (paymentId: string) => api.delete(`/bills/payments/${paymentId}`),
+  // Detected transactions
+  getDetectedSummary: () => api.get('/bills/detected/summary'),
+  confirmDetected:    (id: string, data?: Record<string, unknown>) => api.patch(`/bills/${id}/confirm-detected`, data || {}),
+  dismissDetected:    (id: string) => api.patch(`/bills/${id}/dismiss-detected`),
 };
 
 // Allocations

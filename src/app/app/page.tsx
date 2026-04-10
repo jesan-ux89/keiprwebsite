@@ -35,7 +35,7 @@ export default function DashboardPage() {
     incomeSources, categories, fmt, isBillPaid, isSplitPaid, markBillPaid, toggleSplitPaid, userName, userInitials,
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
-    isPro,
+    isPro, detectedBills, detectedCount, confirmDetectedBill, dismissDetectedBill,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [refreshing, setRefreshing] = useState(false);
@@ -408,6 +408,33 @@ export default function DashboardPage() {
             <span style={{ fontWeight: 600 }}>{fmt(currentRollover.rolloverAmount)}</span> rolled over from last month
           </p>
         </div>
+      )}
+
+      {/* Detected Transactions Alert */}
+      {detectedCount > 0 && (
+        <a href="/app/bills?showDetected=true" style={{ textDecoration: 'none' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            backgroundColor: 'rgba(56,189,248,0.10)', borderRadius: '0.75rem',
+            padding: '0.875rem 1rem', marginBottom: '1rem',
+            border: '1px solid rgba(56,189,248,0.25)', cursor: 'pointer',
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 18,
+              backgroundColor: 'rgba(56,189,248,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+            }}>🔔</div>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
+                {detectedCount} new {detectedCount === 1 ? 'transaction' : 'transactions'} detected
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: colors.textSecondary }}>
+                {detectedBills.slice(0, 2).map(b => b.name).join(', ')}{detectedCount > 2 ? ` +${detectedCount - 2} more` : ''}
+              </p>
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.electric }}>Review →</span>
+          </div>
+        </a>
       )}
 
       {/* Summary Cards — Paycheck View */}

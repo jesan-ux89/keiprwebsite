@@ -42,6 +42,9 @@ export interface Bill {
   p3done: boolean;
   p4done: boolean;
   splitIds: string[]; // IDs of bill_splits rows for API calls
+  status: 'regular' | 'detected' | 'confirmed'; // detected = auto-found, confirmed = user approved
+  detectedMerchant?: string;
+  detectedAt?: string;
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -150,6 +153,12 @@ interface AppContextType {
   setCurrencyCode: (code: string) => void;
   fmt: (amount: number) => string;
 
+  // Detected transactions
+  detectedBills: Bill[];
+  detectedCount: number;
+  confirmDetectedBill: (billId: string, overrides?: Record<string, unknown>) => Promise<void>;
+  dismissDetectedBill: (billId: string) => Promise<void>;
+
   // Subscription
   tier: 'free' | 'pro' | 'ultra';
   isPro: boolean;
@@ -211,6 +220,11 @@ const AppContext = createContext<AppContextType>({
   currency: defaultCurrency,
   setCurrencyCode: () => {},
   fmt: (n) => `$${n.toLocaleString()}`,
+
+  detectedBills: [],
+  detectedCount: 0,
+  confirmDetectedBill: async () => {},
+  dismissDetectedBill: async () => {},
 
   tier: 'free',
   isPro: false,
@@ -288,6 +302,9 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     p1, p2, p3, p4,
     p1done, p2done, p3done, p4done,
     splitIds,
+    status: (raw.status as Bill['status']) || 'regular',
+    detectedMerchant: raw.detected_merchant ? String(raw.detected_merchant) : undefined,
+    detectedAt: raw.detected_at ? String(raw.detected_at) : undefined,
   };
 }
 
@@ -835,6 +852,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const refreshIncomeSources = async () => { await fetchIncomeSources(); };
   const refreshCategories = async () => { await fetchCategories(); };
 
+  // ── Detected bills (computed from bills state) ──────────
+  const detectedBills = bills.filter(b => b.status === 'detected');
+  const detectedCount = detectedBills.length;
+
+  const confirmDetectedBill = async (billId: string, overrides?: Record<string, unknown>) => {
+    try {
+      await billsAPI.confirmDetected(billId, overrides || {});
+      await refreshBills();
+    } catch (err) {
+      console.log('confirmDetectedBill failed:', (err as Error)?.message);
+    }
+  };
+
+  const dismissDetectedBill = async (billId: string) => {
+    setBills(prev => prev.filter(b => b.id !== billId));
+    try {
+      await billsAPI.dismissDetected(billId);
+    } catch (err) {
+      console.log('dismissDetectedBill failed:', (err as Error)?.message);
+      await refreshBills();
+    }
+  };
+
   // ── Income source CRUD ────────────────────────────────────
   const addIncomeSource = async (data: Record<string, unknown>): Promise<IncomeSource> => {
     const res = await usersAPI.addIncomeSource(data);
@@ -887,6 +927,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateBill,
         deleteBill,
         getBill,
+        detectedBills,
+        detectedCount,
+        confirmDetectedBill,
+        dismissDetectedBill,
 
         billPayments,
         paymentsLoading,
