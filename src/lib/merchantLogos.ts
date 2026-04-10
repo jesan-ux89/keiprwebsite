@@ -154,6 +154,48 @@ const MERCHANT_DOMAINS: Record<string, string> = {
   'waste management': 'wm.com',
   'republic services': 'republicservices.com',
 
+  // ── Retail / Shopping ──
+  'walmart': 'walmart.com',
+  'target': 'target.com',
+  'costco': 'costco.com',
+  'home depot': 'homedepot.com',
+  'the home depot': 'homedepot.com',
+  'lowes': 'lowes.com',
+  "lowe's": 'lowes.com',
+  'best buy': 'bestbuy.com',
+  'ikea': 'ikea.com',
+  'ebay': 'ebay.com',
+  'etsy': 'etsy.com',
+  'wayfair': 'wayfair.com',
+
+  // ── Food / Dining ──
+  'doordash': 'doordash.com',
+  'uber eats': 'ubereats.com',
+  'grubhub': 'grubhub.com',
+  'chipotle': 'chipotle.com',
+  "chili's": 'chilis.com',
+  'chilis': 'chilis.com',
+  "mcdonald's": 'mcdonalds.com',
+  'mcdonalds': 'mcdonalds.com',
+  'starbucks': 'starbucks.com',
+  'dunkin': 'dunkindonuts.com',
+  'subway': 'subway.com',
+  'dominos': 'dominos.com',
+  "domino's": 'dominos.com',
+  'papa johns': 'papajohns.com',
+  'stop & shop': 'stopandshop.com',
+  'stop and shop': 'stopandshop.com',
+  'kroger': 'kroger.com',
+  'publix': 'publix.com',
+  'aldi': 'aldi.us',
+  'trader joes': 'traderjoes.com',
+  "trader joe's": 'traderjoes.com',
+  'whole foods': 'wholefoodsmarket.com',
+
+  // ── Rideshare / Transport ──
+  'uber': 'uber.com',
+  'lyft': 'lyft.com',
+
   // ── Gaming ──
   'xbox': 'xbox.com',
   'playstation': 'playstation.com',
