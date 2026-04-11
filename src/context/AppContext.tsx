@@ -49,6 +49,7 @@ export interface Bill {
   possibleDuplicateName?: string;
   paidWith?: string | null; // Credit card name or null for bank account (direct)
   isQuickExpense?: boolean; // True for quick spends logged from Dashboard
+  isInternalTransfer?: boolean; // True for savings transfers, internal account moves
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -345,6 +346,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     possibleDuplicateName: raw.possible_duplicate_name ? String(raw.possible_duplicate_name) : undefined,
     paidWith: typeof raw.paid_with === 'string' ? raw.paid_with : null,
     isQuickExpense: raw.is_quick_expense === true,
+    isInternalTransfer: raw.is_internal_transfer === true,
   };
 }
 
@@ -1015,9 +1017,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBills(prev => prev.filter(b => b.id !== billId));
     try {
       await billsAPI.linkDuplicate(billId, targetBillId);
-    } catch (err) {
-      console.log('linkDuplicateBill failed:', (err as Error)?.message);
-      await refreshBills();
+      await refreshBills(); // Refresh to sync with server
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || (err as Error)?.message || 'Unknown error';
+      console.log('linkDuplicateBill failed:', msg);
+      alert(`Link failed: ${msg}`);
+      await refreshBills(); // Rollback by re-fetching
     }
   };
 

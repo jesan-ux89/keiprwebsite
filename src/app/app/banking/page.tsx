@@ -27,6 +27,7 @@ interface BankAccount {
   account_mask: string;
   is_synced: boolean;
   last_sync: string;
+  error_type?: string | null;
 }
 
 interface BankingStatus {
@@ -276,6 +277,34 @@ export default function BankingPage() {
                     <Button variant="danger" size="sm" onClick={() => handleUnlinkAccount(account.id)}>Unlink</Button>
                   </div>
                 </div>
+
+                {/* Per-account error banner */}
+                {account.error_type && (
+                  <div style={{
+                    marginTop: '0.75rem',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '0.5rem',
+                    border: `1px solid ${account.error_type === 'PENDING_EXPIRATION' ? '#854F0B' : colors.red}`,
+                    backgroundColor: account.error_type === 'PENDING_EXPIRATION' ? 'rgba(133,79,11,0.08)' : `${colors.red}10`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                  }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>
+                      {account.error_type === 'PENDING_EXPIRATION' ? '🔔' : '⚠️'}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: colors.text }}>
+                        {account.error_type === 'PENDING_EXPIRATION' ? 'Re-auth needed soon' : 'Connection expired'}
+                      </p>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                        {account.error_type === 'PENDING_EXPIRATION'
+                          ? 'Your bank connection expires soon. Reconnect to avoid interruption.'
+                          : 'Use the mobile app to reconnect and re-authenticate with your bank.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

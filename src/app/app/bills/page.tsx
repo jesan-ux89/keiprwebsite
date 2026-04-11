@@ -324,7 +324,11 @@ export default function BillsPage() {
                         <MerchantLogo billName={bill.name} category={bill.category} size={32} isDark={isDark} />
                         <div>
                           <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>{bill.name}</h3>
-                          <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>{bill.category} · Due day {bill.dueDay}</p>
+                          <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>
+                            {bill.category} · {bill.detectedAt
+                              ? `Last charged ${new Date(bill.detectedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                              : `Due day ${bill.dueDay}`}
+                          </p>
                         </div>
                       </div>
                       <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: '0 1rem 0 0' }}>{fmt(bill.total)}/mo</p>
