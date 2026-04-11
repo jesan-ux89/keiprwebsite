@@ -150,9 +150,11 @@ npm run build        # Production build
 - Backend CORS: `ALLOWED_ORIGINS` on Railway must include the Vercel domain
 - Do NOT put sensitive keys in `NEXT_PUBLIC_*` env vars
 
+## Pro-to-Ultra Migration Engine (Website Mirror)
+- Settings → Smart Detection → "Re-sync & match bills" calls `POST /api/banking-data/migrate-to-ultra`
+- Dashboard quick stats (INCOME / BILLS / SPENT) are clickable: Income → `/app/income`, Bills → `/app/bills`, Spent → `/app/banking/transactions`
+- `/app/income` page shows income sources + recent bank deposits (fetches `income`, `income_matched`, and `transfer` categories filtered for deposits)
+- `bankingAPI.migrateToUltra()` available in `src/lib/api.ts`
+
 ## What's Left to Build
 1. **Onboarding split** — Manual vs Automated path recommendation
-2. **Pro → Ultra migration UX** — transition screen explaining what changed
-3. **Cleanup deprecated screens** — remove SuggestionsInbox, PendingConfirmations routes
-4. **Plan access from Ultra Budget** — not yet wired
-5. **Pending migration:** `add_income_matching.sql` may still need to run on Supabase
