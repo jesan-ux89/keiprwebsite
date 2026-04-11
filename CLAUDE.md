@@ -151,11 +151,12 @@ npm run build        # Production build
 3. **After completing ALL code changes**, always provide full copy-pasteable commands for EVERY repo that was modified. Never finish a task without giving push commands. Rules:
    - **PowerShell-compatible** — use semicolons (`;`) not `&&` to chain commands.
    - **Full local paths** — always start with `cd C:\Users\Jess\_keiprwebsite`, `cd C:\Users\Jess\_KeiprApp`, or `cd C:\Users\Jess\_keipr-complete-backend`.
-   - **SQL changes** — provide the full SQL statement ready to copy-paste into the Supabase SQL Editor. No placeholders, no "run this migration" — give the actual SQL.
+   - **SINGLE COMMAND BLOCK** — combine ALL repo pushes into ONE copy-pasteable command, chained with semicolons. Jesse should only need to copy once.
+   - **SQL separate** — SQL statements go in their own block since they're pasted into the Supabase SQL Editor, not PowerShell. Provide the full SQL ready to copy-paste. No placeholders.
    - **Once given, assume push/SQL commands have been executed.** Do NOT re-provide the same commands later in the session. Jesse runs them immediately.
-   - **Example format:**
+   - **Example format (all repos in one block):**
      ```powershell
-     cd C:\Users\Jess\_keiprwebsite; git add src/context/AppContext.tsx src/app/app/bills/page.tsx; git commit -m "Mirror mobile bill changes"; git push origin main
+     cd C:\Users\Jess\_KeiprApp; git add src/context/AppContext.tsx; git commit -m "Fix bill logic"; git push origin master; cd C:\Users\Jess\_keiprwebsite; git add src/context/AppContext.tsx src/app/app/bills/page.tsx; git commit -m "Mirror bill fix"; git push origin main
      ```
 4. **UI changes to shared screens** (Dashboard, Bills/Budget, Tracker, Banking/Accounts, Transactions) on mobile MUST be mirrored here. This includes new banners, new fields, conditional logic, and styling.
 5. Do NOT change `mapApiBill()`, `mapIncomeSource()`, `payPeriods.ts`, or dashboard calculations without checking mobile first.
