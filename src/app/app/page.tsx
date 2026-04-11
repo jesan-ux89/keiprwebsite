@@ -116,10 +116,9 @@ export default function DashboardPage() {
 
   // ── This paycheck calculations (MATCHES MOBILE) ────────────
   const totalBillsThisCheck = thisPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
-  // Ultra: also subtract spending budgets (groceries, gas, etc.) from remaining
-  // Divide monthly budget by paychecks per month so each check only subtracts its share
-  const checksPerMonth = periodsPerMonth || 2;
-  const totalSpendingBudgetsAmount = isUltra ? (spendingBudgets || []).reduce((s: number, b: any) => s + ((b.budget_amount || 0) / checksPerMonth), 0) : 0;
+  // Ultra: subtract spending budgets (groceries, gas, etc.) from remaining
+  // budget_amount is stored as per-paycheck amount, so use directly
+  const totalSpendingBudgetsAmount = isUltra ? (spendingBudgets || []).reduce((s: number, b: any) => s + (b.budget_amount || 0), 0) : 0;
   const remaining = (totalPaycheck || 0) - totalBillsThisCheck - totalSpendingBudgetsAmount;
   const spentPct = totalPaycheck > 0 ? Math.round(((totalBillsThisCheck + totalSpendingBudgetsAmount) / totalPaycheck) * 100) : 0;
 

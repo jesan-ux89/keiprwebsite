@@ -127,7 +127,7 @@ export default function SpendingBudgetsPage() {
                       <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>{budget.categoryName}</span>
                     </div>
                     <p style={{ fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#38BDF8' : '#0369A1', margin: '0.25rem 0 0 0' }}>
-                      {fmt(budget.monthlyAmount)}/month
+                      {fmt(budget.monthlyAmount)}/paycheck
                     </p>
                     {budget.spentAmount !== undefined && (
                       <div style={{ marginTop: '0.5rem' }}>
@@ -222,7 +222,7 @@ export default function SpendingBudgetsPage() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 500, color: colors.textSub, letterSpacing: '1px', display: 'block', marginBottom: '0.5rem' }}>
-                MONTHLY AMOUNT
+                AMOUNT PER PAYCHECK
               </label>
               <Input
                 type="number"
