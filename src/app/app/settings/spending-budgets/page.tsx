@@ -69,8 +69,8 @@ export default function SpendingBudgetsPage() {
 
   function openEdit(budget: any) {
     setEditingId(budget.id);
-    setSelectedCategory(budget.categoryName || 'Dining');
-    setAmount(String(budget.monthlyAmount || ''));
+    setSelectedCategory(budget.category || 'Dining');
+    setAmount(String(budget.budget_amount || ''));
     setShowModal(true);
   }
 
@@ -114,20 +114,20 @@ export default function SpendingBudgetsPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {spendingBudgets.map((budget: any) => {
-            const pct = budget.monthlyAmount > 0 && budget.spentAmount !== undefined
-              ? Math.min(100, Math.round((budget.spentAmount / budget.monthlyAmount) * 100))
+            const pct = budget.budget_amount > 0 && budget.spentAmount !== undefined
+              ? Math.min(100, Math.round((budget.spentAmount / budget.budget_amount) * 100))
               : 0;
-            const isOver = budget.spentAmount > budget.monthlyAmount;
+            const isOver = budget.spentAmount > budget.budget_amount;
             return (
               <Card key={budget.id} style={{ padding: '1rem 1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                      <CategoryIcon category={budget.categoryName} size={24} isDark={isDark} />
-                      <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>{budget.categoryName}</span>
+                      <CategoryIcon category={budget.category} size={24} isDark={isDark} />
+                      <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>{budget.category}</span>
                     </div>
                     <p style={{ fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#38BDF8' : '#0369A1', margin: '0.25rem 0 0 0' }}>
-                      {fmt(budget.monthlyAmount)}/paycheck
+                      {fmt(budget.budget_amount)}/paycheck
                     </p>
                     {budget.spentAmount !== undefined && (
                       <div style={{ marginTop: '0.5rem' }}>
@@ -139,7 +139,7 @@ export default function SpendingBudgetsPage() {
                           }} />
                         </div>
                         <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0.25rem 0 0 0' }}>
-                          {fmt(budget.spentAmount)} spent · {fmt(Math.max(0, budget.monthlyAmount - budget.spentAmount))} left
+                          {fmt(budget.spentAmount)} spent · {fmt(Math.max(0, budget.budget_amount - budget.spentAmount))} left
                         </p>
                       </div>
                     )}
