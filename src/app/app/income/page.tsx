@@ -18,50 +18,40 @@ export default function IncomePage() {
   const oneTimeSources = incomeSources.filter((s: any) => s.isOneTime);
   const totalPaycheck = regularSources.reduce((sum: number, s: any) => sum + (s.typicalAmount || 0), 0);
 
-  // Patterns that indicate a payment/transfer, NOT a real deposit
-  const PAYMENT_PATTERNS = /PAYMENT|PMT|PYMT|ONLINE\s*PAY|WEB\s*PAY|MOBILE\s*PAY|AUTOPAY|AUTO\s*PAY|BILL\s*PAY|WITHDRAWAL/i;
-  const TRANSFER_PATTERNS = /TRANSFER\s*(TO|FROM)|ONLINE\s*TRANSFER|XFER|WIRE\s*TRANSFER/i;
-  const CARD_COMPANY_PATTERNS = /CAPITAL\s*ONE|CHASE\s*CARD|CITI\s*CARD|DISCOVER|AMEX|AMERICAN\s*EXPRESS|BREAD\s*FINANCIAL|SYNCHRONY|BARCLAYS|AFFIRM|KLARNA|AFTERPAY|SHEFFIELD/i;
-
-  // Build a set of income source name patterns to exclude paychecks from deposits
+  // Income source names to exclude paychecks (already shown in Income Sources section)
   const incomeSourceNames = incomeSources.map((s: any) => (s.name || '').toUpperCase()).filter(Boolean);
-
-  const isRealDeposit = (txn: any) => {
-    const name = (txn.cleaned_name || txn.merchant_name || txn.name || '').toUpperCase();
-    if (PAYMENT_PATTERNS.test(name)) return false;
-    if (TRANSFER_PATTERNS.test(name)) return false;
-    if (CARD_COMPANY_PATTERNS.test(name)) return false;
-    if (txn.matched_income_source_id) return false;
-    // Exclude transactions whose name matches a known income source (e.g. "KCI TECHNOLOGIES PAYRO..." matches "KCI")
-    if (incomeSourceNames.some((srcName: string) => srcName && name.includes(srcName))) return false;
-    return true;
-  };
 
   useEffect(() => {
     const loadDeposits = async () => {
       if (!isUltra) { setLoading(false); return; }
       try {
-        // Fetch income + income_matched + auto_excluded (401k/misc deposits may still be auto_excluded)
-        const [incomeRes, matchedRes, excludedRes] = await Promise.all([
+        // Simple approach: fetch income + income_matched (Plaid already classified these as real deposits)
+        // Also fetch transfer — but only keep ones Plaid tagged as TRANSFER_IN_DEPOSIT (check deposits, 401k, etc.)
+        const [incomeRes, matchedRes, transferRes] = await Promise.all([
           bankingAPI.getAllTransactions({ category: 'income', days: 90, limit: 100 }),
           bankingAPI.getAllTransactions({ category: 'income_matched', days: 90, limit: 100 }),
-          bankingAPI.getAllTransactions({ category: 'auto_excluded', days: 90, limit: 200 }),
+          bankingAPI.getAllTransactions({ category: 'transfer', days: 90, limit: 100 }),
         ]);
         const incomeTxns = ((incomeRes as any).data?.transactions || []) as any[];
         const matchedTxns = ((matchedRes as any).data?.transactions || []) as any[];
-        // From auto_excluded, rescue genuine deposits (large credits that aren't payments/transfers)
-        const excludedTxns = ((excludedRes as any).data?.transactions || []).filter((t: any) => {
-          const name = (t.cleaned_name || t.merchant_name || '').toUpperCase();
-          if (PAYMENT_PATTERNS.test(name)) return false;
-          if (TRANSFER_PATTERNS.test(name)) return false;
-          if (CARD_COMPANY_PATTERNS.test(name)) return false;
-          return true;
+        // From transfers, ONLY keep actual deposits (Plaid subcategory contains DEPOSIT)
+        const transferDeposits = ((transferRes as any).data?.transactions || []).filter((t: any) => {
+          const sub = (t.personal_finance_subcategory || '').toUpperCase();
+          return sub.includes('DEPOSIT');
         }) as any[];
 
+        // Combine, deduplicate, exclude paychecks, sort newest first
         const seen = new Set<string>();
-        const all = [...incomeTxns, ...matchedTxns, ...excludedTxns]
+        const all = [...incomeTxns, ...matchedTxns, ...transferDeposits]
           .filter((t: any) => { if (seen.has(t.id)) return false; seen.add(t.id); return true; })
-          .filter(isRealDeposit)
+          .filter((t: any) => {
+            // Exclude transactions already matched to an income source (paycheck)
+            if (t.matched_income_source_id) return false;
+            // Exclude transactions whose name matches a known income source
+            const name = (t.cleaned_name || t.merchant_name || t.name || '').toUpperCase();
+            if (incomeSourceNames.some((srcName: string) => srcName && name.includes(srcName))) return false;
+            return true;
+          })
           .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
         setDeposits(all);
       } catch (err) {
