@@ -43,7 +43,7 @@ src/
 │       ├── settings/page.tsx       ← Settings hub
 │       └── banking/                ← Connected banking (Ultra tier)
 │           ├── page.tsx            ← Banking hub / "Accounts" for Ultra
-│           ├── transactions/page.tsx ← All transactions / "Spending" for Ultra
+│           ├── transactions/page.tsx ← All transactions / "Transactions" for Ultra
 │           └── exclusions/page.tsx ← Manage ignored merchants
 ├── components/
 │   ├── layout/AppLayout.tsx        ← Sidebar + top bar shell (tier-based nav: FREE_PRO_NAV vs ULTRA_NAV)
@@ -73,18 +73,18 @@ src/
 - Standard header, no TopBar-style elements
 
 ### Ultra — Automated Intelligence
-- **Sidebar Nav:** Dashboard · Accounts · Spending · Budget · Tracker (+ Settings link + notification bell in top section)
+- **Sidebar Nav:** Dashboard · Accounts · Transactions · Budget · Tracker (+ Settings link + notification bell in top section)
 - **Dashboard Tabs:** Overview · This Check · Next Check
 - **Overview tab:** Available Number hero, spending velocity, quick stats, upcoming bills, recent activity, category summary
 - **Bills page:** Title "Budget", spending budget progress bars added
 - **Tracker page:** Auto-verify hint banner for bank-matched bills
 - **Banking page:** Title "Accounts" for Ultra
-- **Transactions page:** Serves as "Spending" tab for Ultra
+- **Transactions page:** Serves as "Transactions" tab for Ultra
 
 ### AppLayout.tsx (Tier-Based Nav)
 ```tsx
 const FREE_PRO_NAV = [Dashboard, Bills, Tracker, Plan, Settings];
-const ULTRA_NAV = [Dashboard, Accounts, Spending, Budget, Tracker];
+const ULTRA_NAV = [Dashboard, Accounts, Transactions, Budget, Tracker];
 ```
 Ultra top section adds Settings link + Bell notification icon with `detectedCount` badge.
 

@@ -31,11 +31,11 @@ const FREE_PRO_NAV = [
   { label: 'Settings', href: '/app/settings', icon: Settings },
 ];
 
-// Ultra: Dashboard, Accounts, Spending, Budget, Tracker (Settings moves to top bar)
+// Ultra: Dashboard, Accounts, Transactions, Budget, Tracker (Settings moves to top bar)
 const ULTRA_NAV = [
   { label: 'Dashboard', href: '/app', icon: LayoutDashboard },
   { label: 'Accounts', href: '/app/banking', icon: Landmark },
-  { label: 'Spending', href: '/app/banking/transactions', icon: CreditCard },
+  { label: 'Transactions', href: '/app/banking/transactions', icon: CreditCard },
   { label: 'Budget', href: '/app/bills', icon: BarChart3 },
   { label: 'Tracker', href: '/app/tracker', icon: CheckSquare },
 ];
