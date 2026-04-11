@@ -152,6 +152,7 @@ npm run build        # Production build
    - **PowerShell-compatible** — use semicolons (`;`) not `&&` to chain commands.
    - **Full local paths** — always start with `cd C:\Users\Jess\_keiprwebsite`, `cd C:\Users\Jess\_KeiprApp`, or `cd C:\Users\Jess\_keipr-complete-backend`.
    - **SQL changes** — provide the full SQL statement ready to copy-paste into the Supabase SQL Editor. No placeholders, no "run this migration" — give the actual SQL.
+   - **Once given, assume push/SQL commands have been executed.** Do NOT re-provide the same commands later in the session. Jesse runs them immediately.
    - **Example format:**
      ```powershell
      cd C:\Users\Jess\_keiprwebsite; git add src/context/AppContext.tsx src/app/app/bills/page.tsx; git commit -m "Mirror mobile bill changes"; git push origin main
