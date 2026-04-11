@@ -35,25 +35,13 @@ export default function IncomePage() {
     const loadDeposits = async () => {
       if (!isUltra) { setLoading(false); return; }
       try {
-        // Simple approach: fetch income + income_matched (Plaid already classified these as real deposits)
-        // Also fetch transfer — but only keep ones Plaid tagged as TRANSFER_IN_DEPOSIT (check deposits, 401k, etc.)
-        const [incomeRes, matchedRes, transferRes] = await Promise.all([
-          bankingAPI.getAllTransactions({ category: 'income', days: 90, limit: 100 }),
-          bankingAPI.getAllTransactions({ category: 'income_matched', days: 90, limit: 100 }),
-          bankingAPI.getAllTransactions({ category: 'transfer', days: 90, limit: 100 }),
-        ]);
-        const incomeTxns = ((incomeRes as any).data?.transactions || []) as any[];
-        const matchedTxns = ((matchedRes as any).data?.transactions || []) as any[];
-        // From transfers, ONLY keep actual deposits (Plaid subcategory contains DEPOSIT)
-        const transferDeposits = ((transferRes as any).data?.transactions || []).filter((t: any) => {
-          const sub = (t.personal_finance_subcategory || '').toUpperCase();
-          return sub.includes('DEPOSIT');
-        }) as any[];
+        // Fetch ALL deposits in one call — backend filters by Plaid's INCOME/TRANSFER_IN categories
+        // This catches everything: tax refunds, bonuses, Venmo, check deposits, etc.
+        const res = await bankingAPI.getAllTransactions({ category: 'deposits', days: 90, limit: 200 });
+        const allDeposits = ((res as any).data?.transactions || []) as any[];
 
-        // Combine, deduplicate, exclude paychecks, sort newest first
-        const seen = new Set<string>();
-        const all = [...incomeTxns, ...matchedTxns, ...transferDeposits]
-          .filter((t: any) => { if (seen.has(t.id)) return false; seen.add(t.id); return true; })
+        // Filter out paychecks (already shown above) and tiny amounts
+        const filtered = allDeposits
           .filter((t: any) => {
             // Minimum $5 threshold — filters out savings interest pennies, rounding credits, etc.
             if (Math.abs(t.amount) < 5) return false;
@@ -65,7 +53,7 @@ export default function IncomePage() {
             return true;
           })
           .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
-        setDeposits(all);
+        setDeposits(filtered);
       } catch (err) {
         console.log('Error loading deposits:', err);
       } finally {
