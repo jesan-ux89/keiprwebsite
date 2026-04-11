@@ -19,7 +19,7 @@ export default function IncomePage() {
   const totalPaycheck = regularSources.reduce((sum: number, s: any) => sum + (s.typicalAmount || 0), 0);
 
   // Patterns that indicate a payment/transfer, NOT a real deposit
-  const PAYMENT_PATTERNS = /PAYMENT|PMT|PYMT|ONLINE\s*PAY|WEB\s*PAY|MOBILE\s*PAY|AUTOPAY|AUTO\s*PAY|BILL\s*PAY/i;
+  const PAYMENT_PATTERNS = /PAYMENT|PMT|PYMT|ONLINE\s*PAY|WEB\s*PAY|MOBILE\s*PAY|AUTOPAY|AUTO\s*PAY|BILL\s*PAY|WITHDRAWAL/i;
   const TRANSFER_PATTERNS = /TRANSFER\s*(TO|FROM)|ONLINE\s*TRANSFER|XFER|WIRE\s*TRANSFER/i;
   const CARD_COMPANY_PATTERNS = /CAPITAL\s*ONE|CHASE\s*CARD|CITI\s*CARD|DISCOVER|AMEX|AMERICAN\s*EXPRESS|BREAD\s*FINANCIAL|SYNCHRONY|BARCLAYS|AFFIRM|KLARNA|AFTERPAY|SHEFFIELD/i;
 
