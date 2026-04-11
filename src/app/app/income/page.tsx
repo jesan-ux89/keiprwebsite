@@ -40,11 +40,17 @@ export default function IncomePage() {
         const res = await bankingAPI.getAllTransactions({ category: 'deposits', days: 90, limit: 200 });
         const allDeposits = ((res as any).data?.transactions || []) as any[];
 
-        // Filter out paychecks (already shown above) and tiny amounts
+        // Filter out paychecks, internal transfers, and tiny amounts
         const filtered = allDeposits
           .filter((t: any) => {
             // Minimum $5 threshold — filters out savings interest pennies, rounding credits, etc.
             if (Math.abs(t.amount) < 5) return false;
+            // Exclude internal transfers (checking ↔ savings)
+            if (t.is_internal_transfer) return false;
+            if (t.display_category === 'transfer' || t.display_category === 'auto_excluded') {
+              const name = (t.cleaned_name || t.merchant_name || t.name || '').toUpperCase();
+              if (name.includes('TRANSFER') && (name.includes('SAVING') || name.includes('CHECKING') || name.includes('CHASE'))) return false;
+            }
             // Exclude transactions already matched to an income source (paycheck)
             if (t.matched_income_source_id) return false;
             // Exclude transactions whose name matches a known income source
