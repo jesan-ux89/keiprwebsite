@@ -179,9 +179,10 @@ export default function IncomePage() {
                     borderBottom: `0.5px solid ${colors.cardBorder}`,
                   }}>
                     <MerchantLogo
-                      merchantName={txn.merchant_name || txn.name || ''}
+                      billName={txn.merchant_name || txn.name || ''}
                       category={txn.budget_category || 'Income'}
                       size={36}
+                      isDark={isDark}
                     />
                     <div style={{ flex: 1, marginLeft: '0.75rem' }}>
                       <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>
