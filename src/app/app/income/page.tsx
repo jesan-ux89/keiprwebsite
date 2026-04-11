@@ -23,12 +23,17 @@ export default function IncomePage() {
   const TRANSFER_PATTERNS = /TRANSFER\s*(TO|FROM)|ONLINE\s*TRANSFER|XFER|WIRE\s*TRANSFER/i;
   const CARD_COMPANY_PATTERNS = /CAPITAL\s*ONE|CHASE\s*CARD|CITI\s*CARD|DISCOVER|AMEX|AMERICAN\s*EXPRESS|BREAD\s*FINANCIAL|SYNCHRONY|BARCLAYS|AFFIRM|KLARNA|AFTERPAY|SHEFFIELD/i;
 
+  // Build a set of income source name patterns to exclude paychecks from deposits
+  const incomeSourceNames = incomeSources.map((s: any) => (s.name || '').toUpperCase()).filter(Boolean);
+
   const isRealDeposit = (txn: any) => {
     const name = (txn.cleaned_name || txn.merchant_name || txn.name || '').toUpperCase();
     if (PAYMENT_PATTERNS.test(name)) return false;
     if (TRANSFER_PATTERNS.test(name)) return false;
     if (CARD_COMPANY_PATTERNS.test(name)) return false;
     if (txn.matched_income_source_id) return false;
+    // Exclude transactions whose name matches a known income source (e.g. "KCI TECHNOLOGIES PAYRO..." matches "KCI")
+    if (incomeSourceNames.some((srcName: string) => srcName && name.includes(srcName))) return false;
     return true;
   };
 
@@ -36,16 +41,25 @@ export default function IncomePage() {
     const loadDeposits = async () => {
       if (!isUltra) { setLoading(false); return; }
       try {
-        // Only fetch income categories — skip 'transfer' (those are internal moves)
-        const [incomeRes, matchedRes] = await Promise.all([
+        // Fetch income + income_matched + auto_excluded (401k/misc deposits may still be auto_excluded)
+        const [incomeRes, matchedRes, excludedRes] = await Promise.all([
           bankingAPI.getAllTransactions({ category: 'income', days: 90, limit: 100 }),
           bankingAPI.getAllTransactions({ category: 'income_matched', days: 90, limit: 100 }),
+          bankingAPI.getAllTransactions({ category: 'auto_excluded', days: 90, limit: 200 }),
         ]);
         const incomeTxns = ((incomeRes as any).data?.transactions || []) as any[];
         const matchedTxns = ((matchedRes as any).data?.transactions || []) as any[];
+        // From auto_excluded, rescue genuine deposits (large credits that aren't payments/transfers)
+        const excludedTxns = ((excludedRes as any).data?.transactions || []).filter((t: any) => {
+          const name = (t.cleaned_name || t.merchant_name || '').toUpperCase();
+          if (PAYMENT_PATTERNS.test(name)) return false;
+          if (TRANSFER_PATTERNS.test(name)) return false;
+          if (CARD_COMPANY_PATTERNS.test(name)) return false;
+          return true;
+        }) as any[];
 
         const seen = new Set<string>();
-        const all = [...incomeTxns, ...matchedTxns]
+        const all = [...incomeTxns, ...matchedTxns, ...excludedTxns]
           .filter((t: any) => { if (seen.has(t.id)) return false; seen.add(t.id); return true; })
           .filter(isRealDeposit)
           .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
@@ -179,7 +193,7 @@ export default function IncomePage() {
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1.5rem 0 0.75rem 0' }}>
             <h2 style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
-              Extra Deposits
+              Recent Deposits
             </h2>
             {deposits.length > 0 && (
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0A7B6C' }}>{fmt(totalDeposits)} total</span>
@@ -193,8 +207,8 @@ export default function IncomePage() {
           ) : deposits.length === 0 ? (
             <Card style={{ padding: '1.5rem', textAlign: 'center' }}>
               <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>🏦</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>No extra deposits</p>
-              <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: 0 }}>Refunds, bonuses, and other unexpected deposits will appear here</p>
+              <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>No recent deposits</p>
+              <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: 0 }}>Refunds, bonuses, and other deposits will appear here</p>
             </Card>
           ) : (
             <Card style={{ overflow: 'hidden', padding: 0 }}>
