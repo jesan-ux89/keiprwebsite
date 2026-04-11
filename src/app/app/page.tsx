@@ -36,7 +36,7 @@ export default function DashboardPage() {
     incomeSources, categories, fmt, isBillPaid, isSplitPaid, markBillPaid, toggleSplitPaid, userName, userInitials,
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
-    isPro, isUltra, detectedBills, detectedCount,
+    isPro, isUltra, detectedBills, detectedCount, pendingConfirmationsCount,
     availableNumber, availableBreakdown, spendingSummary, fetchAvailableNumber, fetchSpendingSummary,
     logQuickExpense,
   } = useApp();
@@ -498,6 +498,33 @@ export default function DashboardPage() {
               </p>
             </div>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.electric }}>Review →</span>
+          </div>
+        </a>
+      )}
+
+      {/* Pending Confirmations Alert */}
+      {isUltra && pendingConfirmationsCount > 0 && (
+        <a href="/app/banking/confirmations" style={{ textDecoration: 'none' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            backgroundColor: 'rgba(245,158,11,0.10)', borderRadius: '0.75rem',
+            padding: '0.875rem 1rem', marginBottom: '1rem',
+            border: '1px solid rgba(245,158,11,0.25)', cursor: 'pointer',
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 18,
+              backgroundColor: 'rgba(245,158,11,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+            }}>🏦</div>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
+                {pendingConfirmationsCount} bill {pendingConfirmationsCount === 1 ? 'match needs' : 'matches need'} your review
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: colors.textSub }}>
+                Confirm or reject suggested bank matches
+              </p>
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#F59E0B' }}>Review →</span>
           </div>
         </a>
       )}

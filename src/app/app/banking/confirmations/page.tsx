@@ -21,7 +21,7 @@ interface Confirmation {
 
 export default function ConfirmationsPage() {
   const { colors } = useTheme();
-  const { fmt } = useApp();
+  const { fmt, refreshPendingConfirmations } = useApp();
 
   const [confirmations, setConfirmations] = useState<Confirmation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,6 +51,7 @@ export default function ConfirmationsPage() {
     try {
       await bankingAPI.confirmMatch(id);
       setConfirmations(confirmations.filter((c) => c.id !== id));
+      refreshPendingConfirmations();
     } catch (err) {
       console.error('Failed to confirm match:', err);
       alert('Failed to confirm match');
@@ -64,6 +65,7 @@ export default function ConfirmationsPage() {
     try {
       await bankingAPI.rejectMatch(id);
       setConfirmations(confirmations.filter((c) => c.id !== id));
+      refreshPendingConfirmations();
     } catch (err) {
       console.error('Failed to reject match:', err);
       alert('Failed to reject match');

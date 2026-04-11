@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI } from '../lib/api';
+import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI, bankingAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
 
 /**
@@ -161,6 +161,8 @@ interface AppContextType {
   // Detected transactions
   detectedBills: Bill[];
   detectedCount: number;
+  pendingConfirmationsCount: number;
+  refreshPendingConfirmations: () => Promise<void>;
   confirmDetectedBill: (billId: string, overrides?: Record<string, unknown>) => Promise<void>;
   confirmAsOneTime: (billId: string) => Promise<void>;
   dismissDetectedBill: (billId: string) => Promise<void>;
@@ -244,6 +246,8 @@ const AppContext = createContext<AppContextType>({
 
   detectedBills: [],
   detectedCount: 0,
+  pendingConfirmationsCount: 0,
+  refreshPendingConfirmations: async () => {},
   confirmDetectedBill: async () => {},
   confirmAsOneTime: async () => {},
   dismissDetectedBill: async () => {},
@@ -773,7 +777,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Fetch data
-      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards()]);
+      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards(), refreshPendingConfirmations()]);
     }
 
     syncAndFetch();
@@ -984,6 +988,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const detectedBills = bills.filter(b => b.status === 'detected');
   const detectedCount = detectedBills.length;
 
+  // ── Pending confirmations (medium-confidence matches needing review) ──
+  const [pendingConfirmationsCount, setPendingConfirmationsCount] = useState(0);
+
+  const refreshPendingConfirmations = useCallback(async () => {
+    if (!isUltra) return;
+    try {
+      const res = await bankingAPI.getConfirmations();
+      const count = (res.data?.confirmations || []).length;
+      setPendingConfirmationsCount(count);
+    } catch {
+      // Silently fail — not critical
+    }
+  }, [isUltra]);
+
   const confirmDetectedBill = async (billId: string, overrides?: Record<string, unknown>) => {
     try {
       await billsAPI.confirmDetected(billId, overrides || {});
@@ -1142,6 +1160,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchCreditCards,
 
         logQuickExpense,
+
+        pendingConfirmationsCount,
+        refreshPendingConfirmations,
       }}
     >
       {children}
