@@ -216,7 +216,8 @@ export default function AllTransactionsPage() {
   const fetchTransactions = async (isRetryAfterBackfill = false) => {
     setLoading(true);
     try {
-      const res = await bankingAPI.getAllTransactions({ category: 'all', limit: 200, offset: 0 });
+      const accountId = searchParams?.get('accountId') || undefined;
+      const res = await bankingAPI.getAllTransactions({ category: 'all', limit: accountId ? 500 : 300, offset: 0, days: accountId ? 365 : 90, accountId });
       const txns = Array.isArray(res.data?.transactions) ? res.data.transactions : [];
       const cts = res.data?.counts || { matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, transfer: 0, income: 0, income_matched: 0, auto_excluded: 0, user_excluded: 0 };
 
