@@ -894,46 +894,95 @@ export default function DashboardPage() {
                       })()
                     : isBillPaid(bill.id);
 
+                  const fullBillPaid = isBillPaid(bill.id);
                   return (
-                    <div
-                      key={bill.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '1rem',
-                        backgroundColor: colors.background,
-                        borderRadius: '0.5rem',
-                        borderLeft: `4px solid ${isPaid ? colors.green : colors.amber}`,
-                      }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>
-                          {bill.name}
-                        </p>
-                        <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                          {bill.category}
-                          {bill.isSplit && ` · P${currentPaycheckNum}`}
-                          {bill.isAutoPay && ' · AutoPay'}
-                        </p>
+                    <div key={bill.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '1rem',
+                          backgroundColor: colors.background,
+                          borderRadius: '0.5rem',
+                          borderLeft: `4px solid ${isPaid ? colors.green : colors.amber}`,
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>
+                            {bill.name}
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                            {bill.category}
+                            {bill.isSplit && ` · This check's portion`}
+                            {bill.isAutoPay && ' · AutoPay'}
+                          </p>
+                        </div>
+                        <div style={{ textAlign: 'right', marginRight: '1rem' }}>
+                          <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                            {fmt(amt)}
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: isPaid ? colors.green : colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                            {isPaid ? 'Paid' : `Due day ${bill.dueDay}`}
+                          </p>
+                        </div>
+                        {!isPaid && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => toggleSplitPaid(bill.id, currentPaycheckNum)}
+                            style={{ whiteSpace: 'nowrap' }}
+                          >
+                            Mark Paid
+                          </Button>
+                        )}
                       </div>
-                      <div style={{ textAlign: 'right', marginRight: '1rem' }}>
-                        <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-                          {fmt(amt)}
-                        </p>
-                        <p style={{ fontSize: '0.875rem', color: isPaid ? colors.green : colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                          {isPaid ? 'Paid' : `Due day ${bill.dueDay}`}
-                        </p>
-                      </div>
-                      {!isPaid && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => toggleSplitPaid(bill.id, currentPaycheckNum)}
-                          style={{ whiteSpace: 'nowrap' }}
+
+                      {/* Split confirmation — green row when full payment went through */}
+                      {bill.isSplit && fullBillPaid && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '0.75rem 1rem',
+                            backgroundColor: isDark ? 'rgba(34,197,94,0.06)' : 'rgba(34,197,94,0.04)',
+                            borderRadius: '0.5rem',
+                            borderLeft: `4px solid rgba(34,197,94,0.4)`,
+                          }}
                         >
-                          Mark Paid
-                        </Button>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: '0.9rem', fontWeight: 500, color: isDark ? '#86EFAC' : '#16A34A', margin: 0 }}>
+                              {bill.name} — Full Payment
+                            </p>
+                            <p style={{ fontSize: '0.75rem', color: isDark ? 'rgba(134,239,172,0.7)' : 'rgba(22,163,74,0.7)', margin: '0.2rem 0 0 0' }}>
+                              Paid from splits
+                            </p>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '0.3rem' }}>
+                              {[bill.p1, bill.p2, bill.p3, bill.p4].map((pAmt, pi) => {
+                                if (!pAmt || pAmt <= 0) return null;
+                                const isCurrent = (pi + 1) === currentPaycheckNum;
+                                return (
+                                  <span key={pi} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    {pi > 0 && [bill.p1, bill.p2, bill.p3, bill.p4].slice(0, pi).some((v: number) => v > 0) && (
+                                      <span style={{ fontSize: '0.7rem', color: colors.textMuted }}>+</span>
+                                    )}
+                                    <span style={{
+                                      fontSize: '0.7rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px',
+                                      backgroundColor: isCurrent ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.05)',
+                                      color: isCurrent ? '#38BDF8' : colors.textMuted,
+                                    }}>
+                                      P{pi + 1}: {fmt(pAmt)}
+                                    </span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <p style={{ fontSize: '0.95rem', fontWeight: 600, color: isDark ? '#86EFAC' : '#16A34A', margin: 0 }}>
+                            {fmt(bill.total)}
+                          </p>
+                        </div>
                       )}
                     </div>
                   );
