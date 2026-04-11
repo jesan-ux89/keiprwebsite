@@ -1087,6 +1087,31 @@ export default function DashboardPage() {
             </Card>
           )}
 
+          {/* SPENDING BUDGETS — This Check (Ultra only) */}
+          {isUltra && (spendingBudgets || []).length > 0 && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
+                Spending budgets this paycheck
+              </h3>
+              {(spendingBudgets || []).map((budget: any) => (
+                <a key={budget.id} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                  <Card style={{ marginBottom: '0.5rem', padding: '0.875rem', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CategoryIcon category={budget.category} size={28} isDark={isDark} />
+                        <div>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
+                          <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0.125rem 0 0 0' }}>{fmt(budget.budget_amount)} per paycheck</p>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '1rem', fontWeight: 600, color: isDark ? '#38BDF8' : '#0369A1' }}>{fmt(budget.budget_amount)}</span>
+                    </div>
+                  </Card>
+                </a>
+              ))}
+            </div>
+          )}
+
           {/* SIDE INCOME — This Check */}
           {secondaryIncome.length > 0 && getSideIncomeForPaycheck(currentPeriod.paycheckNumber as number).map(src => (
             <div
