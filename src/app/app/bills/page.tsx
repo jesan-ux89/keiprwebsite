@@ -438,7 +438,18 @@ export default function BillsPage() {
                                 letterSpacing: '0.3px',
                               }}>Split</span>
                             )}
-                            {bill.isRecurring && (
+                            {bill.isQuickExpense && (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '10px',
+                                backgroundColor: isDark ? 'rgba(251,191,36,0.15)' : 'rgba(217,119,6,0.1)',
+                                color: isDark ? '#FBBF24' : '#D97706',
+                                letterSpacing: '0.3px',
+                              }}>Quick Spend</span>
+                            )}
+                            {!bill.isQuickExpense && bill.isRecurring && (
                               <span style={{
                                 fontSize: '0.7rem',
                                 fontWeight: 600,
@@ -471,7 +482,7 @@ export default function BillsPage() {
                                 letterSpacing: '0.3px',
                               }}>💳 {bill.paidWith}</span>
                             )}
-                            <span style={{
+                            {!bill.isQuickExpense && <span style={{
                               fontSize: '0.7rem',
                               fontWeight: 600,
                               padding: '0.125rem 0.5rem',
@@ -479,7 +490,7 @@ export default function BillsPage() {
                               backgroundColor: isDark ? 'rgba(214,209,199,0.1)' : 'rgba(12,74,110,0.08)',
                               color: isDark ? '#D6D1C7' : '#4A5568',
                               letterSpacing: '0.3px',
-                            }}>Due the {bill.dueDay}{bill.dueDay === 1 ? 'st' : bill.dueDay === 2 ? 'nd' : bill.dueDay === 3 ? 'rd' : 'th'}</span>
+                            }}>Due the {bill.dueDay}{bill.dueDay === 1 ? 'st' : bill.dueDay === 2 ? 'nd' : bill.dueDay === 3 ? 'rd' : 'th'}</span>}
                           </div>
 
                           {/* Split progress */}
