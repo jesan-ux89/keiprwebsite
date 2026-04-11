@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
@@ -16,6 +16,9 @@ import {
   Settings,
   CheckCircle2,
   BarChart3,
+  CreditCard,
+  FileText,
+  TrendingUp,
 } from 'lucide-react';
 
 /* ─── Types ──────────────────────────────────────── */
@@ -25,9 +28,20 @@ interface BankAccount {
   institution_name: string;
   account_name: string;
   account_mask: string;
+  account_type?: string;
   is_synced: boolean;
   last_sync: string;
   error_type?: string | null;
+}
+
+interface AccountBalance {
+  id: string;
+  current: number;
+  available: number;
+}
+
+interface AccountWithBalance extends BankAccount {
+  balance?: AccountBalance;
 }
 
 interface BankingStatus {
@@ -36,13 +50,59 @@ interface BankingStatus {
   lastSync: string;
 }
 
+/* ─── Account type grouping ──────────────────────── */
+
+type AccountGroup = 'cash' | 'credit' | 'loan' | 'investment' | 'other';
+
+const CASH_TYPES = ['checking', 'savings', 'money_market', 'paypal', 'prepaid', 'hsa', 'cd', 'depository'];
+const CREDIT_TYPES = ['credit card', 'credit_card', 'credit', 'line_of_credit', 'credit_line'];
+const LOAN_TYPES = ['loan', 'auto', 'student', 'mortgage', 'personal', 'commercial', 'home_equity'];
+const INVESTMENT_TYPES = ['brokerage', '401k', '401a', 'ira', 'roth', 'taxable_brokerage', 'investment', 'mutual_fund'];
+
+function getAccountGroup(accountType?: string): AccountGroup {
+  if (!accountType) return 'cash';
+  const t = accountType.toLowerCase();
+  if (CASH_TYPES.some(c => t.includes(c))) return 'cash';
+  if (CREDIT_TYPES.some(c => t.includes(c))) return 'credit';
+  if (LOAN_TYPES.some(c => t.includes(c))) return 'loan';
+  if (INVESTMENT_TYPES.some(c => t.includes(c))) return 'investment';
+  return 'other';
+}
+
+function getGroupLabel(group: AccountGroup): string {
+  switch (group) {
+    case 'cash': return 'Cash';
+    case 'credit': return 'Credit Cards';
+    case 'loan': return 'Loans';
+    case 'investment': return 'Investments';
+    default: return 'Other';
+  }
+}
+
+function getGroupEmoji(group: AccountGroup): string {
+  switch (group) {
+    case 'cash': return '🏦';
+    case 'credit': return '💳';
+    case 'loan': return '📋';
+    case 'investment': return '📈';
+    default: return '🏦';
+  }
+}
+
+function formatAccountType(accountType?: string): string {
+  if (!accountType) return '';
+  return accountType
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 /* ─── Component ──────────────────────────────────── */
 
 export default function BankingPage() {
   const { colors } = useTheme();
   const { isUltra, fmt } = useApp();
 
-  const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
   const [status, setStatus] = useState<BankingStatus | null>(null);
   const [txnCounts, setTxnCounts] = useState<{ matched: number; unmatched: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,14 +125,33 @@ export default function BankingPage() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [accountsRes, statusRes] = await Promise.allSettled([
+      const [accountsRes, statusRes, balancesRes] = await Promise.allSettled([
         bankingAPI.getAccounts(),
         bankingAPI.getStatus(),
+        bankingAPI.getBalances(),
       ]);
-      if (accountsRes.status === 'fulfilled') setAccounts(Array.isArray(accountsRes.value.data?.accounts) ? accountsRes.value.data.accounts : []);
+
+      const accts: BankAccount[] = accountsRes.status === 'fulfilled'
+        ? (Array.isArray(accountsRes.value.data?.accounts) ? accountsRes.value.data.accounts : [])
+        : [];
+
       if (statusRes.status === 'fulfilled') setStatus(statusRes.value.data?.status || null);
+
+      // Merge balances
+      const balMap: Record<string, AccountBalance> = {};
+      if (balancesRes.status === 'fulfilled' && balancesRes.value.data?.accounts) {
+        balancesRes.value.data.accounts.forEach((bal: any) => {
+          balMap[bal.id] = { id: bal.id, current: bal.current_balance ?? bal.current ?? 0, available: bal.available_balance ?? bal.available ?? 0 };
+        });
+      }
+
+      const accountsWithBalance: AccountWithBalance[] = accts.map((acc) => ({
+        ...acc,
+        balance: balMap[acc.id],
+      }));
+
+      setAccounts(accountsWithBalance);
       setError(null);
-      // Fetch transaction counts for preview
       fetchTxnCounts();
     } catch (err) {
       console.error('Failed to load banking data:', err);
@@ -137,6 +216,36 @@ export default function BankingPage() {
     }
   };
 
+  /* ─── Grouped accounts ─────────────────────────── */
+
+  const groupedAccounts = useMemo(() => {
+    const groups: Record<AccountGroup, AccountWithBalance[]> = {
+      cash: [], credit: [], loan: [], investment: [], other: [],
+    };
+    accounts.forEach(acc => {
+      const group = getAccountGroup(acc.account_type);
+      groups[group].push(acc);
+    });
+    const order: AccountGroup[] = ['cash', 'credit', 'loan', 'investment', 'other'];
+    return order
+      .filter(g => groups[g].length > 0)
+      .map(g => ({ key: g as AccountGroup, label: getGroupLabel(g), emoji: getGroupEmoji(g), accounts: groups[g] }));
+  }, [accounts]);
+
+  const summaryTotals = useMemo(() => {
+    let totalCash = 0;
+    let totalCredit = 0;
+    let totalLoans = 0;
+    accounts.forEach(acc => {
+      const bal = acc.balance?.current || 0;
+      const group = getAccountGroup(acc.account_type);
+      if (group === 'cash') totalCash += bal;
+      else if (group === 'credit') totalCredit += bal;
+      else if (group === 'loan') totalLoans += bal;
+    });
+    return { totalCash, totalCredit, totalLoans, totalDebt: totalCredit + totalLoans };
+  }, [accounts]);
+
   /* ─── Ultra gate ───────────────────────────────── */
 
   if (!isUltra) {
@@ -144,7 +253,7 @@ export default function BankingPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-            {isUltra ? 'Accounts' : 'Connected Banking'}
+            Connected Banking
           </h1>
         </div>
         <Card style={{ textAlign: 'center', padding: '3rem 2rem' }}>
@@ -165,6 +274,133 @@ export default function BankingPage() {
     );
   }
 
+  /* ─── Render a single account row ──────────────── */
+
+  function renderAccountRow(account: AccountWithBalance, group: AccountGroup) {
+    const isCreditCard = group === 'credit';
+    const isLoan = group === 'loan';
+    const balCurrent = account.balance?.current || 0;
+    const balAvailable = account.balance?.available || 0;
+    const creditLimit = isCreditCard ? balCurrent + balAvailable : 0;
+    const utilization = isCreditCard && creditLimit > 0 ? (balCurrent / creditLimit) * 100 : 0;
+
+    return (
+      <div key={account.id} style={{ marginBottom: '0.75rem' }}>
+        <Link
+          href={`/app/banking/transactions?accountId=${account.id}&accountName=${encodeURIComponent(account.account_name || account.institution_name)}&accountType=${account.account_type || ''}`}
+          style={{ textDecoration: 'none' }}
+        >
+          <div
+            style={{
+              padding: '1rem',
+              backgroundColor: colors.background,
+              borderRadius: '0.75rem',
+              border: `1px solid ${colors.divider}`,
+              cursor: 'pointer',
+              transition: 'border-color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = colors.electric)}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = colors.divider)}
+          >
+            {/* Icon */}
+            <div style={{
+              width: 40, height: 40, borderRadius: 8,
+              backgroundColor: isCreditCard ? 'rgba(133,79,11,0.1)' : isLoan ? 'rgba(163,45,45,0.08)' : 'rgba(56,189,248,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 20 }}>{getGroupEmoji(group)}</span>
+            </div>
+
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontWeight: 600, color: colors.text, fontSize: '0.95rem' }}>
+                {account.account_name || account.institution_name}
+              </p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                {account.account_type ? formatAccountType(account.account_type) : ''}{account.account_type && account.account_mask ? ' · ' : ''}{account.account_mask ? `···${account.account_mask}` : ''}
+              </p>
+
+              {/* Credit card utilization */}
+              {isCreditCard && account.balance && (
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>{fmt(balAvailable)} available</span>
+                    {creditLimit > 0 && (
+                      <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>{Math.round(utilization)}% used</span>
+                    )}
+                  </div>
+                  {creditLimit > 0 && (
+                    <div style={{ height: 4, backgroundColor: colors.progressTrack || colors.divider, borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{
+                        height: 4,
+                        borderRadius: 2,
+                        width: `${Math.min(utilization, 100)}%`,
+                        backgroundColor: utilization > 75 ? '#E74C3C' : utilization > 50 ? '#854F0B' : '#0A7B6C',
+                      }} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.7rem', color: colors.textMuted }}>
+                {account.last_sync && !isNaN(new Date(account.last_sync).getTime())
+                  ? `Synced ${new Date(account.last_sync).toLocaleDateString()}`
+                  : 'Waiting for first sync…'}
+              </p>
+            </div>
+
+            {/* Balance + chevron */}
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <p style={{
+                margin: 0, fontWeight: 700, fontSize: '1rem',
+                color: (isCreditCard || isLoan) && balCurrent > 0 ? '#E74C3C' : colors.text,
+              }}>
+                {account.balance
+                  ? (isCreditCard || isLoan) ? `-${fmt(balCurrent)}` : fmt(balCurrent)
+                  : '-'}
+              </p>
+              {isCreditCard && creditLimit > 0 && (
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.7rem', color: colors.textMuted }}>of {fmt(creditLimit)}</p>
+              )}
+              <ChevronRight size={16} style={{ color: colors.textMuted, marginTop: 4 }} />
+            </div>
+          </div>
+        </Link>
+
+        {/* Error banner */}
+        {account.error_type && (
+          <div style={{
+            marginTop: '0.5rem',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.5rem',
+            border: `1px solid ${account.error_type === 'PENDING_EXPIRATION' ? '#854F0B' : colors.red}`,
+            backgroundColor: account.error_type === 'PENDING_EXPIRATION' ? 'rgba(133,79,11,0.08)' : `${colors.red}10`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}>
+            <span style={{ fontSize: '1rem', flexShrink: 0 }}>
+              {account.error_type === 'PENDING_EXPIRATION' ? '🔔' : '⚠️'}
+            </span>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: colors.text }}>
+                {account.error_type === 'PENDING_EXPIRATION' ? 'Re-auth needed soon' : 'Connection expired'}
+              </p>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                {account.error_type === 'PENDING_EXPIRATION'
+                  ? 'Your bank connection expires soon. Reconnect to avoid interruption.'
+                  : 'Use the mobile app to reconnect and re-authenticate with your bank.'}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   /* ─── Main render ──────────────────────────────── */
 
   return (
@@ -172,35 +408,49 @@ export default function BankingPage() {
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-          {isUltra ? 'Accounts' : 'Connected Banking'}
+          Accounts
         </h1>
         <p style={{ color: colors.textMuted, margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
           Manage your bank connections
         </p>
       </div>
 
-      {/* Overview + Sync */}
-      <Card style={{ marginBottom: '2rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: '0 0 1rem 0' }}>
-            Overview
-          </h2>
-          {status && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div style={{ padding: '1rem', backgroundColor: colors.background, borderRadius: '0.5rem' }}>
-                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>Connected Accounts</p>
-                <p style={{ color: colors.text, fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>{status.accounts}</p>
+      {/* Summary Card (Cash + Debt) */}
+      {!loading && accounts.length > 0 && (
+        <Card style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Total Cash</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: colors.text }}>{fmt(summaryTotals.totalCash)}</p>
+            </div>
+            {summaryTotals.totalDebt > 0 && (
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Total Debt</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: '#E74C3C' }}>-{fmt(summaryTotals.totalDebt)}</p>
               </div>
-              <div style={{ padding: '1rem', backgroundColor: colors.background, borderRadius: '0.5rem' }}>
-                <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>Last Sync</p>
-                <p style={{ color: colors.text, fontSize: '1rem', fontWeight: 500, margin: 0 }}>
-                  {status.lastSync && !isNaN(new Date(status.lastSync).getTime()) ? new Date(status.lastSync).toLocaleDateString() : 'Never'}
-                </p>
-              </div>
+            )}
+          </div>
+          {summaryTotals.totalDebt > 0 && (
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginTop: '1rem', paddingTop: '1rem',
+              borderTop: `1px solid ${colors.divider}`,
+            }}>
+              <span style={{ fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Net</span>
+              <span style={{
+                fontSize: '1.1rem', fontWeight: 600,
+                color: (summaryTotals.totalCash - summaryTotals.totalDebt) < 0 ? '#E74C3C' : colors.text,
+              }}>
+                {fmt(summaryTotals.totalCash - summaryTotals.totalDebt)}
+              </span>
             </div>
           )}
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        </Card>
+      )}
+
+      {/* Sync Controls */}
+      <Card style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Button
             variant="primary" size="md"
             onClick={handleManualSync}
@@ -220,8 +470,8 @@ export default function BankingPage() {
             Connect Bank
           </Button>
         </div>
-        <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '1rem 0 0 0' }}>
-          Note: Connected banking is best experienced on the mobile app
+        <p style={{ color: colors.textMuted, fontSize: '0.8rem', margin: '0.75rem 0 0 0' }}>
+          Use the mobile app to connect new bank accounts
         </p>
       </Card>
 
@@ -247,72 +497,35 @@ export default function BankingPage() {
         </Card>
       )}
 
-      {/* Accounts Section */}
-      <Card style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: '0 0 1.5rem 0' }}>Accounts</h2>
-        {loading ? (
+      {/* Grouped Accounts */}
+      {loading ? (
+        <Card>
           <p style={{ color: colors.textMuted, margin: 0 }}>Loading accounts...</p>
-        ) : accounts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: colors.background, borderRadius: '0.75rem' }}>
-            <Landmark size={32} style={{ color: colors.textMuted, marginBottom: '0.75rem' }} />
-            <p style={{ color: colors.textMuted, margin: 0 }}>No connected accounts yet</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {accounts.map((account) => (
-              <div key={account.id} style={{ padding: '1rem', backgroundColor: colors.background, borderRadius: '0.5rem', border: `1px solid ${colors.divider}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ color: colors.text, fontWeight: 600, margin: '0 0 0.25rem 0' }}>{account.institution_name}</p>
-                    <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0 0 0.25rem 0' }}>{account.account_name} • {account.account_mask}</p>
-                    <p style={{ color: colors.textMuted, fontSize: '0.75rem', margin: 0 }}>
-                      Last synced: {account.last_sync && !isNaN(new Date(account.last_sync).getTime()) ? new Date(account.last_sync).toLocaleDateString() : 'Waiting for first sync…'}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={account.is_synced} onChange={() => handleToggleSync(account.id, account.is_synced)} style={{ cursor: 'pointer' }} />
-                      <span style={{ color: colors.text, fontSize: '0.875rem' }}>{account.is_synced ? 'Syncing' : 'Paused'}</span>
-                    </label>
-                    <Button variant="danger" size="sm" onClick={() => handleUnlinkAccount(account.id)}>Unlink</Button>
-                  </div>
-                </div>
+        </Card>
+      ) : accounts.length === 0 ? (
+        <Card style={{ textAlign: 'center', padding: '2rem' }}>
+          <Landmark size={32} style={{ color: colors.textMuted, marginBottom: '0.75rem' }} />
+          <p style={{ color: colors.textMuted, margin: 0 }}>No connected accounts yet</p>
+        </Card>
+      ) : (
+        <>
+          {groupedAccounts.map((group) => (
+            <div key={group.key} style={{ marginBottom: '1.5rem' }}>
+              <p style={{
+                fontSize: '0.7rem', fontWeight: 500, textTransform: 'uppercase',
+                letterSpacing: '1.1px', color: colors.textMuted,
+                margin: '0 0 0.5rem 0',
+              }}>
+                {group.emoji}  {group.label}
+              </p>
+              {group.accounts.map(account => renderAccountRow(account, group.key))}
+            </div>
+          ))}
+        </>
+      )}
 
-                {/* Per-account error banner */}
-                {account.error_type && (
-                  <div style={{
-                    marginTop: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '0.5rem',
-                    border: `1px solid ${account.error_type === 'PENDING_EXPIRATION' ? '#854F0B' : colors.red}`,
-                    backgroundColor: account.error_type === 'PENDING_EXPIRATION' ? 'rgba(133,79,11,0.08)' : `${colors.red}10`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                  }}>
-                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>
-                      {account.error_type === 'PENDING_EXPIRATION' ? '🔔' : '⚠️'}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: colors.text }}>
-                        {account.error_type === 'PENDING_EXPIRATION' ? 'Re-auth needed soon' : 'Connection expired'}
-                      </p>
-                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
-                        {account.error_type === 'PENDING_EXPIRATION'
-                          ? 'Your bank connection expires soon. Reconnect to avoid interruption.'
-                          : 'Use the mobile app to reconnect and re-authenticate with your bank.'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {/* ─── Tools ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+      {/* Tools */}
+      <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
         <Link href={`/app/banking/transactions?accountId=&accountType=`} style={{ textDecoration: 'none' }}>
           <Card onClick={() => {}} style={{ cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', height: '100%' }}>
