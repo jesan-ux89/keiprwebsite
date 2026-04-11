@@ -18,7 +18,7 @@ export default function TrackerPage() {
   const { colors } = useTheme();
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
-    isBillPaid, isSplitPaid, toggleSplitPaid, categories, creditCards,
+    isBillPaid, isSplitPaid, toggleSplitPaid, categories, creditCards, isUltra,
   } = useApp();
   const [showNext, setShowNext] = useState(false);
 
@@ -91,6 +91,20 @@ export default function TrackerPage() {
         <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Payment Tracker</h1>
         <p style={{ fontSize: '13px', color: colors.textMuted }}>Track which bills you've paid this paycheck period</p>
       </div>
+
+      {isUltra && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          margin: '0 0 1rem 0', padding: '0.625rem 0.875rem',
+          backgroundColor: 'rgba(56,189,248,0.06)',
+          borderRadius: '10px', border: '0.5px solid rgba(56,189,248,0.15)',
+        }}>
+          <span style={{ fontSize: '0.9rem' }}>🏦</span>
+          <span style={{ fontSize: '0.75rem', color: colors.textSub }}>
+            Bills matched to bank transactions are auto-verified. Look for the 🏦 badge.
+          </span>
+        </div>
+      )}
 
       {/* Progress */}
       <div style={{

@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
-import { usersAPI } from '@/lib/api';
+import { usersAPI, bankingAPI } from '@/lib/api';
 import type { Bill } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -26,7 +26,7 @@ import {
  * Calculations match mobile exactly.
  */
 
-type ViewMode = 'paycheck' | 'nextcheck' | 'cycles' | 'monthly';
+type ViewMode = 'overview' | 'paycheck' | 'nextcheck' | 'cycles' | 'monthly';
 
 export default function DashboardPage() {
   const { colors, isDark } = useTheme();
@@ -36,7 +36,7 @@ export default function DashboardPage() {
     incomeSources, categories, fmt, isBillPaid, isSplitPaid, markBillPaid, toggleSplitPaid, userName, userInitials,
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
-    isPro, detectedBills, detectedCount,
+    isPro, isUltra, detectedBills, detectedCount,
     availableNumber, availableBreakdown, spendingSummary, fetchAvailableNumber, fetchSpendingSummary,
     logQuickExpense,
   } = useApp();
@@ -50,6 +50,23 @@ export default function DashboardPage() {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseSaving, setExpenseSaving] = useState(false);
+
+  // Ultra: Recent transactions
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isUltra) return;
+    bankingAPI.getAllTransactions({ limit: 5, sort: 'date_desc' })
+      .then((res: any) => setRecentTransactions(res.data?.transactions || []))
+      .catch(() => {});
+  }, [isUltra]);
+
+  // Set default view based on tier
+  useEffect(() => {
+    if (isUltra) {
+      setViewMode('overview');
+    }
+  }, [isUltra]);
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
   // Exclude one-time funds from paycheck calculations
@@ -135,6 +152,29 @@ export default function DashboardPage() {
     : 0;
   const savingsPct = monthlyIncome > 0 ? Math.round((savingsAmt / monthlyIncome) * 100) : 0;
   const expensesPctOfIncome = monthlyIncome > 0 ? Math.round((totalBillsMonthly / monthlyIncome) * 100) : 0;
+
+  // ── Spending velocity (Ultra Overview) ────────────────────
+  const now = new Date();
+  const daysIntoPeriod = (() => {
+    if (!currentPeriod?.start) return 1;
+    const diffMs = now.getTime() - currentPeriod.start.getTime();
+    return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  })();
+  const totalPeriodDays = (() => {
+    if (!currentPeriod?.start || !currentPeriod?.end) return 14;
+    const diffMs = currentPeriod.end.getTime() - currentPeriod.start.getTime();
+    return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  })();
+  const totalSpendingThisPeriod = availableBreakdown?.totalSpending || 0;
+  const spendingPerDay = daysIntoPeriod > 0 ? totalSpendingThisPeriod / daysIntoPeriod : 0;
+  const projectedSpending = spendingPerDay * totalPeriodDays;
+  const daysRemaining = Math.max(0, totalPeriodDays - daysIntoPeriod);
+
+  // Upcoming bills (sorted by due day, next 5 unpaid)
+  const upcomingBills = thisPaycheckBills
+    .filter(b => !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, currentPaycheckNum)))
+    .sort((a, b) => (a.dueDay || 1) - (b.dueDay || 1))
+    .slice(0, 5);
 
   // ── 6-month spending trend data (MATCHES MOBILE) ──────────
   const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -274,7 +314,6 @@ export default function DashboardPage() {
   }, [incomeSources]);
 
   // ── Dynamic labels ─────────────────────────────────────────
-  const now = new Date();
   const monthName = now.toLocaleString('default', { month: 'long' });
   const hour = now.getHours();
   const greetingTime = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -437,7 +476,7 @@ export default function DashboardPage() {
       )}
 
       {/* Detected Transactions Alert */}
-      {detectedCount > 0 && (
+      {isUltra && detectedCount > 0 && (
         <a href="/app/bills?showDetected=true" style={{ textDecoration: 'none' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -464,7 +503,7 @@ export default function DashboardPage() {
       )}
 
       {/* Available to Spend Card */}
-      {availableNumber !== null && (
+      {isUltra && availableNumber !== null && (
         <Card style={{
           background: `linear-gradient(135deg, ${colors.midnight}, #0E6494)`,
           color: '#fff',
@@ -627,7 +666,10 @@ export default function DashboardPage() {
           borderBottom: `1px solid ${colors.divider}`,
         }}
       >
-        {(['monthly', 'paycheck', 'nextcheck', 'cycles'] as const).map((mode) => (
+        {(isUltra
+          ? (['overview', 'paycheck', 'nextcheck'] as ViewMode[])
+          : (['monthly', 'paycheck', 'nextcheck', 'cycles'] as ViewMode[])
+        ).map((mode) => (
           <button
             key={mode}
             onClick={() => setViewMode(mode)}
@@ -643,7 +685,7 @@ export default function DashboardPage() {
               transition: 'all 0.2s ease',
             }}
           >
-            {mode === 'paycheck' ? 'This Check' : mode === 'nextcheck' ? 'Next Check' : mode === 'cycles' ? 'Cycles' : 'Monthly'}
+            {mode === 'overview' ? 'Overview' : mode === 'paycheck' ? 'This Check' : mode === 'nextcheck' ? 'Next Check' : mode === 'cycles' ? 'Cycles' : 'Monthly'}
           </button>
         ))}
       </div>
@@ -651,6 +693,168 @@ export default function DashboardPage() {
       {/* Content */}
       {isLoading ? (
         <DashboardSkeleton />
+      ) : viewMode === 'overview' && isUltra ? (
+        /* ── ULTRA OVERVIEW ── */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Available Number Hero */}
+          {availableNumber !== null && (
+            <Card style={{ textAlign: 'center', padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.75rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.8px', margin: '0 0 0.25rem 0' }}>Available to spend</p>
+              <p style={{ fontSize: '2.2rem', fontWeight: 700, color: availableNumber < 0 ? '#EF4444' : '#38BDF8', margin: '0 0 0.5rem 0' }}>
+                {fmt(availableNumber)}
+              </p>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0 0 1rem 0' }}>
+                {fmt(availableBreakdown?.paycheckIncome || 0)} income − {fmt(availableBreakdown?.totalBills || 0)} bills − {fmt(availableBreakdown?.totalSpending || 0)} spent
+              </p>
+              <button
+                onClick={() => setExpenseModalOpen(true)}
+                style={{
+                  backgroundColor: '#38BDF8', color: '#fff', border: 'none', borderRadius: '24px',
+                  padding: '0.625rem 1.25rem', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                + Quick spend
+              </button>
+            </Card>
+          )}
+
+          {/* Spending Velocity */}
+          <Card style={{ padding: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>Spending pace</span>
+              <span style={{ fontSize: '0.8rem', color: colors.textSub }}>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginBottom: '0.375rem' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text }}>{fmt(spendingPerDay)}</span>
+              <span style={{ fontSize: '0.9rem', color: colors.textSub }}>/day</span>
+            </div>
+            <div style={{ height: '4px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '2px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+              <div style={{
+                height: '100%', borderRadius: '2px',
+                width: `${Math.min(100, (daysIntoPeriod / totalPeriodDays) * 100)}%`,
+                backgroundColor: projectedSpending > (availableBreakdown?.paycheckIncome || 0) ? '#EF4444' : '#38BDF8',
+              }} />
+            </div>
+            <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>
+              {fmt(totalSpendingThisPeriod)} spent so far · On pace to spend {fmt(projectedSpending)} this paycheck
+            </p>
+          </Card>
+
+          {/* Quick Stats Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+            <Card style={{ padding: '0.875rem' }}>
+              <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Income</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>{fmt(totalPaycheck)}</p>
+            </Card>
+            <Card style={{ padding: '0.875rem' }}>
+              <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Bills</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>{fmt(totalBillsThisCheck)}</p>
+            </Card>
+            <Card style={{ padding: '0.875rem' }}>
+              <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Spent</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: totalSpendingThisPeriod > 0 ? '#854F0B' : colors.text, margin: 0 }}>{fmt(totalSpendingThisPeriod)}</p>
+            </Card>
+          </div>
+
+          {/* Upcoming Bills */}
+          {upcomingBills.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Upcoming bills</h3>
+                <a href="/app/bills" style={{ fontSize: '0.85rem', fontWeight: 500, color: '#38BDF8', textDecoration: 'none' }}>See all →</a>
+              </div>
+              {upcomingBills.map((b: any, idx: number) => {
+                const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                return (
+                  <a key={b.id} href={`/app/bills`} style={{ textDecoration: 'none', display: 'block', marginBottom: idx < upcomingBills.length - 1 ? '0.375rem' : 0 }}>
+                    <Card style={{
+                      padding: '0.875rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem',
+                      cursor: 'pointer',
+                    }}>
+                      <MerchantLogo billName={b.name} category={b.category || 'Other'} size={32} isDark={isDark} />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>{b.name}</p>
+                        <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0.1rem 0 0 0' }}>
+                          Due {b.dueDay}{suffix(b.dueDay || 1)} · {b.category || 'Other'}
+                        </p>
+                      </div>
+                      <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>
+                        {fmt(billAmountForPaycheck(b, currentPaycheckNum))}
+                      </span>
+                    </Card>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Recent Activity */}
+          {recentTransactions.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Recent activity</h3>
+                <a href="/app/banking/transactions" style={{ fontSize: '0.85rem', fontWeight: 500, color: '#38BDF8', textDecoration: 'none' }}>See all →</a>
+              </div>
+              <Card style={{ padding: '0.75rem 1rem' }}>
+                {recentTransactions.map((txn: any, idx: number) => (
+                  <div key={txn.id || idx} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem',
+                    padding: '0.75rem 0',
+                    borderBottom: idx < recentTransactions.length - 1 ? `0.5px solid ${colors.divider}` : 'none',
+                  }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 18,
+                      backgroundColor: txn.amount < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <span style={{ fontSize: '1rem' }}>{txn.amount < 0 ? '↗' : '↙'}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {txn.merchant_name || txn.name || 'Transaction'}
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0.1rem 0 0 0' }}>
+                        {txn.transaction_date ? new Date(txn.transaction_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {txn.category || txn.classification || ''}
+                      </p>
+                    </div>
+                    <span style={{
+                      fontSize: '0.95rem', fontWeight: 600,
+                      color: txn.amount < 0 ? colors.text : '#0A7B6C',
+                    }}>
+                      {txn.amount < 0 ? '-' : '+'}{fmt(Math.abs(txn.amount))}
+                    </span>
+                  </div>
+                ))}
+              </Card>
+            </div>
+          )}
+
+          {/* Category Spending Summary */}
+          {allocations.length > 0 && (
+            <Card style={{ padding: '1rem' }}>
+              <p style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text, margin: '0 0 0.75rem 0' }}>This paycheck by category</p>
+              {allocations.slice(0, 5).map((cat: any, i: number) => (
+                <div key={cat.name} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.625rem',
+                  marginBottom: i < Math.min(allocations.length, 5) - 1 ? '0.625rem' : 0,
+                }}>
+                  <CategoryIcon category={cat.name} size={24} isDark={isDark} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.text, margin: '0 0 0.25rem 0' }}>{cat.name}</p>
+                    <div style={{ height: '3px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: '2px',
+                        width: `${Math.min(100, totalBillsThisCheck > 0 ? (cat.amt / totalBillsThisCheck) * 100 : 0)}%`,
+                        backgroundColor: cat.color,
+                      }} />
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>{fmt(cat.amt)}</span>
+                </div>
+              ))}
+            </Card>
+          )}
+        </div>
       ) : viewMode === 'paycheck' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* This paycheck bills */}

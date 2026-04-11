@@ -13,19 +13,31 @@ import {
   Calendar,
   Settings,
   Landmark,
+  CreditCard,
+  BarChart3,
   LogOut,
   Menu,
   X,
+  Bell,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
-const NAV_ITEMS = [
+// Free/Pro: Dashboard, Bills, Tracker, Plan, Settings
+const FREE_PRO_NAV = [
   { label: 'Dashboard', href: '/app', icon: LayoutDashboard },
   { label: 'Bills', href: '/app/bills', icon: Receipt },
   { label: 'Tracker', href: '/app/tracker', icon: CheckSquare },
   { label: 'Plan', href: '/app/plan', icon: Calendar },
   { label: 'Settings', href: '/app/settings', icon: Settings },
-  { label: 'Banking', href: '/app/banking', icon: Landmark },
+];
+
+// Ultra: Dashboard, Accounts, Spending, Budget, Tracker (Settings moves to top bar)
+const ULTRA_NAV = [
+  { label: 'Dashboard', href: '/app', icon: LayoutDashboard },
+  { label: 'Accounts', href: '/app/banking', icon: Landmark },
+  { label: 'Spending', href: '/app/banking/transactions', icon: CreditCard },
+  { label: 'Budget', href: '/app/bills', icon: BarChart3 },
+  { label: 'Tracker', href: '/app/tracker', icon: CheckSquare },
 ];
 
 interface AppLayoutProps {
@@ -35,7 +47,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { colors } = useTheme();
   const { user, loading, signOut } = useAuth();
-  const { incomeSources, incomeLoading } = useApp();
+  const { incomeSources, incomeLoading, isUltra, detectedCount } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -155,9 +167,46 @@ export function AppLayout({ children }: AppLayoutProps) {
             </h1>
           </div>
 
+          {/* Ultra top actions — Settings gear + Notifications */}
+          {isUltra && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              marginBottom: '1rem', paddingBottom: '1rem',
+              borderBottom: `1px solid ${colors.divider}`,
+            }}>
+              <Link
+                href="/app/settings"
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
+                  textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500,
+                  color: pathname.startsWith('/app/settings') ? colors.navActive : colors.navIcon,
+                  backgroundColor: pathname.startsWith('/app/settings') ? `${colors.electric}20` : 'transparent',
+                }}
+              >
+                <Settings size={18} />
+                Settings
+              </Link>
+              <div style={{ position: 'relative', marginLeft: 'auto' }}>
+                <Bell size={18} style={{ color: colors.navIcon, cursor: 'pointer' }} />
+                {detectedCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -4, right: -6,
+                    minWidth: 16, height: 16, borderRadius: 8,
+                    backgroundColor: '#EF4444', color: '#fff',
+                    fontSize: 9, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    paddingInline: 3,
+                  }}>{detectedCount > 9 ? '9+' : detectedCount}</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Navigation links */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {NAV_ITEMS.map((item) => {
+            {(isUltra ? ULTRA_NAV : FREE_PRO_NAV).map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 

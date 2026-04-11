@@ -12,6 +12,7 @@ import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
 import { Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
+import CategoryIcon from '@/components/CategoryIcon';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
 
@@ -21,7 +22,7 @@ interface ExpandedBills {
 
 export default function BillsPage() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards } = useApp();
+  const { bills, billsLoading, fmt, isUltra, spendingSummary, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -112,7 +113,7 @@ export default function BillsPage() {
               margin: 0,
             }}
           >
-            Bills
+            {isUltra ? 'Budget' : 'Bills'}
           </h1>
           <p
             style={{
@@ -373,6 +374,45 @@ export default function BillsPage() {
                   </Card>
                 ))}
               </div>
+            </div>
+          )}
+
+          {isUltra && spendingSummary.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Spending budgets</h3>
+                <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>{spendingSummary.length} categories</span>
+              </div>
+              {spendingSummary.map((budget: any) => {
+                const pct = budget.budgetAmount > 0 ? Math.min(100, Math.round((budget.spentAmount / budget.budgetAmount) * 100)) : 0;
+                const isOver = budget.remaining < 0;
+                return (
+                  <Card key={budget.id} style={{ padding: '0.875rem', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CategoryIcon category={budget.category} size={22} isDark={isDark} />
+                        <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
+                      </div>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: isOver ? '#EF4444' : colors.text }}>
+                        {fmt(budget.spentAmount)} / {fmt(budget.budgetAmount)}
+                      </span>
+                    </div>
+                    <div style={{ height: '5px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: '3px',
+                        width: `${pct}%`,
+                        backgroundColor: isOver ? '#EF4444' : pct > 80 ? '#854F0B' : '#38BDF8',
+                      }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                      <span style={{ fontSize: '0.7rem', color: colors.textSub }}>{pct}% used</span>
+                      <span style={{ fontSize: '0.7rem', color: isOver ? '#EF4444' : colors.textSub }}>
+                        {isOver ? `${fmt(Math.abs(budget.remaining))} over` : `${fmt(budget.remaining)} left`}
+                      </span>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
 

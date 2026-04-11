@@ -143,7 +143,7 @@ export default function BankingPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-            Connected Banking
+            {isUltra ? 'Accounts' : 'Connected Banking'}
           </h1>
         </div>
         <Card style={{ textAlign: 'center', padding: '3rem 2rem' }}>
@@ -171,7 +171,7 @@ export default function BankingPage() {
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-          Connected Banking
+          {isUltra ? 'Accounts' : 'Connected Banking'}
         </h1>
         <p style={{ color: colors.textMuted, margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
           Manage your bank connections
