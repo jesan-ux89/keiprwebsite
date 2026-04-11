@@ -992,7 +992,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [pendingConfirmationsCount, setPendingConfirmationsCount] = useState(0);
 
   const refreshPendingConfirmations = useCallback(async () => {
-    if (!isUltra) return;
     try {
       const res = await bankingAPI.getConfirmations();
       const count = (res.data?.confirmations || []).length;
