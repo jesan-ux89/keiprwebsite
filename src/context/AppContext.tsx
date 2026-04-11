@@ -344,7 +344,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     possibleDuplicateOf: raw.possible_duplicate_of ? String(raw.possible_duplicate_of) : undefined,
     possibleDuplicateName: raw.possible_duplicate_name ? String(raw.possible_duplicate_name) : undefined,
     paidWith: typeof raw.paid_with === 'string' ? raw.paid_with : null,
-    isQuickExpense: raw.is_quick_expense || false,
+    isQuickExpense: raw.is_quick_expense === true,
   };
 }
 
