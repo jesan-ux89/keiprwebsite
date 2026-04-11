@@ -166,6 +166,12 @@ npm run build        # Production build
 - Backend CORS: `ALLOWED_ORIGINS` on Railway must include the Vercel domain
 - Do NOT put sensitive keys in `NEXT_PUBLIC_*` env vars
 
+### Trash Folder Convention
+- **Location:** `C:\Users\Jess\_KeiprTrash` — organized by subfolder: `mobile-mockups/`, `backend-unused/`, `website-previews/`
+- **Purpose:** Instead of deleting temp files, mockups, unused code, or design artifacts, MOVE them to the trash folder. This preserves them in case they're needed later.
+- **What goes there:** Design preview HTML files, unused components, experiment files — anything that doesn't belong in production.
+- **Cleanup:** Jesse periodically deletes the trash folder contents (weekly/monthly). Do NOT permanently delete files from project folders — always move to trash first.
+
 ## Pro-to-Ultra Migration Engine (Website Mirror)
 - Settings → Smart Detection → "Re-sync & match bills" calls `POST /api/banking-data/migrate-to-ultra`
 - Dashboard quick stats (INCOME / BILLS / SPENT) are clickable: Income → `/app/income`, Bills → `/app/bills`, Spent → `/app/banking/transactions`
