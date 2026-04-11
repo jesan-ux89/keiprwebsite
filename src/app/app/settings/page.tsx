@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
@@ -31,6 +32,8 @@ import {
   Shield,
   Key,
   Copy,
+  Bell,
+  Landmark,
 } from 'lucide-react';
 
 interface IncomeSourceForm {
@@ -1717,6 +1720,137 @@ export default function SettingsPage() {
           </div>
         )}
       </Card>
+
+      {/* Smart Detection Section — Ultra only */}
+      {isUltra && (
+        <Card style={{ marginBottom: '1.5rem' }}>
+          <button
+            onClick={() => toggleSection('smartdetection')}
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: 'transparent',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              marginBottom: expandedSection === 'smartdetection' ? '1.5rem' : 0,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Bell size={20} style={{ color: colors.electric }} />
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                Smart Detection
+              </h2>
+            </div>
+            <ChevronRight
+              size={20}
+              style={{
+                color: colors.textMuted,
+                transform: expandedSection === 'smartdetection' ? 'rotate(90deg)' : 'none',
+                transition: 'transform 0.2s ease',
+              }}
+            />
+          </button>
+
+          {expandedSection === 'smartdetection' && (
+            <div>
+              {/* Detection Alerts Row */}
+              <div
+                onClick={() => toggleSection('smartdetection')}
+                style={{
+                  padding: '0.875rem',
+                  backgroundColor: colors.background,
+                  borderRadius: '0.5rem',
+                  marginBottom: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDark ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.04)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.background;
+                }}
+              >
+                <Bell size={18} style={{ color: colors.electric, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Detection alerts</h3>
+                  <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>Email when new charges are found</p>
+                </div>
+                <span style={{ color: colors.textMuted }}>›</span>
+              </div>
+
+              {/* Connected Banks Row */}
+              <Link href="/app/banking">
+                <div
+                  style={{
+                    padding: '0.875rem',
+                    backgroundColor: colors.background,
+                    borderRadius: '0.5rem',
+                    marginBottom: '0.75rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    transition: 'all 0.2s ease',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.04)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.background;
+                  }}
+                >
+                  <Landmark size={18} style={{ color: colors.electric, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Connected banks</h3>
+                    <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>Manage accounts and sync</p>
+                  </div>
+                  <span style={{ color: colors.textMuted }}>›</span>
+                </div>
+              </Link>
+
+              {/* Exclusion Rules Row */}
+              <Link href="/app/banking/exclusions">
+                <div
+                  style={{
+                    padding: '0.875rem',
+                    backgroundColor: colors.background,
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    transition: 'all 0.2s ease',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.04)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.background;
+                  }}
+                >
+                  <Shield size={18} style={{ color: colors.electric, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Exclusion rules</h3>
+                    <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>Ignore merchants from detection</p>
+                  </div>
+                  <span style={{ color: colors.textMuted }}>›</span>
+                </div>
+              </Link>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Security Section */}
       <SecuritySection

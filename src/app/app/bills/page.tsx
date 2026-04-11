@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { Plus, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
 import CategoryIcon from '@/components/CategoryIcon';
 
@@ -414,6 +415,35 @@ export default function BillsPage() {
                 );
               })}
             </div>
+          )}
+
+          {/* Plan ahead card — Ultra only */}
+          {isUltra && (
+            <Link href="/app/plan">
+              <Card style={{
+                marginBottom: '1.5rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1.25rem',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.card;
+              }}
+              >
+                <Calendar size={32} style={{ color: colors.electric, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Plan ahead</h3>
+                  <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0 }}>Draft next month's budget</p>
+                </div>
+                <span style={{ color: colors.textMuted, fontSize: '1.25rem' }}>›</span>
+              </Card>
+            </Link>
           )}
 
           {Object.entries(groupedFilteredBills).map(([category, categoryBills]) => (
