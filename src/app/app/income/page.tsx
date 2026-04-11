@@ -45,6 +45,8 @@ export default function IncomePage() {
         const all = [...incomeTxns, ...matchedTxns, ...transferDeposits]
           .filter((t: any) => { if (seen.has(t.id)) return false; seen.add(t.id); return true; })
           .filter((t: any) => {
+            // Minimum $5 threshold — filters out savings interest pennies, rounding credits, etc.
+            if (Math.abs(t.amount) < 5) return false;
             // Exclude transactions already matched to an income source (paycheck)
             if (t.matched_income_source_id) return false;
             // Exclude transactions whose name matches a known income source
