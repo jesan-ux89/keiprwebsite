@@ -704,7 +704,7 @@ export default function DashboardPage() {
               <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Actual balance</span>
               <span style={{ fontSize: '0.875rem', fontWeight: 700, color: colors.electric }}>{fmt(availableNumber)}</span>
             </div>
-            <div style={{ borderTop: `1px solid ${colors.cardBorder || colors.border}`, paddingTop: '0.5rem' }}>
+            <div style={{ borderTop: `1px solid ${colors.cardBorder}`, paddingTop: '0.5rem' }}>
               <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0, lineHeight: 1.4 }}>
                 {availableNumber > remaining
                   ? 'Extra deposits covered spending beyond your paycheck. Your real balance matches the Overview.'
