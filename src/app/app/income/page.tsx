@@ -18,25 +18,36 @@ export default function IncomePage() {
   const oneTimeSources = incomeSources.filter((s: any) => s.isOneTime);
   const totalPaycheck = regularSources.reduce((sum: number, s: any) => sum + (s.typicalAmount || 0), 0);
 
+  // Patterns that indicate a payment/transfer, NOT a real deposit
+  const PAYMENT_PATTERNS = /PAYMENT|PMT|PYMT|ONLINE\s*PAY|WEB\s*PAY|MOBILE\s*PAY|AUTOPAY|AUTO\s*PAY|BILL\s*PAY/i;
+  const TRANSFER_PATTERNS = /TRANSFER\s*(TO|FROM)|ONLINE\s*TRANSFER|XFER|WIRE\s*TRANSFER/i;
+  const CARD_COMPANY_PATTERNS = /CAPITAL\s*ONE|CHASE\s*CARD|CITI\s*CARD|DISCOVER|AMEX|AMERICAN\s*EXPRESS|BREAD\s*FINANCIAL|SYNCHRONY|BARCLAYS|AFFIRM|KLARNA|AFTERPAY|SHEFFIELD/i;
+
+  const isRealDeposit = (txn: any) => {
+    const name = (txn.cleaned_name || txn.merchant_name || txn.name || '').toUpperCase();
+    if (PAYMENT_PATTERNS.test(name)) return false;
+    if (TRANSFER_PATTERNS.test(name)) return false;
+    if (CARD_COMPANY_PATTERNS.test(name)) return false;
+    if (txn.matched_income_source_id) return false;
+    return true;
+  };
+
   useEffect(() => {
     const loadDeposits = async () => {
       if (!isUltra) { setLoading(false); return; }
       try {
-        const [incomeRes, matchedRes, transferRes] = await Promise.all([
+        // Only fetch income categories — skip 'transfer' (those are internal moves)
+        const [incomeRes, matchedRes] = await Promise.all([
           bankingAPI.getAllTransactions({ category: 'income', days: 90, limit: 100 }),
           bankingAPI.getAllTransactions({ category: 'income_matched', days: 90, limit: 100 }),
-          bankingAPI.getAllTransactions({ category: 'transfer', days: 90, limit: 100 }),
         ]);
         const incomeTxns = ((incomeRes as any).data?.transactions || []) as any[];
         const matchedTxns = ((matchedRes as any).data?.transactions || []) as any[];
-        const transferTxns = ((transferRes as any).data?.transactions || []) as any[];
-        // Amounts stored as positive (Math.abs) in DB — transfer deposits already filtered
-        // by webhook (only deposits get display_category='transfer'), so include all
-        const depositTransfers = transferTxns;
 
         const seen = new Set<string>();
-        const all = [...incomeTxns, ...matchedTxns, ...depositTransfers]
+        const all = [...incomeTxns, ...matchedTxns]
           .filter((t: any) => { if (seen.has(t.id)) return false; seen.add(t.id); return true; })
+          .filter(isRealDeposit)
           .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
         setDeposits(all);
       } catch (err) {
@@ -168,7 +179,7 @@ export default function IncomePage() {
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1.5rem 0 0.75rem 0' }}>
             <h2 style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
-              Recent Deposits
+              Extra Deposits
             </h2>
             {deposits.length > 0 && (
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0A7B6C' }}>{fmt(totalDeposits)} total</span>
@@ -182,8 +193,8 @@ export default function IncomePage() {
           ) : deposits.length === 0 ? (
             <Card style={{ padding: '1.5rem', textAlign: 'center' }}>
               <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>🏦</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>No deposits found</p>
-              <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: 0 }}>Deposits from your connected bank accounts will appear here</p>
+              <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>No extra deposits</p>
+              <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: 0 }}>Refunds, bonuses, and other unexpected deposits will appear here</p>
             </Card>
           ) : (
             <Card style={{ overflow: 'hidden', padding: 0 }}>
@@ -212,7 +223,6 @@ export default function IncomePage() {
                         </p>
                         <p style={{ fontSize: '0.6875rem', color: colors.textSub, margin: '0.125rem 0 0 0' }}>
                           {formatDate(txn.transaction_date)}
-                          {txn.display_category === 'income_matched' ? '  ·  Matched to source' : ''}
                         </p>
                       </div>
                       <p style={{ fontSize: '1rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>
