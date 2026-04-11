@@ -143,8 +143,16 @@ npm run build        # Production build
 ```
 
 ## Important Rules
-- **Mobile app is source of truth** — always update website to match
-- Do NOT change `mapApiBill()`, `mapIncomeSource()`, `payPeriods.ts`, or dashboard calculations without checking mobile first
+
+### ⚠ MANDATORY: Cross-Project Sync Workflow
+**This is the #1 rule. Every session must follow it.**
+1. **Mobile app is source of truth.** If you're working on the website and a feature doesn't exist on mobile yet, check with the user — don't invent website-only logic.
+2. **When working on mobile or backend changes**, always check the Mirrored Files table above. If any mirrored file was changed on mobile, update the website equivalent in the SAME session.
+3. **After completing ALL code changes**, always provide full `git add; git commit; git push` commands for EVERY repo that was modified (website, mobile, and/or backend). Never finish a task without giving push commands.
+4. **UI changes to shared screens** (Dashboard, Bills/Budget, Tracker, Banking/Accounts, Transactions) on mobile MUST be mirrored here. This includes new banners, new fields, conditional logic, and styling.
+5. Do NOT change `mapApiBill()`, `mapIncomeSource()`, `payPeriods.ts`, or dashboard calculations without checking mobile first.
+
+### General Rules
 - Do NOT mess up anything that is already confirmed working
 - Split bills must appear in every paycheck section
 - Backend CORS: `ALLOWED_ORIGINS` on Railway must include the Vercel domain
