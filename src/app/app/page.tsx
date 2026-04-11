@@ -533,7 +533,10 @@ export default function DashboardPage() {
             lineHeight: 1.5,
             textAlign: 'center',
           }}>
-            {fmt(availableBreakdown?.paycheckIncome || 0)} income − {fmt(availableBreakdown?.totalBills || 0)} bills − {fmt(availableBreakdown?.totalSpending || 0)} spent
+            {availableBreakdown?.checkingBalance != null
+                ? `${fmt(availableBreakdown.checkingBalance)} checking − ${fmt(availableBreakdown.unpaidBillsTotal || 0)} upcoming bills`
+                : `${fmt(availableBreakdown?.paycheckIncome || 0)} income − ${fmt(availableBreakdown?.totalBills || 0)} bills − ${fmt(availableBreakdown?.totalSpending || 0)} spent`
+              }
           </p>
           <div style={{ textAlign: 'center' }}>
             <button
@@ -704,7 +707,10 @@ export default function DashboardPage() {
                 {fmt(availableNumber)}
               </p>
               <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0 0 1rem 0' }}>
-                {fmt(availableBreakdown?.paycheckIncome || 0)} income − {fmt(availableBreakdown?.totalBills || 0)} bills − {fmt(availableBreakdown?.totalSpending || 0)} spent
+                {availableBreakdown?.checkingBalance != null
+                ? `${fmt(availableBreakdown.checkingBalance)} checking − ${fmt(availableBreakdown.unpaidBillsTotal || 0)} upcoming bills`
+                : `${fmt(availableBreakdown?.paycheckIncome || 0)} income − ${fmt(availableBreakdown?.totalBills || 0)} bills − ${fmt(availableBreakdown?.totalSpending || 0)} spent`
+              }
               </p>
               <button
                 onClick={() => setExpenseModalOpen(true)}
