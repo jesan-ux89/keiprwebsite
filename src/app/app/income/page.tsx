@@ -30,7 +30,9 @@ export default function IncomePage() {
         const incomeTxns = ((incomeRes as any).data?.transactions || []) as any[];
         const matchedTxns = ((matchedRes as any).data?.transactions || []) as any[];
         const transferTxns = ((transferRes as any).data?.transactions || []) as any[];
-        const depositTransfers = transferTxns.filter((t: any) => t.amount < 0);
+        // Amounts stored as positive (Math.abs) in DB — transfer deposits already filtered
+        // by webhook (only deposits get display_category='transfer'), so include all
+        const depositTransfers = transferTxns;
 
         const seen = new Set<string>();
         const all = [...incomeTxns, ...matchedTxns, ...depositTransfers]
