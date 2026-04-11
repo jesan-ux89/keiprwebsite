@@ -395,7 +395,7 @@ export default function AllTransactionsPage() {
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: colors.text, letterSpacing: '0.2px' }}>
                   {group.label}
                 </span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: colors.textSecondary }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: colors.textMuted }}>
                   {fmt(group.dailyTotal)}
                 </span>
               </div>
