@@ -345,7 +345,9 @@ export default function AllTransactionsPage() {
         <Link href="/app/banking" style={{ textDecoration: 'none' }}>
           <Button variant="ghost" size="sm"><ChevronLeft size={18} style={{ color: colors.text }} /></Button>
         </Link>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, margin: 0 }}>All Transactions</h1>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, margin: 0 }}>
+          {searchParams?.get('accountName') || 'All Transactions'}
+        </h1>
       </div>
 
       {/* Tabs */}
