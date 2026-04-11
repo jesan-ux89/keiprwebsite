@@ -38,6 +38,7 @@ interface TransactionCounts {
   spending: number;
   transfer: number;
   income: number;
+  income_matched: number;
   auto_excluded: number;
   user_excluded: number;
 }
@@ -46,6 +47,7 @@ interface DateGroup {
   dateKey: string;
   label: string;
   transactions: Transaction[];
+  dailyTotal: number;
 }
 
 const TABS: Array<{ key: TabKey; label: string }> = [
@@ -94,6 +96,7 @@ function unmatchedReason(txn: Transaction): string {
   if (cat === 'user_excluded') return 'Excluded by you';
   if (cat === 'auto_excluded') return 'Auto-excluded';
   if (cat === 'possible_bill') return 'Possible match';
+  if (cat === 'income_matched') return 'Paycheck';
   if (cat === 'income') return 'Income';
   if (cat === 'transfer') return 'Transfer';
   if (cat === 'spending' || cat === 'likely_not_bill') {
@@ -107,6 +110,7 @@ function unmatchedReasonColor(txn: Transaction, isDark: boolean): string {
   if (cat === 'possible_bill') return isDark ? '#FBBF24' : '#B45309';
   if (cat === 'user_excluded' || cat === 'auto_excluded') return isDark ? '#A78BFA' : '#7E22CE';
   if (cat === 'spending') return isDark ? '#34D399' : '#059669';
+  if (cat === 'income_matched') return isDark ? '#86EFAC' : '#16A34A';
   if (cat === 'income') return isDark ? '#60A5FA' : '#2563EB';
   if (cat === 'transfer') return isDark ? '#A78BFA' : '#7C3AED';
   return isDark ? '#9CA3AF' : '#6B7280';
@@ -120,7 +124,7 @@ export default function AllTransactionsPage() {
 
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [counts, setCounts] = useState<TransactionCounts>({
-    matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, transfer: 0, income: 0, auto_excluded: 0, user_excluded: 0,
+    matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, transfer: 0, income: 0, income_matched: 0, auto_excluded: 0, user_excluded: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,12 +153,16 @@ export default function AllTransactionsPage() {
     }
     return Object.keys(grouped)
       .sort((a, b) => b.localeCompare(a))
-      .map(dateKey => ({ dateKey, label: formatSectionDate(dateKey), transactions: grouped[dateKey] }));
+      .map(dateKey => {
+        const txns = grouped[dateKey];
+        const dailyTotal = txns.reduce((sum, t) => sum + (t.amount || 0), 0);
+        return { dateKey, label: formatSectionDate(dateKey), transactions: txns, dailyTotal };
+      });
   }, [filteredTransactions]);
 
   // ── Tab counts ──
   const matchedCount = counts.matched || 0;
-  const unmatchedCount = (counts.possible_bill || 0) + (counts.likely_not_bill || 0) + (counts.spending || 0) + (counts.transfer || 0) + (counts.income || 0) + (counts.auto_excluded || 0) + (counts.user_excluded || 0);
+  const unmatchedCount = (counts.possible_bill || 0) + (counts.likely_not_bill || 0) + (counts.spending || 0) + (counts.transfer || 0) + (counts.income || 0) + (counts.income_matched || 0) + (counts.auto_excluded || 0) + (counts.user_excluded || 0);
   const allCount = matchedCount + unmatchedCount;
 
   function tabCount(key: TabKey): number {
@@ -174,7 +182,7 @@ export default function AllTransactionsPage() {
     try {
       const res = await bankingAPI.getAllTransactions({ category: 'all', limit: 200, offset: 0 });
       const txns = Array.isArray(res.data?.transactions) ? res.data.transactions : [];
-      const cts = res.data?.counts || { matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, transfer: 0, income: 0, auto_excluded: 0, user_excluded: 0 };
+      const cts = res.data?.counts || { matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, transfer: 0, income: 0, income_matched: 0, auto_excluded: 0, user_excluded: 0 };
 
       const total = res.data?.total || 0;
       const countSum = Object.values(cts).reduce((a: number, b: unknown) => a + (Number(b) || 0), 0);
@@ -387,15 +395,29 @@ export default function AllTransactionsPage() {
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: colors.text, letterSpacing: '0.2px' }}>
                   {group.label}
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted }}>
-                  {group.transactions.length}
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: colors.textSecondary }}>
+                  {fmt(group.dailyTotal)}
                 </span>
               </div>
 
               <Card style={{ padding: 0, overflow: 'hidden' }}>
                 {group.transactions.map((txn, idx) => {
                   const isMatched = txn.display_category === 'matched';
+                  const isDeposit = txn.display_category === 'income' || txn.display_category === 'income_matched';
+                  const isTransfer = txn.display_category === 'transfer';
                   const isExpanded = expandedId === txn.id;
+
+                  const amountColor = isDeposit
+                    ? (isDark ? '#86EFAC' : '#16A34A')
+                    : isMatched
+                      ? (isDark ? '#34D399' : '#047857')
+                      : isTransfer
+                        ? (isDark ? '#A78BFA' : '#7C3AED')
+                        : (isDark ? '#E8E5DC' : '#1A1814');
+
+                  const categoryLabel = isMatched
+                    ? (txn.matched_bill_name || 'Bill')
+                    : unmatchedReason(txn);
 
                   return (
                     <div
@@ -416,28 +438,27 @@ export default function AllTransactionsPage() {
                             }}>
                               {cleanMerchantName(txn.merchant_name || txn.cleaned_name || '')}
                             </div>
-                            {/* Status line */}
-                            <div style={{ marginTop: '2px' }}>
-                              {isMatched ? (
-                                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: isDark ? '#34D399' : '#047857' }}>
-                                  Matched → {txn.matched_bill_name || 'Bill'}
-                                </span>
-                              ) : (
-                                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: unmatchedReasonColor(txn, isDark) }}>
-                                  {unmatchedReason(txn)}
-                                  {txn.display_category === 'possible_bill' && txn.matched_bill_name
-                                    ? ` — could be "${txn.matched_bill_name}"`
-                                    : ''}
+                            {/* Category line */}
+                            <div style={{ marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: unmatchedReasonColor(txn, isDark) }}>
+                                {isMatched ? `✓ ${categoryLabel}` : categoryLabel}
+                                {txn.display_category === 'possible_bill' && txn.matched_bill_name
+                                  ? ` — could be "${txn.matched_bill_name}"`
+                                  : ''}
+                              </span>
+                              {txn.budget_category && !isMatched && txn.budget_category !== categoryLabel && (
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: unmatchedReasonColor(txn, isDark), opacity: 0.7 }}>
+                                  {txn.budget_category}
                                 </span>
                               )}
                             </div>
                           </div>
                           <span style={{
                             fontSize: '0.9rem', fontWeight: 700,
-                            color: isMatched ? (isDark ? '#34D399' : '#047857') : (isDark ? '#E8E5DC' : '#1A1814'),
+                            color: amountColor,
                             flexShrink: 0, marginLeft: '0.75rem',
                           }}>
-                            {fmt(txn.amount ?? 0)}
+                            {isDeposit ? '+' : ''}{fmt(txn.amount ?? 0)}
                           </span>
                         </div>
 

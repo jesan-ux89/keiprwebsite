@@ -125,6 +125,153 @@ const ICONS: Record<string, CategoryIconDef> = {
       'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
     ],
   },
+  Healthcare: {
+    lightStroke: '#DC2626', darkStroke: '#FCA5A5',
+    lightBg: 'rgba(220,38,38,0.12)', darkBg: 'rgba(252,165,165,0.20)',
+    paths: [
+      'M8 19V5', 'M16 19V5', 'M3 12h18',
+    ],
+  },
+  Education: {
+    lightStroke: '#1D4ED8', darkStroke: '#93C5FD',
+    lightBg: 'rgba(29,78,216,0.13)', darkBg: 'rgba(147,197,253,0.22)',
+    paths: [
+      'M22 10v6M2 10l10-5 10 5-10 5z',
+      'M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5',
+    ],
+  },
+  Taxes: {
+    lightStroke: '#6D28D9', darkStroke: '#C4B5FD',
+    lightBg: 'rgba(109,40,217,0.12)', darkBg: 'rgba(196,181,253,0.20)',
+    paths: [
+      'M3 21h18M3 10h18M5 6l7-3 7 3',
+      'M4 10v11M20 10v11M8 10v11M12 10v11M16 10v11',
+    ],
+  },
+  'Home Improvement': {
+    lightStroke: '#CA8A04', darkStroke: '#FDE047',
+    lightBg: 'rgba(202,138,4,0.13)', darkBg: 'rgba(253,224,71,0.22)',
+    paths: [
+      'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+    ],
+  },
+  'Cash & ATM': {
+    lightStroke: '#059669', darkStroke: '#6EE7B7',
+    lightBg: 'rgba(5,150,105,0.12)', darkBg: 'rgba(110,231,183,0.20)',
+    paths: [
+      'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+    ],
+  },
+  Fitness: {
+    lightStroke: '#E11D48', darkStroke: '#FDA4AF',
+    lightBg: 'rgba(225,29,72,0.12)', darkBg: 'rgba(253,164,175,0.20)',
+    paths: [
+      'M6.5 6.5h11M6.5 17.5h11',
+      'M2 12h4M18 12h4',
+      'M6.5 6.5v11M17.5 6.5v11',
+    ],
+  },
+  Phone: {
+    lightStroke: '#0891B2', darkStroke: '#67E8F9',
+    lightBg: 'rgba(8,145,178,0.12)', darkBg: 'rgba(103,232,249,0.20)',
+    paths: [
+      'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z',
+    ],
+  },
+  Internet: {
+    lightStroke: '#4F46E5', darkStroke: '#A5B4FC',
+    lightBg: 'rgba(79,70,229,0.12)', darkBg: 'rgba(165,180,252,0.20)',
+    paths: [
+      'M5 12.55a11 11 0 0 1 14.08 0',
+      'M1.42 9a16 16 0 0 1 21.16 0',
+      'M8.53 16.11a6 6 0 0 1 6.95 0',
+    ],
+    circles: [{ cx: 12, cy: 20, r: 1 }],
+  },
+  Childcare: {
+    lightStroke: '#DB2777', darkStroke: '#F9A8D4',
+    lightBg: 'rgba(219,39,119,0.12)', darkBg: 'rgba(249,168,212,0.20)',
+    paths: [
+      'M9 12h.01M15 12h.01',
+      'M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5',
+    ],
+    circles: [{ cx: 12, cy: 12, r: 10 }],
+  },
+  'Pet Care': {
+    lightStroke: '#A16207', darkStroke: '#FCD34D',
+    lightBg: 'rgba(161,98,7,0.12)', darkBg: 'rgba(252,211,77,0.20)',
+    paths: [
+      'M4.93 4.93c4.08-1.46 5.07.43 7.07 2.43 2-2 2.99-3.89 7.07-2.43 1.46 4.08-.43 5.07-2.43 7.07 2 2 3.89 2.99 2.43 7.07-4.08 1.46-5.07-.43-7.07-2.43-2 2-2.99 3.89-7.07 2.43-1.46-4.08.43-5.07 2.43-7.07-2-2-3.89-2.99-2.43-7.07z',
+    ],
+  },
+  Entertainment: {
+    lightStroke: '#C026D3', darkStroke: '#E879F9',
+    lightBg: 'rgba(192,38,211,0.12)', darkBg: 'rgba(232,121,249,0.20)',
+    paths: [
+      'M4 20h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z',
+      'M7 4v16M17 4v16M3 8h4M17 8h4M3 12h18M3 16h4M17 16h4',
+    ],
+  },
+  Travel: {
+    lightStroke: '#0284C7', darkStroke: '#7DD3FC',
+    lightBg: 'rgba(2,132,199,0.12)', darkBg: 'rgba(125,211,252,0.20)',
+    paths: [
+      'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
+    ],
+  },
+  Donations: {
+    lightStroke: '#059669', darkStroke: '#6EE7B7',
+    lightBg: 'rgba(5,150,105,0.12)', darkBg: 'rgba(110,231,183,0.20)',
+    paths: [
+      'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+    ],
+  },
+  'Credit Card Payment': {
+    lightStroke: '#475569', darkStroke: '#94A3B8',
+    lightBg: 'rgba(71,85,105,0.12)', darkBg: 'rgba(148,163,184,0.20)',
+    paths: [
+      'M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z',
+      'M1 10h22',
+    ],
+  },
+  Transfer: {
+    lightStroke: '#6366F1', darkStroke: '#A5B4FC',
+    lightBg: 'rgba(99,102,241,0.12)', darkBg: 'rgba(165,180,252,0.20)',
+    paths: [
+      'M7 17l-5-5 5-5',
+      'M17 7l5 5-5 5',
+      'M2 12h20',
+    ],
+  },
+  Paychecks: {
+    lightStroke: '#16A34A', darkStroke: '#86EFAC',
+    lightBg: 'rgba(22,163,74,0.13)', darkBg: 'rgba(134,239,172,0.22)',
+    paths: [
+      'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+    ],
+  },
+  Income: {
+    lightStroke: '#15803D', darkStroke: '#4ADE80',
+    lightBg: 'rgba(21,128,61,0.12)', darkBg: 'rgba(74,222,128,0.20)',
+    paths: [
+      'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+    ],
+  },
+  'Bank Fees': {
+    lightStroke: '#DC2626', darkStroke: '#FCA5A5',
+    lightBg: 'rgba(220,38,38,0.10)', darkBg: 'rgba(252,165,165,0.18)',
+    paths: [
+      'M3 21h18M3 10h18M5 6l7-3 7 3',
+      'M4 10v11M20 10v11M8 10v11M12 10v11M16 10v11',
+    ],
+  },
+  Financial: {
+    lightStroke: '#0369A1', darkStroke: '#7DD3FC',
+    lightBg: 'rgba(3,105,161,0.12)', darkBg: 'rgba(125,211,252,0.20)',
+    paths: [
+      'M22 12h-4l-3 9L9 3l-3 9H2',
+    ],
+  },
   Other: {
     lightStroke: '#525252', darkStroke: '#A8A8A8',
     lightBg: 'rgba(82,82,82,0.12)', darkBg: 'rgba(160,160,160,0.20)',
