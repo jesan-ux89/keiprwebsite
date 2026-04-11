@@ -471,7 +471,8 @@ export default function AllTransactionsPage() {
                   const isTransfer = txn.display_category === 'transfer';
                   const isExpanded = expandedId === txn.id;
 
-                  const amountColor = isDeposit
+                  const isCredit = (txn.amount ?? 0) < 0;
+                  const amountColor = (isDeposit || isCredit)
                     ? (isDark ? '#86EFAC' : '#16A34A')
                     : isMatched
                       ? (isDark ? '#34D399' : '#047857')
@@ -522,7 +523,7 @@ export default function AllTransactionsPage() {
                             color: amountColor,
                             flexShrink: 0, marginLeft: '0.75rem',
                           }}>
-                            {isDeposit ? '+' : ''}{fmt(txn.amount ?? 0)}
+                            {(isDeposit || isCredit) ? '+' : ''}{fmt(Math.abs(txn.amount ?? 0))}
                           </span>
                         </div>
 
