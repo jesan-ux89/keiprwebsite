@@ -27,12 +27,15 @@ interface Transaction {
   matched_bill_name?: string;
   exclusion_rule_value?: string;
   user_action?: string;
+  budget_category?: string;
+  classification?: string;
 }
 
 interface TransactionCounts {
   matched: number;
   possible_bill: number;
   likely_not_bill: number;
+  spending: number;
   auto_excluded: number;
   user_excluded: number;
 }
@@ -45,8 +48,8 @@ interface DateGroup {
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'matched', label: 'Matched' },
-  { key: 'unmatched', label: 'Unmatched' },
+  { key: 'matched', label: 'Bills' },
+  { key: 'unmatched', label: 'Spending' },
 ];
 
 // ── Helpers ──
@@ -89,7 +92,9 @@ function unmatchedReason(txn: Transaction): string {
   if (cat === 'user_excluded') return 'Excluded by you';
   if (cat === 'auto_excluded') return 'Auto-excluded';
   if (cat === 'possible_bill') return 'Possible match';
-  if (cat === 'likely_not_bill') return 'Skipped';
+  if (cat === 'spending' || cat === 'likely_not_bill') {
+    return txn.budget_category || 'Spending';
+  }
   return 'Not matched';
 }
 
@@ -97,6 +102,7 @@ function unmatchedReasonColor(txn: Transaction, isDark: boolean): string {
   const cat = txn.display_category || '';
   if (cat === 'possible_bill') return isDark ? '#FBBF24' : '#B45309';
   if (cat === 'user_excluded' || cat === 'auto_excluded') return isDark ? '#A78BFA' : '#7E22CE';
+  if (cat === 'spending') return isDark ? '#34D399' : '#059669';
   return isDark ? '#9CA3AF' : '#6B7280';
 }
 
@@ -108,7 +114,7 @@ export default function AllTransactionsPage() {
 
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [counts, setCounts] = useState<TransactionCounts>({
-    matched: 0, possible_bill: 0, likely_not_bill: 0, auto_excluded: 0, user_excluded: 0,
+    matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, auto_excluded: 0, user_excluded: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +148,7 @@ export default function AllTransactionsPage() {
 
   // ── Tab counts ──
   const matchedCount = counts.matched || 0;
-  const unmatchedCount = (counts.possible_bill || 0) + (counts.likely_not_bill || 0) + (counts.auto_excluded || 0) + (counts.user_excluded || 0);
+  const unmatchedCount = (counts.possible_bill || 0) + (counts.likely_not_bill || 0) + (counts.spending || 0) + (counts.auto_excluded || 0) + (counts.user_excluded || 0);
   const allCount = matchedCount + unmatchedCount;
 
   function tabCount(key: TabKey): number {
@@ -162,7 +168,7 @@ export default function AllTransactionsPage() {
     try {
       const res = await bankingAPI.getAllTransactions({ category: 'all', limit: 200, offset: 0 });
       const txns = Array.isArray(res.data?.transactions) ? res.data.transactions : [];
-      const cts = res.data?.counts || { matched: 0, possible_bill: 0, likely_not_bill: 0, auto_excluded: 0, user_excluded: 0 };
+      const cts = res.data?.counts || { matched: 0, possible_bill: 0, likely_not_bill: 0, spending: 0, auto_excluded: 0, user_excluded: 0 };
 
       const total = res.data?.total || 0;
       const countSum = Object.values(cts).reduce((a: number, b: unknown) => a + (Number(b) || 0), 0);
@@ -172,6 +178,16 @@ export default function AllTransactionsPage() {
           return fetchTransactions(true);
         } catch (bfErr) {
           console.error('Backfill failed:', bfErr);
+        }
+      }
+
+      // Auto-reclassify: if there are likely_not_bill but no spending, upgrade them
+      if ((cts.likely_not_bill || 0) > 0 && (cts.spending || 0) === 0 && !isRetryAfterBackfill) {
+        try {
+          await bankingAPI.reclassifySpending();
+          return fetchTransactions(true);
+        } catch (rcErr) {
+          console.error('Reclassify failed:', rcErr);
         }
       }
 

@@ -148,6 +148,7 @@ export const bankingAPI = {
   updateAutoExclusionSettings: (data: Record<string, unknown>) => api.post('/banking-data/auto-exclusion-settings', data),
   scanSuggestions:     () => api.post('/banking-data/suggest/scan'),
   backfillCategories:  () => api.post('/banking-data/backfill-categories'),
+  reclassifySpending:  () => api.post('/banking-data/reclassify-spending'),
   bulkExcludeMerchant: (merchantName: string) => api.post('/banking-data/bulk/exclude-merchant', { merchant_name: merchantName }),
   bulkConfirmHighConfidence: (minConfidence = 0.90) => api.post('/banking-data/bulk/confirm-high-confidence', { min_confidence: minConfidence }),
 };
