@@ -148,7 +148,14 @@ npm run build        # Production build
 **This is the #1 rule. Every session must follow it.**
 1. **Mobile app is source of truth.** If you're working on the website and a feature doesn't exist on mobile yet, check with the user — don't invent website-only logic.
 2. **When working on mobile or backend changes**, always check the Mirrored Files table above. If any mirrored file was changed on mobile, update the website equivalent in the SAME session.
-3. **After completing ALL code changes**, always provide full `git add; git commit; git push` commands for EVERY repo that was modified (website, mobile, and/or backend). Never finish a task without giving push commands.
+3. **After completing ALL code changes**, always provide full copy-pasteable commands for EVERY repo that was modified. Never finish a task without giving push commands. Rules:
+   - **PowerShell-compatible** — use semicolons (`;`) not `&&` to chain commands.
+   - **Full local paths** — always start with `cd C:\Users\Jess\_keiprwebsite`, `cd C:\Users\Jess\_KeiprApp`, or `cd C:\Users\Jess\_keipr-complete-backend`.
+   - **SQL changes** — provide the full SQL statement ready to copy-paste into the Supabase SQL Editor. No placeholders, no "run this migration" — give the actual SQL.
+   - **Example format:**
+     ```powershell
+     cd C:\Users\Jess\_keiprwebsite; git add src/context/AppContext.tsx src/app/app/bills/page.tsx; git commit -m "Mirror mobile bill changes"; git push origin main
+     ```
 4. **UI changes to shared screens** (Dashboard, Bills/Budget, Tracker, Banking/Accounts, Transactions) on mobile MUST be mirrored here. This includes new banners, new fields, conditional logic, and styling.
 5. Do NOT change `mapApiBill()`, `mapIncomeSource()`, `payPeriods.ts`, or dashboard calculations without checking mobile first.
 
