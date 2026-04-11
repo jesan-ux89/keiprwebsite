@@ -131,8 +131,9 @@ export default function BankingPage() {
         bankingAPI.getBalances(),
       ]);
 
+      // Filter to active accounts only (soft-deleted accounts stay in DB for payment data but hidden from UI)
       const accts: BankAccount[] = accountsRes.status === 'fulfilled'
-        ? (Array.isArray(accountsRes.value.data?.accounts) ? accountsRes.value.data.accounts : [])
+        ? (Array.isArray(accountsRes.value.data?.accounts) ? accountsRes.value.data.accounts.filter((a: any) => a.is_active !== false) : [])
         : [];
 
       if (statusRes.status === 'fulfilled') setStatus(statusRes.value.data?.status || null);
@@ -206,10 +207,14 @@ export default function BankingPage() {
   };
 
   const handleUnlinkAccount = async (id: string) => {
-    if (!window.confirm('Are you sure you want to unlink this account?')) return;
+    const choice = window.confirm(
+      'Disconnect this account?\n\nClick OK to disconnect (data preserved — reconnect anytime).\nTo permanently delete all data, use the mobile app.'
+    );
+    if (!choice) return;
     try {
       await bankingAPI.unlinkAccount(id);
       setAccounts(accounts.filter(acc => acc.id !== id));
+      setSuccess('Disconnected. Your data is preserved — reconnect anytime.');
     } catch (err) {
       console.error('Failed to unlink account:', err);
       setError('Failed to unlink account');

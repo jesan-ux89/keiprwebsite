@@ -129,6 +129,7 @@ export const bankingAPI = {
   getReconnectToken:   (id: string) => api.post(`/banking/accounts/${id}/reconnect`),
   reconnectComplete:   (id: string) => api.post(`/banking/accounts/${id}/reconnect-complete`),
   unlinkAccount:       (id: string) => api.delete(`/banking/accounts/${id}`),
+  permanentDelete:     (id: string) => api.delete(`/banking/accounts/${id}/permanent`),
   getStatus:           () => api.get('/banking/status'),
   getSuggestions:      () => api.get('/banking-data/suggestions'),
   addSuggestion:       (id: string) => api.post(`/banking-data/suggestions/${id}/add`),
