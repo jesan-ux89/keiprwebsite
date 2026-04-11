@@ -4,15 +4,19 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { bankingAPI } from '@/lib/api';
+import { bankingAPI, usersAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import MerchantLogo from '@/components/MerchantLogo';
 
 export default function IncomePage() {
   const { colors, isDark } = useTheme();
-  const { incomeSources, fmt, isUltra } = useApp();
+  const { incomeSources, fmt, isUltra, isPro, refreshIncomeSources } = useApp();
   const [deposits, setDeposits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trackModal, setTrackModal] = useState(false);
+  const [trackingTxn, setTrackingTxn] = useState<any>(null);
+  const [trackName, setTrackName] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const regularSources = incomeSources.filter((s: any) => !s.isOneTime);
   const oneTimeSources = incomeSources.filter((s: any) => s.isOneTime);
@@ -20,6 +24,12 @@ export default function IncomePage() {
 
   // Income source names to exclude paychecks (already shown in Income Sources section)
   const incomeSourceNames = incomeSources.map((s: any) => (s.name || '').toUpperCase()).filter(Boolean);
+
+  // Helper: check if a deposit is already tracked as a one-time fund
+  const isAlreadyTracked = (txn: any) => {
+    const amt = Math.abs(txn.amount);
+    return oneTimeSources.some((s: any) => Math.abs(s.typicalAmount - amt) < 0.01);
+  };
 
   useEffect(() => {
     const loadDeposits = async () => {
@@ -221,7 +231,25 @@ export default function IncomePage() {
                     <div key={txn.id} style={{
                       display: 'flex', alignItems: 'center', padding: '0.875rem 1rem',
                       borderTop: `0.5px solid ${colors.cardBorder}40`,
-                    }}>
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onClick={() => {
+                      if (isAlreadyTracked(txn)) {
+                        alert('This deposit is already saved as a One-Time Fund.');
+                        return;
+                      }
+                      setTrackingTxn(txn);
+                      setTrackName(txn.cleaned_name || txn.merchant_name || txn.name || 'Deposit');
+                      setTrackModal(true);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(232,229,220,0.05)' : 'rgba(0,0,0,0.03)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    >
                       <MerchantLogo billName={txn.merchant_name || txn.name || ''} category={txn.budget_category || 'Income'} size={38} isDark={isDark} />
                       <div style={{ flex: 1, marginLeft: '0.75rem' }}>
                         <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, margin: 0 }}>
@@ -253,6 +281,132 @@ export default function IncomePage() {
           <p style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#38BDF8', margin: 0 }}>Manage Income Sources</p>
         </Card>
       </Link>
+
+      {/* Track as One-Time Fund Modal */}
+      {trackModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000,
+        }} onClick={() => setTrackModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            backgroundColor: colors.card,
+            borderRadius: 20,
+            padding: '2rem',
+            width: '90%',
+            maxWidth: 420,
+          }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: colors.text, margin: '0 0 0.25rem 0' }}>
+              Track as One-Time Fund
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: '0 0 1.25rem 0' }}>
+              Save this deposit so you can track how it's used
+            </p>
+
+            {/* Amount display */}
+            <div style={{
+              background: isDark ? 'rgba(10,123,108,0.08)' : 'rgba(10,123,108,0.06)',
+              borderRadius: 14,
+              padding: '1rem',
+              textAlign: 'center',
+              marginBottom: '1.25rem',
+              border: `1px solid ${isDark ? 'rgba(10,123,108,0.2)' : 'rgba(10,123,108,0.15)'}`,
+            }}>
+              <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0A7B6C', margin: 0 }}>
+                {trackingTxn ? fmt(Math.abs(trackingTxn.amount)) : ''}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0.25rem 0 0 0' }}>
+                {trackingTxn ? new Date(trackingTxn.transaction_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+              </p>
+            </div>
+
+            {/* Name input */}
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Fund Name
+            </label>
+            <input
+              value={trackName}
+              onChange={(e) => setTrackName(e.target.value)}
+              style={{
+                width: '100%',
+                backgroundColor: colors.inputBg,
+                borderRadius: 12,
+                padding: '0.875rem',
+                fontSize: '1rem',
+                color: colors.text,
+                border: `1px solid ${colors.cardBorder}`,
+                marginTop: '0.375rem',
+                marginBottom: '1.25rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              placeholder="e.g., 401k Withdrawal, Tax Refund"
+            />
+
+            {/* Confirm button */}
+            <button
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true);
+                try {
+                  await usersAPI.addIncomeSource({
+                    name: trackName.trim() || 'Deposit',
+                    frequency: 'monthly',
+                    typicalAmount: Math.abs(trackingTxn.amount),
+                    isOneTime: true,
+                    linkedTransactionId: trackingTxn.plaid_transaction_id || trackingTxn.id,
+                  });
+                  if (refreshIncomeSources) await refreshIncomeSources();
+                  setTrackModal(false);
+                  setTrackingTxn(null);
+                  alert(`"${trackName.trim()}" has been added to your One-Time Funds.`);
+                } catch (err: any) {
+                  if (err?.response?.data?.code === 'PRO_REQUIRED') {
+                    alert('One-time fund tracking requires Keipr Pro.');
+                  } else {
+                    alert('Could not save. Please try again.');
+                  }
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: '#38BDF8',
+                borderRadius: 14,
+                padding: '1rem',
+                fontSize: '1rem',
+                fontWeight: 700,
+                color: '#fff',
+                border: 'none',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.6 : 1,
+              }}
+            >
+              {saving ? 'Saving...' : 'Save as One-Time Fund'}
+            </button>
+
+            {/* Cancel */}
+            <button
+              onClick={() => setTrackModal(false)}
+              style={{
+                width: '100%',
+                background: 'none',
+                border: 'none',
+                padding: '0.75rem',
+                marginTop: '0.5rem',
+                fontSize: '0.9375rem',
+                fontWeight: 600,
+                color: colors.textSub,
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

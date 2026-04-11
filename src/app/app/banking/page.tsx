@@ -313,7 +313,7 @@ export default function BankingPage() {
 
       {/* ─── Tools ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-        <Link href="/app/banking/transactions" style={{ textDecoration: 'none' }}>
+        <Link href={`/app/banking/transactions?accountId=&accountType=`} style={{ textDecoration: 'none' }}>
           <Card onClick={() => {}} style={{ cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', height: '100%' }}>
               <div>

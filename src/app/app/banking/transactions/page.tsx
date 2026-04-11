@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
+import { useSearchParams } from 'next/navigation';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -121,6 +122,7 @@ function unmatchedReasonColor(txn: Transaction, isDark: boolean): string {
 export default function AllTransactionsPage() {
   const { colors, isDark } = useTheme();
   const { isUltra, fmt, bills } = useApp();
+  const searchParams = useSearchParams();
 
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [counts, setCounts] = useState<TransactionCounts>({
@@ -134,6 +136,7 @@ export default function AllTransactionsPage() {
   const [actioning, setActioning] = useState<string | null>(null);
   const [billPickerTxn, setBillPickerTxn] = useState<Transaction | null>(null);
   const [linkLoading, setLinkLoading] = useState(false);
+  const [interestEarned, setInterestEarned] = useState({ thisMonth: 0, thisYear: 0, count: 0 });
 
   // ── Derived: filter by active tab ──
   const filteredTransactions = useMemo(() => {
@@ -174,8 +177,41 @@ export default function AllTransactionsPage() {
   // ── Data fetching ──
 
   useEffect(() => {
-    if (isUltra) fetchTransactions();
-  }, [isUltra]);
+    if (isUltra) {
+      fetchTransactions();
+      fetchInterestEarned();
+    }
+  }, [isUltra, searchParams]);
+
+  const fetchInterestEarned = async () => {
+    const accountType = searchParams?.get('accountType');
+    const accountId = searchParams?.get('accountId');
+    if (!accountId || !accountType?.toLowerCase().includes('saving')) {
+      setInterestEarned({ thisMonth: 0, thisYear: 0, count: 0 });
+      return;
+    }
+    try {
+      const res = await bankingAPI.getAllTransactions({ category: 'all', days: 365, limit: 500, accountId });
+      const txns = (res as any).data?.transactions || [];
+      const interestTxns = txns.filter((t: any) => {
+        const name = (t.cleaned_name || t.merchant_name || '').toUpperCase();
+        return name.includes('INTEREST');
+      });
+      const now = new Date();
+      const thisMonth = interestTxns
+        .filter((t: any) => {
+          const d = new Date(t.transaction_date);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        })
+        .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
+      const thisYear = interestTxns
+        .filter((t: any) => new Date(t.transaction_date).getFullYear() === now.getFullYear())
+        .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
+      setInterestEarned({ thisMonth, thisYear, count: interestTxns.length });
+    } catch (err) {
+      console.log('Error fetching interest:', err);
+    }
+  };
 
   const fetchTransactions = async (isRetryAfterBackfill = false) => {
     setLoading(true);
@@ -359,6 +395,31 @@ export default function AllTransactionsPage() {
         <div style={{ padding: '0.6rem 1rem', marginBottom: '0.75rem', borderRadius: '0.5rem',
           backgroundColor: isDark ? 'rgba(52,211,153,0.1)' : 'rgba(4,120,87,0.08)' }}>
           <span style={{ fontSize: '0.8rem', color: isDark ? '#34D399' : '#047857' }}>{success}</span>
+        </div>
+      )}
+
+      {/* Interest Earned Card */}
+      {searchParams?.get('accountType')?.toLowerCase().includes('saving') && interestEarned.count > 0 && (
+        <div style={{
+          background: isDark ? 'rgba(10,123,108,0.08)' : 'rgba(10,123,108,0.06)',
+          borderRadius: 14,
+          padding: 16,
+          marginBottom: 16,
+          border: `1px solid ${isDark ? 'rgba(10,123,108,0.2)' : 'rgba(10,123,108,0.15)'}`,
+        }}>
+          <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#0A7B6C', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 10px 0' }}>
+            Interest Earned
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>This Month</p>
+              <p style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0A7B6C', margin: 0 }}>{fmt(interestEarned.thisMonth)}</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>Year to Date</p>
+              <p style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0A7B6C', margin: 0 }}>{fmt(interestEarned.thisYear)}</p>
+            </div>
+          </div>
         </div>
       )}
 
