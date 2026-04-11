@@ -19,6 +19,7 @@ import {
   Receipt,
   CheckCircle2,
   RefreshCw,
+  ShoppingCart,
 } from 'lucide-react';
 
 /**
@@ -628,36 +629,78 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
-                Remaining
-              </p>
-              <p style={{ fontSize: '1.75rem', fontWeight: 700, color: remaining >= 0 ? colors.green : colors.red, margin: 0 }}>
-                {fmt(remaining)}
-              </p>
-            </div>
-            <CheckCircle2 size={24} style={{ color: remaining >= 0 ? colors.green : colors.red, opacity: 0.7 }} />
-          </div>
-        </Card>
+        {isUltra ? (
+          /* Ultra: Spent (from bank) + Remaining (after bills + spending) */
+          <>
+            <Card>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
+                    Spent
+                  </p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: totalSpendingThisPeriod > 0 ? colors.amber : colors.text, margin: 0 }}>
+                    {fmt(totalSpendingThisPeriod)}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                    From bank
+                  </p>
+                </div>
+                <ShoppingCart size={24} style={{ color: colors.amber, opacity: 0.7 }} />
+              </div>
+            </Card>
 
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
-                Monthly Income
-              </p>
-              <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.electric, margin: 0 }}>
-                {fmt(monthlyIncome)}
-              </p>
-              <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                {paycheckCount} paycheck{paycheckCount > 1 ? 's' : ''}/mo
-              </p>
-            </div>
-            <TrendingUp size={24} style={{ color: colors.electric, opacity: 0.7 }} />
-          </div>
-        </Card>
+            <Card>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
+                    Remaining
+                  </p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: (totalPaycheck - totalBillsThisCheck - totalSpendingThisPeriod) >= 0 ? colors.green : colors.red, margin: 0 }}>
+                    {fmt(totalPaycheck - totalBillsThisCheck - totalSpendingThisPeriod)}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                    After bills + spending
+                  </p>
+                </div>
+                <CheckCircle2 size={24} style={{ color: (totalPaycheck - totalBillsThisCheck - totalSpendingThisPeriod) >= 0 ? colors.green : colors.red, opacity: 0.7 }} />
+              </div>
+            </Card>
+          </>
+        ) : (
+          /* Free/Pro: Remaining + Monthly Income */
+          <>
+            <Card>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
+                    Remaining
+                  </p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: remaining >= 0 ? colors.green : colors.red, margin: 0 }}>
+                    {fmt(remaining)}
+                  </p>
+                </div>
+                <CheckCircle2 size={24} style={{ color: remaining >= 0 ? colors.green : colors.red, opacity: 0.7 }} />
+              </div>
+            </Card>
+
+            <Card>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
+                    Monthly Income
+                  </p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.electric, margin: 0 }}>
+                    {fmt(monthlyIncome)}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                    {paycheckCount} paycheck{paycheckCount > 1 ? 's' : ''}/mo
+                  </p>
+                </div>
+                <TrendingUp size={24} style={{ color: colors.electric, opacity: 0.7 }} />
+              </div>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Progress bar */}
