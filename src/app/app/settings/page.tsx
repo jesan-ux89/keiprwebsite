@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { usersAPI, exportAPI, subscriptionsAPI, authAPI } from '@/lib/api';
+import { usersAPI, exportAPI, subscriptionsAPI, authAPI, bankingAPI } from '@/lib/api';
 import { getPayPeriods } from '@/lib/payPeriods';
 import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import { Card } from '@/components/ui/Card';
@@ -34,6 +34,7 @@ import {
   Copy,
   Bell,
   Landmark,
+  RefreshCw,
 } from 'lucide-react';
 
 interface IncomeSourceForm {
@@ -1847,6 +1848,37 @@ export default function SettingsPage() {
                   <span style={{ color: colors.textMuted }}>›</span>
                 </div>
               </Link>
+
+              {/* Re-sync & Match */}
+              <div
+                style={{
+                  padding: '0.875rem',
+                  backgroundColor: colors.background,
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  transition: 'all 0.2s ease',
+                }}
+                onClick={async () => {
+                  if (!confirm('This will match your manual bills to bank transactions and fix any double-counting. Continue?')) return;
+                  try {
+                    const res = await bankingAPI.migrateToUltra();
+                    const r = (res as any).data;
+                    alert(`Sync Complete!\n\nMatched: ${r.matched}\nPending review: ${r.pendingConfirmation}\nReclassified: ${r.reclassified}`);
+                  } catch (err: any) {
+                    alert(err?.response?.data?.error || 'Sync failed. Please try again.');
+                  }
+                }}
+              >
+                <RefreshCw size={18} style={{ color: colors.electric, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Re-sync & match bills</h3>
+                  <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>Match manual bills to bank transactions</p>
+                </div>
+                <span style={{ color: colors.textMuted }}>›</span>
+              </div>
             </div>
           )}
         </Card>
