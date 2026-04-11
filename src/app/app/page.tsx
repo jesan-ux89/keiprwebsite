@@ -686,6 +686,33 @@ export default function DashboardPage() {
         </div>
       </Card>
 
+      {/* Ultra: Budget vs Bank reconciliation */}
+      {isUltra && availableNumber !== null && Math.abs(availableNumber - remaining) > 1 && (
+        <a href="/app/income" style={{ textDecoration: 'none' }}>
+          <Card style={{ marginBottom: '2rem', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px' }}>BUDGET vs BANK</span>
+              <span style={{ fontSize: '0.7rem', color: colors.electric, fontWeight: 600 }}>View deposits →</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+              <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Paycheck budget</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: remaining >= 0 ? colors.green : colors.red }}>{fmt(remaining)} remaining</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>Actual balance</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: colors.electric }}>{fmt(availableNumber)}</span>
+            </div>
+            <div style={{ borderTop: `1px solid ${colors.cardBorder || colors.border}`, paddingTop: '0.5rem' }}>
+              <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0, lineHeight: 1.4 }}>
+                {availableNumber > remaining
+                  ? 'Extra deposits covered spending beyond your paycheck. Your real balance matches the Overview.'
+                  : 'Some spending came from your paycheck budget. Your real balance matches the Overview.'}
+              </p>
+            </div>
+          </Card>
+        </a>
+      )}
+
       {/* View Tabs */}
       <div
         style={{
