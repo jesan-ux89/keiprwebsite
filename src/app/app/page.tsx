@@ -740,20 +740,26 @@ export default function DashboardPage() {
             </p>
           </Card>
 
-          {/* Quick Stats Row */}
+          {/* Quick Stats Row — clickable shortcuts */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-            <Card style={{ padding: '0.875rem' }}>
-              <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Income</p>
-              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>{fmt(totalPaycheck)}</p>
-            </Card>
-            <Card style={{ padding: '0.875rem' }}>
-              <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Bills</p>
-              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>{fmt(totalBillsThisCheck)}</p>
-            </Card>
-            <Card style={{ padding: '0.875rem' }}>
-              <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Spent</p>
-              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: totalSpendingThisPeriod > 0 ? '#854F0B' : colors.text, margin: 0 }}>{fmt(totalSpendingThisPeriod)}</p>
-            </Card>
+            <a href="/app/income" style={{ textDecoration: 'none' }}>
+              <Card style={{ padding: '0.875rem', cursor: 'pointer', transition: 'opacity 0.15s' }}>
+                <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Income</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>{fmt(totalPaycheck)}</p>
+              </Card>
+            </a>
+            <a href="/app/bills" style={{ textDecoration: 'none' }}>
+              <Card style={{ padding: '0.875rem', cursor: 'pointer', transition: 'opacity 0.15s' }}>
+                <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Bills</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>{fmt(totalBillsThisCheck)}</p>
+              </Card>
+            </a>
+            <a href="/app/banking/transactions" style={{ textDecoration: 'none' }}>
+              <Card style={{ padding: '0.875rem', cursor: 'pointer', transition: 'opacity 0.15s' }}>
+                <p style={{ fontSize: '0.65rem', color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Spent</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 700, color: totalSpendingThisPeriod > 0 ? '#854F0B' : colors.text, margin: 0 }}>{fmt(totalSpendingThisPeriod)}</p>
+              </Card>
+            </a>
           </div>
 
           {/* Upcoming Bills */}
