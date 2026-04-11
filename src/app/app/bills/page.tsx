@@ -126,19 +126,38 @@ export default function BillsPage() {
             Manage and track all your bills
           </p>
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setShowAddModal(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <Plus size={20} />
-          Add Bill
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {isUltra && (
+            <Link href="/app/settings/spending-budgets">
+              <Button
+                variant="primary"
+                size="md"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  backgroundColor: isDark ? '#047857' : '#0A7B6C',
+                }}
+              >
+                <Plus size={20} />
+                Budget
+              </Button>
+            </Link>
+          )}
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => setShowAddModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <Plus size={20} />
+            Add Bill
+          </Button>
+        </div>
       </div>
 
       {/* Search and Sort */}
@@ -382,42 +401,69 @@ export default function BillsPage() {
             </div>
           )}
 
-          {isUltra && spendingSummary.length > 0 && (
+          {isUltra && (
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Spending budgets</h3>
-                <span style={{ fontSize: '0.8rem', color: colors.textMuted }}>{spendingSummary.length} categories</span>
+                {spendingSummary.length > 0 && (
+                  <Link href="/app/settings/spending-budgets" style={{ fontSize: '0.8rem', color: colors.textMuted, textDecoration: 'none' }}>
+                    {spendingSummary.length} categories · Edit
+                  </Link>
+                )}
               </div>
-              {spendingSummary.map((budget: any) => {
-                const pct = budget.budgetAmount > 0 ? Math.min(100, Math.round((budget.spentAmount / budget.budgetAmount) * 100)) : 0;
-                const isOver = budget.remaining < 0;
-                return (
-                  <Card key={budget.id} style={{ padding: '0.875rem', marginBottom: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CategoryIcon category={budget.category} size={22} isDark={isDark} />
-                        <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
-                      </div>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: isOver ? '#EF4444' : colors.text }}>
-                        {fmt(budget.spentAmount)} / {fmt(budget.budgetAmount)}
-                      </span>
-                    </div>
-                    <div style={{ height: '5px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: '3px',
-                        width: `${pct}%`,
-                        backgroundColor: isOver ? '#EF4444' : pct > 80 ? '#854F0B' : '#38BDF8',
-                      }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                      <span style={{ fontSize: '0.7rem', color: colors.textSub }}>{pct}% used</span>
-                      <span style={{ fontSize: '0.7rem', color: isOver ? '#EF4444' : colors.textSub }}>
-                        {isOver ? `${fmt(Math.abs(budget.remaining))} over` : `${fmt(budget.remaining)} left`}
-                      </span>
-                    </div>
+              {spendingSummary.length === 0 ? (
+                <Link href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                  <Card style={{
+                    padding: '1.5rem',
+                    border: `2px dashed ${colors.cardBorder}`,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}>
+                    <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>📊</p>
+                    <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Set up spending budgets</p>
+                    <p style={{ fontSize: '0.875rem', color: colors.textSub, margin: 0 }}>Track groceries, gas, and other spending categories against your paycheck</p>
                   </Card>
-                );
-              })}
+                </Link>
+              ) : (
+                <>
+                  {spendingSummary.map((budget: any) => {
+                    const pct = budget.budgetAmount > 0 ? Math.min(100, Math.round((budget.spentAmount / budget.budgetAmount) * 100)) : 0;
+                    const isOver = budget.remaining < 0;
+                    return (
+                      <Link key={budget.id} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                        <Card style={{ padding: '0.875rem', marginBottom: '0.5rem', cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <CategoryIcon category={budget.category} size={22} isDark={isDark} />
+                              <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
+                            </div>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: isOver ? '#EF4444' : colors.text }}>
+                              {fmt(budget.spentAmount)} / {fmt(budget.budgetAmount)}
+                            </span>
+                          </div>
+                          <div style={{ height: '5px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', borderRadius: '3px',
+                              width: `${pct}%`,
+                              backgroundColor: isOver ? '#EF4444' : pct > 80 ? '#854F0B' : '#38BDF8',
+                            }} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                            <span style={{ fontSize: '0.7rem', color: colors.textSub }}>{pct}% used</span>
+                            <span style={{ fontSize: '0.7rem', color: isOver ? '#EF4444' : colors.textSub }}>
+                              {isOver ? `${fmt(Math.abs(budget.remaining))} over` : `${fmt(budget.remaining)} left`}
+                            </span>
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                  <Link href="/app/settings/spending-budgets" style={{ textDecoration: 'none', display: 'block', textAlign: 'center', padding: '0.5rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500, color: isDark ? '#38BDF8' : '#0369A1' }}>＋ Add another budget</span>
+                  </Link>
+                </>
+              )}
             </div>
           )}
 
