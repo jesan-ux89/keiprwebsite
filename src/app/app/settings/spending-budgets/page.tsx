@@ -36,13 +36,13 @@ export default function SpendingBudgetsPage() {
     try {
       if (editingId) {
         await spendingAPI.updateBudget(editingId, {
-          categoryName: selectedCategory,
-          monthlyAmount: parseFloat(amount),
+          category: selectedCategory,
+          budgetAmount: parseFloat(amount),
         });
       } else {
         await spendingAPI.createBudget({
-          categoryName: selectedCategory,
-          monthlyAmount: parseFloat(amount),
+          category: selectedCategory,
+          budgetAmount: parseFloat(amount),
         });
       }
       await fetchSpendingBudgets();
