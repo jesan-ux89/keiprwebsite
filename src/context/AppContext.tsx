@@ -852,6 +852,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (splits.length > 0) {
         try {
           await billsAPI.setSplits(id, splits);
+          // Refresh bills to get fresh splitIds — required for toggleSplitPaid to work
+          await fetchBills();
         } catch (e) {
           console.warn('Failed to set splits:', e);
         }
