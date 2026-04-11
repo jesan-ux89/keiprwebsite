@@ -37,7 +37,7 @@ export default function DashboardPage() {
     currentRollover, decideRollover,
     sideIncomeSummary, sideIncomeAllocations, allocateSideIncome, removeAllocation,
     isPro, isUltra, detectedBills, detectedCount, pendingConfirmationsCount,
-    availableNumber, availableBreakdown, spendingSummary, fetchAvailableNumber, fetchSpendingSummary,
+    availableNumber, availableBreakdown, spendingSummary, spendingBudgets, fetchAvailableNumber, fetchSpendingSummary,
     logQuickExpense,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
@@ -116,8 +116,10 @@ export default function DashboardPage() {
 
   // ── This paycheck calculations (MATCHES MOBILE) ────────────
   const totalBillsThisCheck = thisPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
-  const remaining = (totalPaycheck || 0) - totalBillsThisCheck;
-  const spentPct = totalPaycheck > 0 ? Math.round((totalBillsThisCheck / totalPaycheck) * 100) : 0;
+  // Ultra: also subtract spending budgets (groceries, gas, etc.) from remaining
+  const totalSpendingBudgetsAmount = isUltra ? (spendingBudgets || []).reduce((s: number, b: any) => s + (b.budget_amount || 0), 0) : 0;
+  const remaining = (totalPaycheck || 0) - totalBillsThisCheck - totalSpendingBudgetsAmount;
+  const spentPct = totalPaycheck > 0 ? Math.round(((totalBillsThisCheck + totalSpendingBudgetsAmount) / totalPaycheck) * 100) : 0;
 
   const nextBillsTotal = nextPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
   const nextRemaining = (totalPaycheck || 0) - nextBillsTotal;
@@ -615,10 +617,10 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
-                Bills This Check
+                {isUltra && totalSpendingBudgetsAmount > 0 ? 'Bills + Budget' : 'Bills This Check'}
               </p>
               <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: 0 }}>
-                {fmt(totalBillsThisCheck)}
+                {fmt(totalBillsThisCheck + totalSpendingBudgetsAmount)}
               </p>
               <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
                 {spentPct}% of paycheck
