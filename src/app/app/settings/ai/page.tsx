@@ -299,8 +299,8 @@ export default function AISettingsPage() {
             divider
           />
           <ToggleRow
-            label="Budget Suggestions"
-            description="AI creates spending budgets based on your patterns"
+            label="Expense Suggestions"
+            description="AI creates spending targets based on your patterns"
             value={budgetSuggestionsEnabled}
             onChange={handleToggleBudgetSuggestions}
             disabled={!aiEnabled}

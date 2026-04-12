@@ -455,16 +455,8 @@ export default function BillsPage() {
             const hasBills = categoryBills.length > 0;
             const hasBudget = isUltra && !!catBudget;
 
-            let catHeaderSub = '';
-            if (hasBills && hasBudget) {
-              catHeaderSub = `${categoryBills.length} bill${categoryBills.length !== 1 ? 's' : ''} + spending target`;
-            } else if (hasBills) {
-              catHeaderSub = `${categoryBills.length} bill${categoryBills.length !== 1 ? 's' : ''}`;
-            } else if (hasBudget) {
-              const spent = catSummary?.spentAmount || 0;
-              const budget = catBudget.budget_amount || 0;
-              catHeaderSub = `${fmt(spent)} of ${fmt(budget)} spent`;
-            }
+            const itemCount = categoryBills.length + (hasBudget ? 1 : 0);
+            const catHeaderSub = `${itemCount} expense${itemCount !== 1 ? 's' : ''}`;
 
             return (
             <div key={catName}>
@@ -492,19 +484,6 @@ export default function BillsPage() {
                     >
                       {catName}
                     </h2>
-                    {hasBudget && (
-                      <span style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        padding: '0.125rem 0.5rem',
-                        borderRadius: '10px',
-                        backgroundColor: catSummary && catSummary.remaining < 0 ? 'rgba(220,38,38,0.1)' : 'rgba(168,130,255,0.15)',
-                        color: catSummary && catSummary.remaining < 0 ? '#DC2626' : isDark ? '#A882FF' : '#6D28D9',
-                        letterSpacing: '0.3px',
-                      }}>
-                        {catSummary && catSummary.remaining < 0 ? 'OVER' : 'TARGET'}
-                      </span>
-                    )}
                   </div>
                   <p
                     style={{
@@ -515,26 +494,17 @@ export default function BillsPage() {
                   >
                     {catHeaderSub}
                   </p>
-                  {hasBudget && !hasBills && catBudget.budget_amount > 0 && (
-                    <div style={{ height: '5px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden', marginTop: '0.5rem', width: '85%' }}>
-                      <div style={{
-                        height: '100%', borderRadius: '3px',
-                        width: `${Math.min(100, Math.round(((catSummary?.spentAmount || 0) / (catBudget.budget_amount || 1)) * 100))}%`,
-                        backgroundColor: catSummary && catSummary.remaining < 0 ? '#DC2626' : colors.green,
-                      }} />
-                    </div>
-                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <p
                     style={{
                       fontSize: '1rem',
                       fontWeight: 700,
-                      color: catSummary && catSummary.remaining < 0 ? '#DC2626' : colors.text,
+                      color: colors.text,
                       margin: 0,
                     }}
                   >
-                    {fmt(hasBills ? categoryBills.reduce((s, b) => s + b.total, 0) : (catBudget?.budget_amount || 0))}
+                    {fmt(categoryBills.reduce((s, b) => s + b.total, 0) + (hasBudget ? (catBudget.budget_amount || 0) : 0))}
                   </p>
                   <span style={{ color: colors.textMuted, fontSize: '1rem' }}>
                     {expandedBills[catName] ? '▲' : '▼'}
@@ -913,51 +883,22 @@ export default function BillsPage() {
                   );
                 })}
                 {hasBudget && (
-                  <Card style={{ cursor: 'pointer' }} onClick={() => alert('Budget spending tracker')}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.625rem', flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', flex: 1 }}>
+                  <Card style={{ cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.625rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
                         <CategoryIcon category={catName} size={32} isDark={isDark} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-                              {catName} spending
-                            </h3>
-                            <span style={{
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              padding: '0.125rem 0.5rem',
-                              borderRadius: '10px',
-                              backgroundColor: catSummary && catSummary.remaining < 0 ? 'rgba(220,38,38,0.1)' : 'rgba(168,130,255,0.15)',
-                              color: catSummary && catSummary.remaining < 0 ? '#DC2626' : isDark ? '#A882FF' : '#6D28D9',
-                              letterSpacing: '0.3px',
-                            }}>
-                              {catSummary && catSummary.remaining < 0 ? 'OVER' : 'TARGET'}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0 0 0.5rem 0' }}>
-                            {fmt(catSummary?.spentAmount || 0)} of {fmt(catBudget.budget_amount)} spent
+                        <div>
+                          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                            {catName}
+                          </h3>
+                          <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                            {catSummary ? `${fmt(catSummary.spentAmount)} of ${fmt(catBudget.budget_amount)} spent` : `~${fmt(catBudget.budget_amount)} per paycheck`}
                           </p>
-                          {catBudget.budget_amount > 0 && (
-                            <div style={{ height: '5px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{
-                                height: '100%', borderRadius: '3px',
-                                width: `${Math.min(100, Math.round(((catSummary?.spentAmount || 0) / (catBudget.budget_amount || 1)) * 100))}%`,
-                                backgroundColor: catSummary && catSummary.remaining < 0 ? '#DC2626' : colors.green,
-                              }} />
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                          {fmt(catBudget.budget_amount)}
-                        </p>
-                        {catSummary && catSummary.spentAmount > 0 && (
-                          <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                            {fmt(catSummary.spentAmount)}
-                          </p>
-                        )}
-                      </div>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
+                        {fmt(catBudget.budget_amount)}
+                      </p>
                     </div>
                   </Card>
                 )}

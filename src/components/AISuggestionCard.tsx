@@ -56,7 +56,7 @@ export default function AISuggestionCard({ suggestions, onAction }: Props) {
       case 'category_fix':
         return 'Category Fix';
       case 'budget_creation':
-        return 'New Budget';
+        return 'New Expense';
       case 'category_consolidation':
         return 'Simplify Categories';
       default:
