@@ -968,7 +968,7 @@ export default function BillsPage() {
         </div>
       )}
 
-      {/* Add Bill Modal */}
+      {/* Add Expense Modal */}
       <AddBillModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
