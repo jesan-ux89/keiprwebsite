@@ -366,7 +366,7 @@ export default function BankingPage() {
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <p style={{
                 margin: 0, fontWeight: 700, fontSize: '1rem',
-                color: (isCreditCard || isLoan) && balCurrent > 0 ? (isDark ? '#D4A373' : '#854F0B') : colors.text,
+                color: (isCreditCard || isLoan) && balCurrent > 0 ? (isDark ? '#7C8DB5' : '#506385') : colors.text,
               }}>
                 {account.balance
                   ? (isCreditCard || isLoan) ? `-${fmt(balCurrent)}` : fmt(balCurrent)
@@ -431,16 +431,22 @@ export default function BankingPage() {
           style={{ marginBottom: '2rem', cursor: 'pointer', userSelect: 'none' }}
           onClick={() => setSummaryExpanded(!summaryExpanded)}
         >
-          {/* Collapsed: Cash + Debt side by side */}
+          {/* Collapsed: Cash + CC Debt + Loans */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Cash</p>
               <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: colors.text }}>{fmt(summaryTotals.totalCash)}</p>
             </div>
-            {summaryTotals.totalDebt > 0 && (
+            {summaryTotals.totalCredit > 0 && (
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>CC Debt</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalCredit)}</p>
+              </div>
+            )}
+            {summaryTotals.totalLoans > 0 && (
               <div style={{ textAlign: 'right' }}>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Debt</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: isDark ? '#D4A373' : '#854F0B' }}>{fmt(summaryTotals.totalDebt)}</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Loans</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalLoans)}</p>
               </div>
             )}
             <span style={{ fontSize: '0.875rem', color: colors.textMuted, alignSelf: 'center', marginLeft: 4 }}>
@@ -471,7 +477,7 @@ export default function BankingPage() {
                   {summaryTotals.creditAccounts.map((acc, i) => (
                     <div key={`cc-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
                       <span style={{ fontSize: '0.8125rem', color: colors.textMuted }}>{acc.name}{acc.mask ? ` ···${acc.mask}` : ''}</span>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: acc.amount > 0 ? (isDark ? '#D4A373' : '#854F0B') : colors.textMuted }}>{acc.amount > 0 ? fmt(acc.amount) : '$0'}</span>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: acc.amount > 0 ? (isDark ? '#7C8DB5' : '#506385') : colors.textMuted }}>{acc.amount > 0 ? fmt(acc.amount) : '$0'}</span>
                     </div>
                   ))}
                 </div>
@@ -484,7 +490,7 @@ export default function BankingPage() {
                   {summaryTotals.loanAccounts.map((acc, i) => (
                     <div key={`loan-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
                       <span style={{ fontSize: '0.8125rem', color: colors.textMuted }}>{acc.name}{acc.mask ? ` ···${acc.mask}` : ''}</span>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: isDark ? '#D4A373' : '#854F0B' }}>{fmt(acc.amount)}</span>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(acc.amount)}</span>
                     </div>
                   ))}
                 </div>
