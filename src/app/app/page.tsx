@@ -1040,7 +1040,7 @@ export default function DashboardPage() {
               const spentAmt = summaryItem ? summaryItem.spentAmount : 0;
               const leftAmt = budget.budget_amount - spentAmt;
               return (
-                <a key={`budget-${budget.id}`} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                <a key={`budget-${budget.id}`} href="/app/bills" style={{ textDecoration: 'none' }}>
                   <div style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '1rem', backgroundColor: colors.background,
@@ -1113,7 +1113,7 @@ export default function DashboardPage() {
               {/* STANDALONE SPENDING TARGETS — Next Check (Ultra only, categories without bills) */}
               {isUltra && (spendingBudgets || []).filter((b: any) => !nextPaycheckBills.some(bill => bill.category === b.category)).map((budget: any) => {
                 return (
-                  <a key={`next-budget-${budget.id}`} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                  <a key={`next-budget-${budget.id}`} href="/app/bills" style={{ textDecoration: 'none' }}>
                     <div style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       padding: '1rem', backgroundColor: colors.background,
