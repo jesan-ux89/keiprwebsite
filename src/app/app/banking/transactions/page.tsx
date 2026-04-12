@@ -236,9 +236,11 @@ export default function AllTransactionsPage() {
     try {
       const res = await bankingAPI.getAllTransactions({ category: 'all', days: 365, limit: 1000, accountId });
       const txns = (res as any).data?.transactions || [];
+      const INTEREST_RE = /\b(INTEREST\s*(CHARGE|CHG)?|FINANCE\s*CHARGE|FINANCE\s*CHG|MIN(IMUM)?\s*INT(EREST)?\s*(CHARGE|CHG)?|PURCHASE\s*INT(EREST)?|CASH\s*ADV(ANCE)?\s*INT(EREST)?)\b/i;
       const interestTxns = txns.filter((t: any) => {
         const name = (t.cleaned_name || t.merchant_name || '').toUpperCase();
-        return name.includes('INTEREST') && t.amount > 0;
+        const pfc = (t.personal_finance_category || '').toUpperCase();
+        return (INTEREST_RE.test(name) || name.includes('INTEREST') || pfc.includes('INTEREST')) && t.amount > 0;
       });
       if (interestTxns.length === 0) {
         setInterestCharged({ thisMonth: 0, lastMonth: 0, monthlyBreakdown: [], twelveMonthTotal: 0, monthlyAverage: 0, count: 0 });
