@@ -964,7 +964,8 @@ export default function BillsPage() {
               </div>
               )}
             </div>
-          );})
+            );
+          })}
         </div>
       )}
 
