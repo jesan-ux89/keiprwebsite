@@ -319,7 +319,6 @@ export default function AISettingsPage() {
                 justifyContent: 'space-between',
                 gap: '1rem',
               }}
-              onHover
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
                 <Layers size={20} style={{ color: colors.electric }} />
