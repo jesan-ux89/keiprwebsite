@@ -184,4 +184,28 @@ export const spendingAPI = {
   getSuggested:    () => api.get('/spending/budgets/suggested'),
 };
 
+// AI Settings & Features
+export const aiAPI = {
+  // AI Settings
+  getSettings:           () => api.get('/ai/settings'),
+  updateSettings:        (settings: Record<string, boolean>) => api.patch('/ai/settings', settings),
+  // Merchant Category Rules
+  getCategoryRules:      () => api.get('/ai/category-rules'),
+  setCategoryRule:       (merchantName: string, category: string, applyToExisting = false) =>
+    api.post('/ai/category-rules', { merchantName, category, applyToExisting }),
+  deleteCategoryRule:    (ruleId: string) => api.delete(`/ai/category-rules/${ruleId}`),
+  // AI Suggestions (Ultra)
+  getSuggestions:        () => api.get('/ai/suggestions'),
+  handleSuggestion:      (suggestionId: string, action: string) =>
+    api.post(`/ai/suggestions/${suggestionId}/action`, { action }),
+  // Match Feedback (Ultra)
+  submitMatchFeedback:   (feedback: Record<string, any>) => api.post('/ai/match-feedback', feedback),
+  // Transaction Recategorization
+  recategorizeTransaction: (transactionId: string, category: string) =>
+    api.post(`/ai/transactions/${transactionId}/recategorize`, { category }),
+  // On-demand AI Scans (Ultra)
+  scanCategories:          () => api.post('/ai/scan/categories'),
+  scanBudgets:             () => api.post('/ai/scan/budgets'),
+};
+
 export default api;

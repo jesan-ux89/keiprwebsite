@@ -35,6 +35,7 @@ import {
   Bell,
   Landmark,
   RefreshCw,
+  Zap,
 } from 'lucide-react';
 
 interface IncomeSourceForm {
@@ -1892,6 +1893,33 @@ export default function SettingsPage() {
         expandedSection={expandedSection}
         toggleSection={toggleSection}
       />
+
+      {/* AI Features Section */}
+      <Card style={{ marginBottom: '1.5rem' }}>
+        <Link href="/app/settings/ai" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Zap size={20} style={{ color: colors.electric }} />
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                AI Features
+              </h2>
+            </div>
+            <ChevronRight
+              size={20}
+              style={{
+                color: colors.textMuted,
+              }}
+            />
+          </div>
+        </Link>
+      </Card>
 
       {/* Export Section */}
       <Card style={{ marginBottom: '1.5rem' }}>
