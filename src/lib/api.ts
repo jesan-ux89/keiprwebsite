@@ -206,6 +206,8 @@ export const aiAPI = {
   // On-demand AI Scans (Ultra)
   scanCategories:          () => api.post('/ai/scan/categories'),
   scanBudgets:             () => api.post('/ai/scan/budgets'),
+  // Admin Stats (Ultra)
+  getAdminStats:           () => api.get('/ai/admin/stats'),
 };
 
 export default api;

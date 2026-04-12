@@ -160,9 +160,29 @@ export default function AISettingsPage() {
         >
           <ArrowLeft size={20} />
         </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text, margin: 0 }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text, margin: 0, flex: 1 }}>
           AI Features
         </h1>
+        {isUltra && (
+          <Link
+            href="/app/settings/ai-admin"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.375rem 0.75rem',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: colors.electric,
+              border: `1px solid ${colors.electric}`,
+              borderRadius: '0.375rem',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap' as const,
+            }}
+          >
+            Admin Dashboard
+          </Link>
+        )}
       </div>
 
       {/* Toast Message */}
