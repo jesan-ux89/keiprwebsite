@@ -821,7 +821,7 @@ export default function DashboardPage() {
               {upcomingBills.map((b: any, idx: number) => {
                 const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
                 return (
-                  <a key={b.id} href={`/app/bills`} style={{ textDecoration: 'none', display: 'block', marginBottom: idx < upcomingBills.length - 1 ? '0.375rem' : 0 }}>
+                  <a key={b.id} href={`/app/bills?edit=${b.id}`} style={{ textDecoration: 'none', display: 'block', marginBottom: idx < upcomingBills.length - 1 ? '0.375rem' : 0 }}>
                     <Card style={{
                       padding: '0.875rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem',
                       cursor: 'pointer',
@@ -1052,21 +1052,25 @@ export default function DashboardPage() {
                 {nextPaycheckBills.map((bill) => {
                   const amt = billAmountForPaycheck(bill, nextPaycheckNum);
                   return (
-                    <div
+                    <a
                       key={bill.id}
+                      href={`/app/bills?edit=${bill.id}`}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         padding: '0.75rem',
                         backgroundColor: colors.background,
                         borderRadius: '0.375rem',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.15s',
                       }}
                     >
                       <span style={{ color: colors.text, fontWeight: 500 }}>
                         {bill.name}{bill.isSplit ? ` · P${nextPaycheckNum}` : ''}
                       </span>
                       <span style={{ color: colors.text, fontWeight: 600 }}>{fmt(amt)}</span>
-                    </div>
+                    </a>
                   );
                 })}
               </div>
@@ -1279,8 +1283,9 @@ export default function DashboardPage() {
                       const amt = billAmountForPaycheck(bill, nextPaycheckNum);
                       const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
                       return (
-                        <div
+                        <a
                           key={bill.id}
+                          href={`/app/bills?edit=${bill.id}`}
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -1289,6 +1294,9 @@ export default function DashboardPage() {
                             backgroundColor: colors.background,
                             borderRadius: '0.5rem',
                             borderLeft: `4px solid ${CATEGORY_COLORS[bill.category] || '#6B7280'}`,
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            transition: 'opacity 0.15s',
                           }}
                         >
                           <div style={{ flex: 1 }}>
@@ -1317,7 +1325,7 @@ export default function DashboardPage() {
                           <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
                             {fmt(amt)}
                           </p>
-                        </div>
+                        </a>
                       );
                     })}
                   </div>
@@ -1866,8 +1874,9 @@ export default function DashboardPage() {
                           {catBills.map(b => {
                             const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
                             return (
-                              <div
+                              <a
                                 key={b.id}
+                                href={`/app/bills?edit=${b.id}`}
                                 style={{
                                   display: 'flex',
                                   justifyContent: 'space-between',
@@ -1876,6 +1885,9 @@ export default function DashboardPage() {
                                   backgroundColor: colors.background,
                                   borderRadius: '0.5rem',
                                   borderLeft: `3px solid ${color}`,
+                                  textDecoration: 'none',
+                                  cursor: 'pointer',
+                                  transition: 'opacity 0.15s',
                                 }}
                               >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1888,7 +1900,7 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
                                 <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(b.total)}</span>
-                              </div>
+                              </a>
                             );
                           })}
                         </div>
