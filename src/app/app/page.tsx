@@ -173,11 +173,24 @@ export default function DashboardPage() {
   const projectedSpending = spendingPerDay * totalPeriodDays;
   const daysRemaining = Math.max(0, totalPeriodDays - daysIntoPeriod);
 
-  // Upcoming bills (sorted by due day, next 5 unpaid)
-  const upcomingBills = thisPaycheckBills
-    .filter(b => !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, currentPaycheckNum)))
-    .sort((a, b) => (a.dueDay || 1) - (b.dueDay || 1))
-    .slice(0, 5);
+  // Upcoming bills: show unpaid bills whose due day is today or later this month.
+  // Combines this-check and next-check bills so the user always sees what's coming.
+  const todayDay = now.getDate();
+  const upcomingBills = (() => {
+    const thisCheckUpcoming = thisPaycheckBills
+      .filter(b => (b.dueDay || 1) >= todayDay && !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, currentPaycheckNum)));
+    const nextCheckUpcoming = nextPaycheckBills
+      .filter(b => !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, nextPaycheckNum)));
+    return [...thisCheckUpcoming, ...nextCheckUpcoming]
+      .sort((a, b) => {
+        const aInThis = thisCheckUpcoming.includes(a);
+        const bInThis = thisCheckUpcoming.includes(b);
+        if (aInThis && !bInThis) return -1;
+        if (!aInThis && bInThis) return 1;
+        return (a.dueDay || 1) - (b.dueDay || 1);
+      })
+      .slice(0, 5);
+  })();
 
   // ── 6-month spending trend data (MATCHES MOBILE) ──────────
   const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
