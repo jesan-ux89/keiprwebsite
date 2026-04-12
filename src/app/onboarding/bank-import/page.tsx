@@ -15,7 +15,7 @@ function BankImportContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { colors } = useTheme();
-  const { refreshBills } = useApp();
+  const { refreshBills, refreshIncomeSources } = useApp();
 
   // Url params from previous step
   const schedule = searchParams.get('schedule') || 'biweekly';
@@ -28,6 +28,7 @@ function BankImportContent() {
   const [error, setError] = useState<string | null>(null);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [connectedBank, setConnectedBank] = useState<string | null>(null);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
   const plaidReady = useRef(false);
 
   // ── Step 1: Start Ultra free trial ──
@@ -129,11 +130,23 @@ function BankImportContent() {
         });
 
         setConnectedBank(institution?.name || 'Your bank');
+        setStep('success');
 
-        // Show success step after brief delay
-        setTimeout(() => {
-          setStep('success');
-        }, 1500);
+        // Background: auto-import bills, income, budgets from transaction history
+        setImportStatus('Scanning your transactions...');
+        try {
+          const importRes = await bankingAPI.onboardingImport();
+          const data = importRes.data || {};
+          if (data.billsCreated > 0) await refreshBills();
+          if (data.incomeDetected > 0) await refreshIncomeSources();
+          setImportStatus(
+            data.billsCreated > 0
+              ? `Found ${data.billsCreated} bill${data.billsCreated > 1 ? 's' : ''}${data.incomeDetected > 0 ? ' and your income' : ''}`
+              : 'Connected — you can add bills manually'
+          );
+        } catch (_) {
+          setImportStatus(null);
+        }
       } catch (err: any) {
         setError(err?.response?.data?.error || 'Failed to connect bank. Please try again.');
         setStep('connecting');
