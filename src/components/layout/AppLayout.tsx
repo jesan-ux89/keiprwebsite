@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Bell,
+  BrainCircuit,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -46,7 +47,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { colors } = useTheme();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isAdmin } = useAuth();
   const { incomeSources, incomeLoading, isUltra, detectedCount } = useApp();
   const pathname = usePathname();
   const router = useRouter();
@@ -234,6 +235,33 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </Link>
               );
             })}
+
+            {/* Admin-only link */}
+            {isAdmin && (
+              <Link
+                href="/app/settings/ai-admin"
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  textDecoration: 'none',
+                  marginTop: '0.5rem',
+                  borderTop: `1px solid ${colors.divider}`,
+                  paddingTop: '1rem',
+                  color: pathname.startsWith('/app/settings/ai-admin') ? colors.navActive : colors.navIcon,
+                  backgroundColor: pathname.startsWith('/app/settings/ai-admin') ? `${colors.electric}20` : 'transparent',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.95rem',
+                  fontWeight: pathname.startsWith('/app/settings/ai-admin') ? 600 : 500,
+                }}
+              >
+                <BrainCircuit size={20} />
+                Admin AI Dashboard
+              </Link>
+            )}
           </div>
         </div>
 

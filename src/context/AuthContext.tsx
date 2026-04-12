@@ -17,6 +17,7 @@ import { authAPI } from '../lib/api';
 interface AuthContextType {
   user: FirebaseUser | null;
   loading: boolean;
+  isAdmin: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -27,6 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isAdmin: false,
   signInWithEmail: async () => {},
   signUpWithEmail: async () => {},
   signInWithGoogle: async () => {},
@@ -37,12 +39,22 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+
+      // Check admin status when user signs in
+      if (currentUser) {
+        authAPI.isAdmin()
+          .then(res => setIsAdmin(res.data?.isAdmin === true))
+          .catch(() => setIsAdmin(false));
+      } else {
+        setIsAdmin(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -97,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         loading,
+        isAdmin,
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,

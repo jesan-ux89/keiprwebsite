@@ -28,6 +28,7 @@ export const authAPI = {
   totpVerify:         (email: string, code: string) => api.post('/auth/totp/verify', { email, code }),
   totpVerifyRecovery: (email: string, recoveryCode: string) => api.post('/auth/totp/verify-recovery', { email, recoveryCode }),
   totpDisable:        () => api.post('/auth/totp/disable'),
+  isAdmin:            () => api.get('/auth/is-admin'),
 };
 
 // Paychecks

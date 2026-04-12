@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { aiAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 
@@ -61,7 +61,7 @@ interface AdminStats {
 
 export default function AIAdminPage() {
   const { colors } = useTheme();
-  const { isUltra } = useApp();
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -84,11 +84,11 @@ export default function AIAdminPage() {
     }
   }
 
-  if (!isUltra) {
+  if (!isAdmin) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: colors.textMuted }}>
-        <p>AI Admin Dashboard requires Ultra tier.</p>
-        <Link href="/app/settings" style={{ color: colors.electric }}>Back to Settings</Link>
+        <p>Access denied. Admin only.</p>
+        <Link href="/app" style={{ color: colors.electric }}>Back to Dashboard</Link>
       </div>
     );
   }

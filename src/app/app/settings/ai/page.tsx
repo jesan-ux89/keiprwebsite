@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { aiAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -27,6 +28,7 @@ interface ToastMessage {
 export default function AISettingsPage() {
   const { colors, isDark } = useTheme();
   const { isUltra } = useApp();
+  const { isAdmin } = useAuth();
 
   // State
   const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ export default function AISettingsPage() {
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text, margin: 0, flex: 1 }}>
           AI Features
         </h1>
-        {isUltra && (
+        {isAdmin && (
           <Link
             href="/app/settings/ai-admin"
             style={{
