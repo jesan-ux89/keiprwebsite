@@ -631,7 +631,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0, marginBottom: '0.5rem' }}>
-                {isUltra && totalSpendingBudgetsAmount > 0 ? 'Bills + Budget' : 'Bills This Check'}
+                Expenses
               </p>
               <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: 0 }}>
                 {fmt(totalBillsThisCheck + totalSpendingBudgetsAmount)}
@@ -1432,7 +1432,7 @@ export default function DashboardPage() {
               {/* After bills summary */}
               <Card style={{ backgroundColor: 'rgba(56,189,248,0.06)', border: `1px solid rgba(56,189,248,0.15)` }}>
                 <p style={{ margin: 0, fontSize: '0.95rem' }}>
-                  <span style={{ fontWeight: 700, color: colors.midnight }}>After bills: {fmt(nextRemaining)} </span>
+                  <span style={{ fontWeight: 700, color: colors.midnight }}>After expenses: {fmt(nextRemaining)} </span>
                   <span style={{ color: colors.midnight }}>available for spending &amp; savings</span>
                 </p>
               </Card>
