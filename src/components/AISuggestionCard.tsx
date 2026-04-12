@@ -43,7 +43,7 @@ export default function AISuggestionCard({ suggestions, onAction }: Props) {
       case 'category_fix':
         return `Move ${payload.merchantName} from ${payload.currentCategory} to ${payload.suggestedCategory}`;
       case 'budget_creation':
-        return `Create a ${payload.category} budget of $${Math.round((payload.suggestedAmount || 0) / 100)}/month`;
+        return `Create a ${payload.category} budget of $${Math.round((payload.suggestedAmount || 0) / 100)}/paycheck`;
       case 'category_consolidation':
         return `Merge ${payload.categories?.join(', ')} into ${payload.suggestedCategory}`;
       default:
