@@ -102,6 +102,7 @@ export default function BankingPage() {
   const { colors, isDark } = useTheme();
   const { isUltra, fmt } = useApp();
   const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [loanPayments, setLoanPayments] = useState<Record<string, Array<{ date: string; amount: number }>>>({});
 
   const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
   const [status, setStatus] = useState<BankingStatus | null>(null);
@@ -122,6 +123,29 @@ export default function BankingPage() {
   useEffect(() => {
     if (isUltra) loadAll();
   }, [isUltra]);
+
+  // Fetch recent loan payments when accounts load
+  useEffect(() => {
+    if (!accounts.length) return;
+    const loanAccts = accounts.filter(a => getAccountGroup(a.account_type) === 'loan');
+    if (loanAccts.length === 0) return;
+    loanAccts.forEach(async (acc) => {
+      try {
+        const res = await bankingAPI.getAllTransactions({ category: 'all', days: 180, limit: 200, accountId: acc.id });
+        const txns = (res as any).data?.transactions || [];
+        const payments = txns
+          .filter((t: any) => {
+            const name = (t.cleaned_name || t.merchant_name || '').toUpperCase();
+            return name.includes('PAYMENT') || name.includes('PMT') || t.amount < 0;
+          })
+          .slice(0, 3)
+          .map((t: any) => ({ date: t.transaction_date?.split('T')[0] || '', amount: Math.abs(t.amount) }));
+        if (payments.length > 0) {
+          setLoanPayments(prev => ({ ...prev, [acc.id]: payments }));
+        }
+      } catch (_) { /* non-critical */ }
+    });
+  }, [accounts]);
 
   async function loadAll() {
     setLoading(true);
@@ -242,13 +266,13 @@ export default function BankingPage() {
     let totalCash = 0;
     let totalCredit = 0;
     let totalLoans = 0;
-    const cashAccounts: Array<{ name: string; mask: string; amount: number }> = [];
-    const creditAccounts: Array<{ name: string; mask: string; amount: number }> = [];
-    const loanAccounts: Array<{ name: string; mask: string; amount: number }> = [];
+    const cashAccounts: Array<{ id: string; name: string; mask: string; amount: number }> = [];
+    const creditAccounts: Array<{ id: string; name: string; mask: string; amount: number }> = [];
+    const loanAccounts: Array<{ id: string; name: string; mask: string; amount: number }> = [];
     accounts.forEach(acc => {
       const bal = acc.balance?.current || 0;
       const group = getAccountGroup(acc.account_type);
-      const entry = { name: acc.account_name || acc.institution_name, mask: acc.account_mask || '', amount: bal };
+      const entry = { id: acc.id, name: acc.account_name || acc.institution_name, mask: acc.account_mask || '', amount: bal };
       if (group === 'cash') { totalCash += bal; cashAccounts.push(entry); }
       else if (group === 'credit') { totalCredit += bal; creditAccounts.push(entry); }
       else if (group === 'loan') { totalLoans += bal; loanAccounts.push(entry); }
@@ -464,7 +488,10 @@ export default function BankingPage() {
                   onClick={() => setSummaryExpanded(!summaryExpanded)}
                 >
                   <p style={{ margin: '0 0 4px 0', fontSize: '0.625rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>💳  Credit Cards</p>
-                  <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalCredit)}</p>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalCredit)}</p>
+                    <span style={{ fontSize: '0.625rem', color: colors.textMuted }}>total balance</span>
+                  </div>
                   <p style={{ margin: '3px 0 0 0', fontSize: '0.625rem', color: colors.textMuted }}>
                     {summaryTotals.creditAccounts.length} card{summaryTotals.creditAccounts.length !== 1 ? 's' : ''}
                     {summaryTotals.creditAccounts.filter(a => a.amount > 0).length > 0
@@ -491,20 +518,43 @@ export default function BankingPage() {
                   onClick={() => setSummaryExpanded(!summaryExpanded)}
                 >
                   <p style={{ margin: '0 0 4px 0', fontSize: '0.625rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📋  Loans</p>
-                  <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalLoans)}</p>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalLoans)}</p>
+                    <span style={{ fontSize: '0.625rem', color: colors.textMuted }}>owed</span>
+                  </div>
                   <p style={{ margin: '3px 0 0 0', fontSize: '0.625rem', color: colors.textMuted }}>
                     {summaryTotals.loanAccounts.length > 1
                       ? `${summaryTotals.loanAccounts.length} loans`
                       : summaryTotals.loanAccounts[0]?.name || '1 loan'}
                   </p>
-                  {summaryExpanded && summaryTotals.loanAccounts.length > 1 && (
+                  {summaryExpanded && (
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${colors.divider}` }}>
-                      {summaryTotals.loanAccounts.map((acc, i) => (
+                      {summaryTotals.loanAccounts.length > 1 && summaryTotals.loanAccounts.map((acc, i) => (
                         <div key={`loan-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
                           <span style={{ fontSize: '0.6875rem', color: colors.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{acc.name}</span>
                           <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(acc.amount)}</span>
                         </div>
                       ))}
+                      {/* Recent payments */}
+                      {summaryTotals.loanAccounts.map((acc) => {
+                        const payments = loanPayments[acc.id];
+                        if (!payments || payments.length === 0) return null;
+                        return (
+                          <div key={`lp-${acc.id}`} style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${colors.divider}` }}>
+                            <p style={{ margin: '0 0 4px 0', fontSize: '0.625rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recent Payments</p>
+                            {payments.map((p, pi) => {
+                              const d = new Date(p.date + 'T12:00:00');
+                              const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                              return (
+                                <div key={`p-${pi}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                                  <span style={{ fontSize: '0.6875rem', color: colors.textMuted }}>{dateStr}</span>
+                                  <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: isDark ? '#34D399' : '#059669' }}>{fmt(p.amount)}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </Card>
