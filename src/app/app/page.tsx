@@ -1033,78 +1033,66 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Spending budget targets (Ultra only) */}
-            {isUltra && (spendingBudgets || []).length > 0 && (
-              <>
-                {thisPaycheckBills.length > 0 && (
-                  <div style={{ borderTop: `1px solid ${colors.border}`, margin: '1rem 0 0.75rem 0' }} />
-                )}
-                <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.75rem 0' }}>
-                  Spending Targets
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {(spendingBudgets || []).map((budget: any) => {
-                    const summaryItem = (spendingSummary || []).find((s: any) => s.category === budget.category);
-                    const pct = summaryItem ? Math.min(100, summaryItem.pacePercent) : 0;
-                    const isOver = summaryItem && summaryItem.pacePercent > 100;
-                    return (
-                      <a key={budget.id} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
-                        <div style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          padding: '0.875rem 1rem', backgroundColor: colors.background,
-                          borderRadius: '0.5rem', borderLeft: `4px solid ${isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0C4A6E')}`,
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
-                            <CategoryIcon category={budget.category} size={28} isDark={isDark} />
-                            <div style={{ flex: 1 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
-                                <span style={{
-                                  fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.3px',
-                                  backgroundColor: isOver ? 'rgba(220,38,38,0.1)' : 'rgba(56,189,248,0.12)',
-                                  color: isOver ? '#DC2626' : '#38BDF8',
-                                  padding: '2px 6px', borderRadius: '4px',
-                                }}>
-                                  {isOver ? 'OVER' : 'TARGET'}
-                                </span>
-                              </div>
-                              <p style={{ fontSize: '0.8rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.2rem 0 0 0' }}>
-                                {summaryItem
-                                  ? `${fmt(summaryItem.spentAmount)} of ${fmt(budget.budget_amount)} spent`
-                                  : `${fmt(budget.budget_amount)} per paycheck`
-                                }
-                              </p>
-                              {summaryItem && (
-                                <div style={{
-                                  width: '100%', height: '3px',
-                                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-                                  borderRadius: '2px', marginTop: '0.375rem', overflow: 'hidden'
-                                }}>
-                                  <div style={{
-                                    width: `${pct}%`, height: '100%', borderRadius: '2px',
-                                    backgroundColor: isOver ? '#DC2626' : (isDark ? '#0A7B6C' : '#059669'),
-                                  }} />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0369A1') }}>
-                              {fmt(budget.budget_amount)}
-                            </span>
-                            {summaryItem && summaryItem.spentAmount > 0 && (
-                              <p style={{ fontSize: '0.75rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.15rem 0 0 0' }}>
-                                {fmt(summaryItem.spentAmount)} spent
-                              </p>
-                            )}
-                          </div>
+            {/* STANDALONE SPENDING BUDGETS — This Check (Ultra only, categories without bills) */}
+            {isUltra && (spendingBudgets || []).filter((b: any) => !thisPaycheckBills.some(bill => bill.category === b.category)).map((budget: any) => {
+              const summaryItem = (spendingSummary || []).find((s: any) => s.category === budget.category);
+              const pct = summaryItem ? Math.min(100, summaryItem.pacePercent) : 0;
+              const isOver = summaryItem && summaryItem.pacePercent > 100;
+              return (
+                <a key={`budget-${budget.id}`} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '0.875rem 1rem', backgroundColor: colors.background,
+                    borderRadius: '0.5rem', borderLeft: `4px solid ${isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0C4A6E')}`,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
+                      <CategoryIcon category={budget.category} size={28} isDark={isDark} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
+                          <span style={{
+                            fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.3px',
+                            backgroundColor: isOver ? 'rgba(220,38,38,0.1)' : 'rgba(56,189,248,0.12)',
+                            color: isOver ? '#DC2626' : '#38BDF8',
+                            padding: '2px 6px', borderRadius: '4px',
+                          }}>
+                            {isOver ? 'OVER' : 'TARGET'}
+                          </span>
                         </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+                        <p style={{ fontSize: '0.8rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.2rem 0 0 0' }}>
+                          {summaryItem
+                            ? `${fmt(summaryItem.spentAmount)} of ${fmt(budget.budget_amount)} spent`
+                            : `${fmt(budget.budget_amount)} per paycheck`
+                          }
+                        </p>
+                        {summaryItem && (
+                          <div style={{
+                            width: '100%', height: '3px',
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                            borderRadius: '2px', marginTop: '0.375rem', overflow: 'hidden'
+                          }}>
+                            <div style={{
+                              width: `${pct}%`, height: '100%', borderRadius: '2px',
+                              backgroundColor: isOver ? '#DC2626' : (isDark ? '#0A7B6C' : '#059669'),
+                            }} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '1rem', fontWeight: 600, color: isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0369A1') }}>
+                        {fmt(budget.budget_amount)}
+                      </span>
+                      {summaryItem && summaryItem.spentAmount > 0 && (
+                        <p style={{ fontSize: '0.75rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                          {fmt(summaryItem.spentAmount)} spent
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
           </Card>
 
           {/* Next paycheck preview */}
@@ -1148,76 +1136,66 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              {/* Spending budget targets (Ultra only) */}
-              {isUltra && (spendingBudgets || []).length > 0 && (
-                <>
-                  <div style={{ borderTop: `1px solid ${colors.border}`, margin: '1rem 0 0.75rem 0' }} />
-                  <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.75rem 0' }}>
-                    Spending Targets
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {(spendingBudgets || []).map((budget: any) => {
-                      const summaryItem = (spendingSummary || []).find((s: any) => s.category === budget.category);
-                      const pct = summaryItem ? Math.min(100, summaryItem.pacePercent) : 0;
-                      const isOver = summaryItem && summaryItem.pacePercent > 100;
-                      return (
-                        <a key={budget.id} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
-                          <div style={{
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            padding: '0.875rem 1rem', backgroundColor: colors.background,
-                            borderRadius: '0.5rem', borderLeft: `4px solid ${isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0C4A6E')}`,
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
-                              <CategoryIcon category={budget.category} size={28} isDark={isDark} />
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
-                                  <span style={{
-                                    fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.3px',
-                                    backgroundColor: isOver ? 'rgba(220,38,38,0.1)' : 'rgba(56,189,248,0.12)',
-                                    color: isOver ? '#DC2626' : '#38BDF8',
-                                    padding: '2px 6px', borderRadius: '4px',
-                                  }}>
-                                    {isOver ? 'OVER' : 'TARGET'}
-                                  </span>
-                                </div>
-                                <p style={{ fontSize: '0.8rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.2rem 0 0 0' }}>
-                                  {summaryItem
-                                    ? `${fmt(summaryItem.spentAmount)} of ${fmt(budget.budget_amount)} spent`
-                                    : `${fmt(budget.budget_amount)} per paycheck`
-                                  }
-                                </p>
-                                {summaryItem && (
-                                  <div style={{
-                                    width: '100%', height: '3px',
-                                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-                                    borderRadius: '2px', marginTop: '0.375rem', overflow: 'hidden'
-                                  }}>
-                                    <div style={{
-                                      width: `${pct}%`, height: '100%', borderRadius: '2px',
-                                      backgroundColor: isOver ? '#DC2626' : (isDark ? '#0A7B6C' : '#059669'),
-                                    }} />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <span style={{ fontSize: '1rem', fontWeight: 600, color: isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0369A1') }}>
-                                {fmt(budget.budget_amount)}
-                              </span>
-                              {summaryItem && summaryItem.spentAmount > 0 && (
-                                <p style={{ fontSize: '0.75rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.15rem 0 0 0' }}>
-                                  {fmt(summaryItem.spentAmount)} spent
-                                </p>
-                              )}
-                            </div>
+              {/* STANDALONE SPENDING BUDGETS — Next Check (Ultra only, categories without bills) */}
+              {isUltra && (spendingBudgets || []).filter((b: any) => !nextPaycheckBills.some(bill => bill.category === b.category)).map((budget: any) => {
+                const summaryItem = (spendingSummary || []).find((s: any) => s.category === budget.category);
+                const pct = summaryItem ? Math.min(100, summaryItem.pacePercent) : 0;
+                const isOver = summaryItem && summaryItem.pacePercent > 100;
+                return (
+                  <a key={`next-budget-${budget.id}`} href="/app/settings/spending-budgets" style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '0.875rem 1rem', backgroundColor: colors.background,
+                      borderRadius: '0.5rem', borderLeft: `4px solid ${isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0C4A6E')}`,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
+                        <CategoryIcon category={budget.category} size={28} isDark={isDark} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>{budget.category}</span>
+                            <span style={{
+                              fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.3px',
+                              backgroundColor: isOver ? 'rgba(220,38,38,0.1)' : 'rgba(56,189,248,0.12)',
+                              color: isOver ? '#DC2626' : '#38BDF8',
+                              padding: '2px 6px', borderRadius: '4px',
+                            }}>
+                              {isOver ? 'OVER' : 'TARGET'}
+                            </span>
                           </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+                          <p style={{ fontSize: '0.8rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.2rem 0 0 0' }}>
+                            {summaryItem
+                              ? `${fmt(summaryItem.spentAmount)} of ${fmt(budget.budget_amount)} spent`
+                              : `${fmt(budget.budget_amount)} per paycheck`
+                            }
+                          </p>
+                          {summaryItem && (
+                            <div style={{
+                              width: '100%', height: '3px',
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                              borderRadius: '2px', marginTop: '0.375rem', overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                width: `${pct}%`, height: '100%', borderRadius: '2px',
+                                backgroundColor: isOver ? '#DC2626' : (isDark ? '#0A7B6C' : '#059669'),
+                              }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 600, color: isOver ? '#DC2626' : (isDark ? '#38BDF8' : '#0369A1') }}>
+                          {fmt(budget.budget_amount)}
+                        </span>
+                        {summaryItem && summaryItem.spentAmount > 0 && (
+                          <p style={{ fontSize: '0.75rem', color: isOver ? '#DC2626' : colors.textMuted, margin: '0.15rem 0 0 0' }}>
+                            {fmt(summaryItem.spentAmount)} spent
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
             </Card>
           )}
 
