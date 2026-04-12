@@ -99,7 +99,8 @@ export default function AISettingsPage() {
       setScanLoading('categories');
       const res = await aiAPI.scanCategories();
       const result = res.data;
-      showToast(`Scanned ${result?.scanned || 0} transactions`, 'success');
+      const count = result?.suggestionsCreated || 0;
+      showToast(count > 0 ? `Found ${count} category suggestion${count !== 1 ? 's' : ''}` : 'No issues found — categories look good!', 'success');
       await loadSettings();
     } catch (err: any) {
       console.error('[AISettings] Scan categories failed:', err?.message);
@@ -114,7 +115,8 @@ export default function AISettingsPage() {
       setScanLoading('budgets');
       const res = await aiAPI.scanBudgets();
       const result = res.data;
-      showToast(`Generated ${result?.suggested || 0} budget(s)`, 'success');
+      const count = result?.suggestionsCreated || 0;
+      showToast(count > 0 ? `Created ${count} budget suggestion${count !== 1 ? 's' : ''}` : 'No new budget suggestions', 'success');
       await loadSettings();
     } catch (err: any) {
       console.error('[AISettings] Scan budgets failed:', err?.message);
