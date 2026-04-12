@@ -425,79 +425,93 @@ export default function BankingPage() {
         </p>
       </div>
 
-      {/* Summary Card (Collapsible) */}
+      {/* ═══ CASH CARD (Collapsible) ═══ */}
       {!loading && accounts.length > 0 && (
-        <Card
-          style={{ marginBottom: '2rem', cursor: 'pointer', userSelect: 'none' }}
-          onClick={() => setSummaryExpanded(!summaryExpanded)}
-        >
-          {/* Collapsed: Cash + CC Debt + Loans */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Cash</p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: colors.text }}>{fmt(summaryTotals.totalCash)}</p>
+        <>
+          <Card
+            style={{ marginBottom: '0.75rem', cursor: 'pointer', userSelect: 'none' }}
+            onClick={() => setSummaryExpanded(!summaryExpanded)}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Cash</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: colors.text }}>{fmt(summaryTotals.totalCash)}</p>
+              </div>
+              <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>
+                {summaryExpanded ? '▲' : '▼'}
+              </span>
             </div>
-            {summaryTotals.totalCredit > 0 && (
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>CC Debt</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalCredit)}</p>
+            {/* Expanded: Cash breakdown */}
+            {summaryExpanded && summaryTotals.cashAccounts.length > 0 && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${colors.divider}` }}>
+                {summaryTotals.cashAccounts.map((acc, i) => (
+                  <div key={`cash-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
+                    <span style={{ fontSize: '0.8125rem', color: colors.textMuted }}>{acc.name}{acc.mask ? ` ···${acc.mask}` : ''}</span>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: colors.text }}>{fmt(acc.amount)}</span>
+                  </div>
+                ))}
               </div>
             )}
-            {summaryTotals.totalLoans > 0 && (
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted, fontWeight: 500 }}>Loans</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '1.75rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalLoans)}</p>
-              </div>
-            )}
-            <span style={{ fontSize: '0.875rem', color: colors.textMuted, alignSelf: 'center', marginLeft: 4 }}>
-              {summaryExpanded ? '▲' : '▼'}
-            </span>
-          </div>
+          </Card>
 
-          {/* Expanded: Full breakdown */}
-          {summaryExpanded && (
-            <div style={{ marginTop: 12 }}>
-              {/* Cash breakdown */}
-              {summaryTotals.cashAccounts.length > 0 && (
-                <div style={{ paddingTop: 12, borderTop: `1px solid ${colors.divider}` }}>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '0.6875rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Cash Accounts</p>
-                  {summaryTotals.cashAccounts.map((acc, i) => (
-                    <div key={`cash-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-                      <span style={{ fontSize: '0.8125rem', color: colors.textMuted }}>{acc.name}{acc.mask ? ` ···${acc.mask}` : ''}</span>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: colors.text }}>{fmt(acc.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Credit Cards breakdown */}
+          {/* ═══ DEBT MINI CARDS (CC + Loans) ═══ */}
+          {(summaryTotals.totalCredit > 0 || summaryTotals.totalLoans > 0) && (
+            <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '2rem' }}>
+              {/* Credit Cards mini card */}
               {summaryTotals.creditAccounts.length > 0 && (
-                <div style={{ paddingTop: 12, marginTop: 8, borderTop: `1px solid ${colors.divider}` }}>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '0.6875rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Credit Cards</p>
-                  {summaryTotals.creditAccounts.map((acc, i) => (
-                    <div key={`cc-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-                      <span style={{ fontSize: '0.8125rem', color: colors.textMuted }}>{acc.name}{acc.mask ? ` ···${acc.mask}` : ''}</span>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: acc.amount > 0 ? (isDark ? '#7C8DB5' : '#506385') : colors.textMuted }}>{acc.amount > 0 ? fmt(acc.amount) : '$0'}</span>
+                <Card
+                  style={{ flex: 1, padding: '0.75rem', cursor: 'pointer', userSelect: 'none' }}
+                  onClick={() => setSummaryExpanded(!summaryExpanded)}
+                >
+                  <p style={{ margin: '0 0 4px 0', fontSize: '0.625rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>💳  Credit Cards</p>
+                  <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalCredit)}</p>
+                  <p style={{ margin: '3px 0 0 0', fontSize: '0.625rem', color: colors.textMuted }}>
+                    {summaryTotals.creditAccounts.length} card{summaryTotals.creditAccounts.length !== 1 ? 's' : ''}
+                    {summaryTotals.creditAccounts.filter(a => a.amount > 0).length > 0
+                      ? ` · ${summaryTotals.creditAccounts.filter(a => a.amount > 0).length} with balance`
+                      : ''}
+                  </p>
+                  {summaryExpanded && (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${colors.divider}` }}>
+                      {summaryTotals.creditAccounts.map((acc, i) => (
+                        <div key={`cc-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
+                          <span style={{ fontSize: '0.6875rem', color: colors.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{acc.name}</span>
+                          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: acc.amount > 0 ? (isDark ? '#7C8DB5' : '#506385') : colors.textMuted }}>{acc.amount > 0 ? fmt(acc.amount) : '$0'}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </Card>
               )}
 
-              {/* Loans breakdown */}
+              {/* Loans mini card */}
               {summaryTotals.loanAccounts.length > 0 && (
-                <div style={{ paddingTop: 12, marginTop: 8, borderTop: `1px solid ${colors.divider}` }}>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '0.6875rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Loans</p>
-                  {summaryTotals.loanAccounts.map((acc, i) => (
-                    <div key={`loan-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-                      <span style={{ fontSize: '0.8125rem', color: colors.textMuted }}>{acc.name}{acc.mask ? ` ···${acc.mask}` : ''}</span>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(acc.amount)}</span>
+                <Card
+                  style={{ flex: 1, padding: '0.75rem', cursor: 'pointer', userSelect: 'none' }}
+                  onClick={() => setSummaryExpanded(!summaryExpanded)}
+                >
+                  <p style={{ margin: '0 0 4px 0', fontSize: '0.625rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📋  Loans</p>
+                  <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(summaryTotals.totalLoans)}</p>
+                  <p style={{ margin: '3px 0 0 0', fontSize: '0.625rem', color: colors.textMuted }}>
+                    {summaryTotals.loanAccounts.length > 1
+                      ? `${summaryTotals.loanAccounts.length} loans`
+                      : summaryTotals.loanAccounts[0]?.name || '1 loan'}
+                  </p>
+                  {summaryExpanded && summaryTotals.loanAccounts.length > 1 && (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${colors.divider}` }}>
+                      {summaryTotals.loanAccounts.map((acc, i) => (
+                        <div key={`loan-${i}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
+                          <span style={{ fontSize: '0.6875rem', color: colors.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{acc.name}</span>
+                          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: isDark ? '#7C8DB5' : '#506385' }}>{fmt(acc.amount)}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </Card>
               )}
             </div>
           )}
-        </Card>
+        </>
       )}
 
       {/* Sync Controls */}
