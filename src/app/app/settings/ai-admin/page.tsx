@@ -30,11 +30,19 @@ interface TimelineEvent {
   confidence?: number; reasoning?: string; action?: string; merchant?: string;
   category?: string; source?: string; amount?: number; timestamp: string; resolvedAt?: string;
 }
+interface DataFlowField { field: string; description: string; feedsInto: string; }
+interface PerUserRow { userId: string; total: number; autoResolved: number; defaultCount: number; autoPercent: number; }
+interface ServerImpact {
+  dashboardFeed: { txnsWithCategory: number; totalTxns: number; feedPercent: number; spendingBudgets: number; totalBudgetAmount: number };
+  cacheEfficiency: { globalCacheSize: number; savedAiCalls: number; freshAiCalls: number; cacheHitRate: number; avgConfidence: number };
+  perUserBreakdown: PerUserRow[];
+  dataFlowFields: DataFlowField[];
+}
 interface AdminStats {
   pipeline: PipelineStats; suggestions: SuggestionStats; matchFeedback: MatchStats;
   detection: DetectionStats; globalMerchants: GlobalMerchantStats; categoryRules: RulesStats;
   userImpact: UserImpact; coverage: CoverageStats; accuracyTrends: WeeklyTrend[];
-  timeline: TimelineEvent[]; apiKeyConfigured: boolean;
+  timeline: TimelineEvent[]; apiKeyConfigured: boolean; serverImpact: ServerImpact | null;
 }
 
 export default function AIAdminPage() {
@@ -67,6 +75,7 @@ export default function AIAdminPage() {
 
   const tabs = [
     { key: 'overview', label: 'Overview' },
+    { key: 'server', label: 'Server' },
     { key: 'pipeline', label: 'Pipeline' },
     { key: 'trends', label: 'Trends' },
     { key: 'detection', label: 'Detection' },
@@ -105,6 +114,7 @@ export default function AIAdminPage() {
       </div>
 
       {activeTab === 'overview' && <OverviewTab stats={stats} colors={colors} />}
+      {activeTab === 'server' && <ServerTab stats={stats} colors={colors} />}
       {activeTab === 'pipeline' && <PipelineTab stats={stats} colors={colors} />}
       {activeTab === 'trends' && <TrendsTab trends={stats.accuracyTrends} colors={colors} />}
       {activeTab === 'detection' && <DetectionTab stats={stats} colors={colors} />}
@@ -171,6 +181,115 @@ function OverviewTab({ stats, colors }: { stats: AdminStats; colors: any }) {
             <MiniStat label="Avg Confidence" value={`${stats.matchFeedback.avgConfidence}%`} colors={colors} />
           </div>
         )}
+      </Card>
+    </div>
+  );
+}
+
+/* ── Server Impact Tab ──────────────────────────────────────────────── */
+function ServerTab({ stats, colors }: { stats: AdminStats; colors: any }) {
+  const si = stats.serverImpact;
+  if (!si) {
+    return (<Card style={{ padding: '2rem', textAlign: 'center' }}><p style={{ color: colors.textMuted }}>Server impact data not yet available. Deploy the latest backend to enable.</p></Card>);
+  }
+
+  const df = si.dashboardFeed;
+  const ce = si.cacheEfficiency;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Section: How AI Feeds the Dashboard */}
+      <Card style={{ padding: '1.25rem' }}>
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>How AI Feeds the Dashboard</h3>
+        <p style={{ fontSize: '0.8125rem', color: colors.textMuted, lineHeight: 1.6, marginBottom: '1rem' }}>
+          Every transaction processed by the webhook gets a <code style={{ backgroundColor: colors.cardBorder, padding: '0.125rem 0.375rem', borderRadius: 4, fontSize: '0.8125rem' }}>budget_category</code> assigned via the 5-step pipeline. This field directly powers the spending summaries, category breakdowns, budget progress bars, and the Available Number on every user&apos;s dashboard.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+          <StatCard label="Categorized Txns" value={df.txnsWithCategory.toLocaleString()} colors={colors} />
+          <StatCard label="Feed Rate" value={`${df.feedPercent}%`} accent={df.feedPercent >= 80 ? colors.green : colors.amber} colors={colors} />
+          <StatCard label="Spending Budgets" value={df.spendingBudgets} colors={colors} />
+          <StatCard label="Budget Total" value={`$${df.totalBudgetAmount.toLocaleString()}`} colors={colors} />
+        </div>
+      </Card>
+
+      {/* Section: Data Flow Fields */}
+      <Card style={{ padding: '1.25rem' }}>
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, marginBottom: '1rem' }}>Server-Level Fields Written Per Transaction</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          {si.dataFlowFields.map((f, idx) => (
+            <div key={idx} style={{ paddingBottom: idx < si.dataFlowFields.length - 1 ? '0.875rem' : 0, borderBottom: idx < si.dataFlowFields.length - 1 ? `1px solid ${colors.cardBorder}` : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <code style={{ backgroundColor: colors.electric + '18', color: colors.electric, padding: '0.125rem 0.5rem', borderRadius: 4, fontSize: '0.8125rem', fontWeight: 600 }}>{f.field}</code>
+              </div>
+              <p style={{ fontSize: '0.8125rem', color: colors.textMuted, margin: '0.25rem 0 0.125rem 0', lineHeight: 1.5 }}>{f.description}</p>
+              <p style={{ fontSize: '0.75rem', color: colors.textSub || colors.textMuted, margin: 0 }}>
+                Feeds → <span style={{ fontWeight: 500, color: colors.text }}>{f.feedsInto}</span>
+              </p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Section: Global Merchant Cache Efficiency */}
+      <Card style={{ padding: '1.25rem' }}>
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>Global Merchant Cache</h3>
+        <p style={{ fontSize: '0.8125rem', color: colors.textMuted, lineHeight: 1.6, marginBottom: '1rem' }}>
+          When AI classifies a merchant, it&apos;s cached globally. Future transactions from that merchant — for any user — skip AI entirely and use the cached result, saving API calls and money.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+          <StatCard label="Cache Size" value={ce.globalCacheSize} accent="#A78BFA" colors={colors} />
+          <StatCard label="Cache Hits" value={ce.savedAiCalls.toLocaleString()} accent={colors.green} colors={colors} />
+          <StatCard label="Fresh AI Calls" value={ce.freshAiCalls} accent="#38BDF8" colors={colors} />
+          <StatCard label="Hit Rate" value={`${ce.cacheHitRate}%`} accent={ce.cacheHitRate >= 50 ? colors.green : colors.amber} colors={colors} />
+          <StatCard label="Avg Confidence" value={`${ce.avgConfidence}%`} colors={colors} />
+        </div>
+        <div style={{ height: 10, borderRadius: 5, backgroundColor: colors.progressTrack || colors.cardBorder, overflow: 'hidden', display: 'flex' }}>
+          <div style={{ width: `${ce.cacheHitRate}%`, backgroundColor: colors.green, height: '100%' }} title="Cache Hits" />
+          <div style={{ width: `${100 - ce.cacheHitRate}%`, backgroundColor: '#38BDF8', height: '100%' }} title="Fresh AI Calls" />
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.75rem', color: colors.textMuted }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: colors.green, display: 'inline-block' }} /> Cache Hits (saved)</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: '#38BDF8', display: 'inline-block' }} /> Fresh AI Calls</span>
+        </div>
+      </Card>
+
+      {/* Section: Per-User Resolution Breakdown */}
+      {si.perUserBreakdown.length > 0 && (
+        <Card style={{ padding: '1.25rem' }}>
+          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>Per-User Category Resolution</h3>
+          <p style={{ fontSize: '0.8125rem', color: colors.textMuted, lineHeight: 1.6, marginBottom: '1rem' }}>
+            How well AI is resolving categories for each user. High auto-resolve % means fewer transactions falling to &quot;Other&quot;.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* Header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 60px 60px 50px', gap: '0.5rem', fontSize: '0.6875rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.5px', paddingBottom: '0.375rem', borderBottom: `1px solid ${colors.cardBorder}` }}>
+              <span>User</span><span>Resolution</span><span style={{ textAlign: 'right' }}>Auto</span><span style={{ textAlign: 'right' }}>Default</span><span style={{ textAlign: 'right' }}>Rate</span>
+            </div>
+            {si.perUserBreakdown.map((u, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 60px 60px 50px', gap: '0.5rem', alignItems: 'center', fontSize: '0.8125rem', paddingBottom: '0.375rem', borderBottom: idx < si.perUserBreakdown.length - 1 ? `1px solid ${colors.cardBorder}` : 'none' }}>
+                <span style={{ color: colors.textMuted, fontFamily: 'monospace', fontSize: '0.75rem' }}>{u.userId}</span>
+                <div style={{ height: 8, borderRadius: 4, backgroundColor: colors.progressTrack || colors.cardBorder, overflow: 'hidden', display: 'flex' }}>
+                  <div style={{ width: `${u.autoPercent}%`, backgroundColor: colors.green, height: '100%' }} />
+                  <div style={{ width: `${100 - u.autoPercent}%`, backgroundColor: '#EF4444', height: '100%' }} />
+                </div>
+                <span style={{ textAlign: 'right', color: colors.green, fontWeight: 600 }}>{u.autoResolved}</span>
+                <span style={{ textAlign: 'right', color: u.defaultCount > 0 ? '#EF4444' : colors.textMuted, fontWeight: 600 }}>{u.defaultCount}</span>
+                <span style={{ textAlign: 'right', fontWeight: 700, color: u.autoPercent >= 80 ? colors.green : u.autoPercent >= 50 ? colors.amber : '#EF4444' }}>{u.autoPercent}%</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Section: Server Pipeline Explanation */}
+      <Card style={{ padding: '1.25rem' }}>
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>How It All Connects</h3>
+        <div style={{ fontSize: '0.8125rem', color: colors.textMuted, lineHeight: 1.7 }}>
+          <p style={{ margin: '0 0 0.75rem 0' }}><strong style={{ color: colors.text }}>Webhook receives transaction</strong> → Merchant name normalized → 5-step pipeline resolves <code style={{ backgroundColor: colors.cardBorder, padding: '0.125rem 0.25rem', borderRadius: 3, fontSize: '0.75rem' }}>budget_category</code> → If unresolved, Claude Haiku classifies → Result cached globally</p>
+          <p style={{ margin: '0 0 0.75rem 0' }}><strong style={{ color: colors.text }}>Dashboard reads</strong> → <code style={{ backgroundColor: colors.cardBorder, padding: '0.125rem 0.25rem', borderRadius: 3, fontSize: '0.75rem' }}>/spending/summary</code> aggregates by budget_category → Category breakdowns, progress bars, spending pace all derive from this one field</p>
+          <p style={{ margin: '0 0 0.75rem 0' }}><strong style={{ color: colors.text }}>Available Number</strong> → <code style={{ backgroundColor: colors.cardBorder, padding: '0.125rem 0.25rem', borderRadius: 3, fontSize: '0.75rem' }}>/spending/available</code> uses <code style={{ backgroundColor: colors.cardBorder, padding: '0.125rem 0.25rem', borderRadius: 3, fontSize: '0.75rem' }}>display_category</code> to exclude matched bills, income, and transfers from spending — then subtracts spending from paycheck</p>
+          <p style={{ margin: 0 }}><strong style={{ color: colors.text }}>Cache learning loop</strong> → First AI call for a merchant costs ~0.1¢ → All future users get it free from the global cache → Confidence grows with each confirming user</p>
+        </div>
       </Card>
     </div>
   );
