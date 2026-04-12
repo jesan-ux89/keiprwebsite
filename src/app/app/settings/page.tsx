@@ -102,7 +102,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors, isDark } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra } = useApp();
+  const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra, refreshSubscription } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -158,6 +158,18 @@ export default function SettingsPage() {
     }
   }, [expandedSection]);
 
+  // Refresh subscription tier when user returns to the tab (e.g. after checkout in new tab)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshSubscription();
+        if (expandedSection === 'subscription') loadSubStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [expandedSection, refreshSubscription]);
+
   const loadSubStatus = async () => {
     try {
       const res = await subscriptionsAPI.getStatus();
@@ -203,6 +215,7 @@ export default function SettingsPage() {
     try {
       const res = await subscriptionsAPI.cancel();
       alert(res.data?.message || 'Subscription cancelled.');
+      await refreshSubscription();
       await loadSubStatus();
     } catch (err: any) {
       console.error('Cancel failed:', err);
@@ -216,6 +229,7 @@ export default function SettingsPage() {
     setSubLoading(true);
     try {
       await subscriptionsAPI.resume();
+      await refreshSubscription();
       await loadSubStatus();
     } catch (err: any) {
       console.error('Resume failed:', err);
@@ -1669,7 +1683,7 @@ export default function SettingsPage() {
                             handleCheckout(planKey);
                           } else {
                             // Already subscribed — change plan via API
-                            subscriptionsAPI.changePlan(planKey).then(() => loadSubStatus()).catch((err: any) => alert(err?.response?.data?.error || 'Failed to change plan'));
+                            subscriptionsAPI.changePlan(planKey).then(async () => { await refreshSubscription(); loadSubStatus(); }).catch((err: any) => alert(err?.response?.data?.error || 'Failed to change plan'));
                           }
                         }}
                       >
@@ -1691,7 +1705,7 @@ export default function SettingsPage() {
                         }}
                         onClick={() => {
                           if (window.confirm(`Downgrade to ${tier.name}? Your billing will be adjusted.`)) {
-                            subscriptionsAPI.changePlan(planKey).then(() => loadSubStatus()).catch((err: any) => alert(err?.response?.data?.error || 'Failed to change plan'));
+                            subscriptionsAPI.changePlan(planKey).then(async () => { await refreshSubscription(); loadSubStatus(); }).catch((err: any) => alert(err?.response?.data?.error || 'Failed to change plan'));
                           }
                         }}
                       >

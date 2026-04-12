@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI, bankingAPI } from '../lib/api';
+import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI, bankingAPI, subscriptionsAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
 
 /**
@@ -174,6 +174,7 @@ interface AppContextType {
   isUltra: boolean;
   canSplit: (billId?: string) => boolean;
   maxForwardMonths: number;
+  refreshSubscription: () => Promise<void>;
 
   // Secondary income allocations
   sideIncomeSummary: SideIncomeSummary[];
@@ -258,6 +259,7 @@ const AppContext = createContext<AppContextType>({
   isUltra: false,
   canSplit: () => false,
   maxForwardMonths: 1,
+  refreshSubscription: async () => {},
 
   sideIncomeSummary: [],
   sideIncomeAllocations: [],
@@ -459,6 +461,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const existingSplits = bills.filter(b => b.isSplit);
     if (billId && existingSplits.some(b => b.id === billId)) return true;
     return existingSplits.length < FREE_SPLIT_LIMIT;
+  }
+
+  async function refreshSubscription() {
+    try {
+      const res = await subscriptionsAPI.getStatus();
+      const plan = res.data?.plan || 'free';
+      if (plan === 'pro' || plan === 'ultra') setTier(plan);
+      else setTier('free');
+    } catch (err) {
+      console.log('refreshSubscription error:', (err as any)?.message);
+    }
   }
 
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
@@ -1144,6 +1157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isUltra,
         canSplit,
         maxForwardMonths,
+        refreshSubscription,
 
         userName,
         userInitials,
