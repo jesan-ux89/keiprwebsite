@@ -156,6 +156,7 @@ export const bankingAPI = {
   migrateToUltra:      () => api.post('/banking-data/migrate-to-ultra', {}, { timeout: 120000 }),
   bulkExcludeMerchant: (merchantName: string) => api.post('/banking-data/bulk/exclude-merchant', { merchant_name: merchantName }),
   bulkConfirmHighConfidence: (minConfidence = 0.90) => api.post('/banking-data/bulk/confirm-high-confidence', { min_confidence: minConfidence }),
+  onboardingImport:  () => api.post('/banking-data/onboarding-import', {}, { timeout: 120000 }),
 };
 
 // Rollover
