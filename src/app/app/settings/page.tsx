@@ -102,7 +102,7 @@ const TIERS = [
 export default function SettingsPage() {
   const { colors, isDark } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
-  const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, fmt, isPro, isUltra, refreshSubscription } = useApp();
+  const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, refreshBills, fetchSpendingBudgets, fmt, isPro, isUltra, refreshSubscription } = useApp();
   const { user, signOut } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -1881,7 +1881,14 @@ export default function SettingsPage() {
                   try {
                     const res = await bankingAPI.migrateToUltra();
                     const r = (res as any).data;
-                    alert(`Sync Complete!\n\nMatched: ${r.matched}\nPending review: ${r.pendingConfirmation}\nReclassified: ${r.reclassified}`);
+                    if (r.autoDiscovery) {
+                      alert(`Sync Complete!\n\nBills created: ${r.autoDiscovery.billsCreated}\nIncome detected: ${r.autoDiscovery.incomeDetected}\nBudgets created: ${r.autoDiscovery.budgetsCreated}`);
+                      if (r.autoDiscovery.billsCreated > 0) refreshBills();
+                      if (r.autoDiscovery.incomeDetected > 0) refreshIncomeSources();
+                      if (r.autoDiscovery.budgetsCreated > 0) fetchSpendingBudgets();
+                    } else {
+                      alert(`Sync Complete!\n\nMatched: ${r.matched}\nPending review: ${r.pendingConfirmation}\nReclassified: ${r.reclassified}`);
+                    }
                   } catch (err: any) {
                     alert(err?.response?.data?.error || 'Sync failed. Please try again.');
                   }
