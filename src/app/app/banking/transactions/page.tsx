@@ -137,6 +137,15 @@ export default function AllTransactionsPage() {
   const [billPickerTxn, setBillPickerTxn] = useState<Transaction | null>(null);
   const [linkLoading, setLinkLoading] = useState(false);
   const [interestEarned, setInterestEarned] = useState({ thisMonth: 0, thisYear: 0, count: 0 });
+  const [interestCharged, setInterestCharged] = useState<{
+    thisMonth: number;
+    lastMonth: number;
+    monthlyBreakdown: Array<{ month: string; shortMonth: string; amount: number }>;
+    twelveMonthTotal: number;
+    monthlyAverage: number;
+    count: number;
+  }>({ thisMonth: 0, lastMonth: 0, monthlyBreakdown: [], twelveMonthTotal: 0, monthlyAverage: 0, count: 0 });
+  const [interestExpanded, setInterestExpanded] = useState(false);
 
   // ── Derived: filter by active tab ──
   const filteredTransactions = useMemo(() => {
@@ -180,6 +189,7 @@ export default function AllTransactionsPage() {
     if (isUltra) {
       fetchTransactions();
       fetchInterestEarned();
+      fetchInterestCharged();
     }
   }, [isUltra, searchParams]);
 
@@ -210,6 +220,59 @@ export default function AllTransactionsPage() {
       setInterestEarned({ thisMonth, thisYear, count: interestTxns.length });
     } catch (err) {
       console.log('Error fetching interest:', err);
+    }
+  };
+
+  const CREDIT_TYPES = ['credit card', 'credit_card', 'credit', 'line_of_credit', 'credit_line'];
+  const isCreditAccount = CREDIT_TYPES.some(c => (searchParams?.get('accountType') || '').toLowerCase().includes(c));
+
+  const fetchInterestCharged = async () => {
+    const accountType = searchParams?.get('accountType');
+    const accountId = searchParams?.get('accountId');
+    if (!accountId || !CREDIT_TYPES.some(c => (accountType || '').toLowerCase().includes(c))) {
+      setInterestCharged({ thisMonth: 0, lastMonth: 0, monthlyBreakdown: [], twelveMonthTotal: 0, monthlyAverage: 0, count: 0 });
+      return;
+    }
+    try {
+      const res = await bankingAPI.getAllTransactions({ category: 'all', days: 365, limit: 1000, accountId });
+      const txns = (res as any).data?.transactions || [];
+      const interestTxns = txns.filter((t: any) => {
+        const name = (t.cleaned_name || t.merchant_name || '').toUpperCase();
+        return name.includes('INTEREST') && t.amount > 0;
+      });
+      if (interestTxns.length === 0) {
+        setInterestCharged({ thisMonth: 0, lastMonth: 0, monthlyBreakdown: [], twelveMonthTotal: 0, monthlyAverage: 0, count: 0 });
+        return;
+      }
+      const now = new Date();
+      const monthMap: Record<string, number> = {};
+      for (const t of interestTxns) {
+        const d = new Date(t.transaction_date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthMap[key] = (monthMap[key] || 0) + Math.abs(t.amount);
+      }
+      const months: Array<{ month: string; shortMonth: string; amount: number }> = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const shortMonth = d.toLocaleDateString('en-US', { month: 'short' });
+        months.push({ month: key, shortMonth, amount: monthMap[key] || 0 });
+      }
+      const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+      const twelveMonthTotal = Object.values(monthMap).reduce((sum, v) => sum + v, 0);
+      const monthsWithData = Object.keys(monthMap).length;
+      setInterestCharged({
+        thisMonth: monthMap[thisMonthKey] || 0,
+        lastMonth: monthMap[lastMonthKey] || 0,
+        monthlyBreakdown: months,
+        twelveMonthTotal,
+        monthlyAverage: monthsWithData > 0 ? twelveMonthTotal / monthsWithData : 0,
+        count: interestTxns.length,
+      });
+    } catch (err) {
+      console.log('Error fetching interest charged:', err);
     }
   };
 
@@ -423,6 +486,108 @@ export default function AllTransactionsPage() {
               <p style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0A7B6C', margin: 0 }}>{fmt(interestEarned.thisYear)}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Interest Costs Card (Credit Cards) */}
+      {isCreditAccount && interestCharged.count > 0 && (
+        <div
+          onClick={() => setInterestExpanded(!interestExpanded)}
+          style={{
+            background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(220,38,38,0.06)',
+            borderRadius: 14,
+            padding: 16,
+            marginBottom: 16,
+            border: `1px solid ${isDark ? 'rgba(248,113,113,0.2)' : 'rgba(220,38,38,0.15)'}`,
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: isDark ? '#F87171' : '#DC2626', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
+              Interest Costs
+            </p>
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>
+              {interestExpanded ? '▲' : '▼'}
+            </span>
+          </div>
+
+          {/* Collapsed: this month + trend + average */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>This Month</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <p style={{ fontSize: '1.125rem', fontWeight: 800, color: isDark ? '#F87171' : '#DC2626', margin: 0 }}>
+                  {fmt(interestCharged.thisMonth)}
+                </p>
+                {interestCharged.lastMonth > 0 && (
+                  <span style={{
+                    fontSize: '0.75rem', fontWeight: 700,
+                    color: interestCharged.thisMonth > interestCharged.lastMonth
+                      ? (isDark ? '#F87171' : '#DC2626')
+                      : (isDark ? '#34D399' : '#059669'),
+                  }}>
+                    {interestCharged.thisMonth > interestCharged.lastMonth ? '↑' : interestCharged.thisMonth < interestCharged.lastMonth ? '↓' : '→'}
+                    {' '}{Math.abs(Math.round(((interestCharged.thisMonth - interestCharged.lastMonth) / interestCharged.lastMonth) * 100))}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>Monthly Avg</p>
+              <p style={{ fontSize: '1.125rem', fontWeight: 800, color: isDark ? '#F87171' : '#DC2626', margin: 0 }}>
+                {fmt(interestCharged.monthlyAverage)}
+              </p>
+            </div>
+          </div>
+
+          {/* Expanded: 6-month bar chart + 12-month total */}
+          {interestExpanded && (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${isDark ? 'rgba(248,113,113,0.15)' : 'rgba(220,38,38,0.1)'}` }}>
+              {/* Mini bar chart */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 80, marginBottom: 8 }}>
+                {(() => {
+                  const maxAmt = Math.max(...interestCharged.monthlyBreakdown.map(m => m.amount), 1);
+                  return interestCharged.monthlyBreakdown.map((m, i) => {
+                    const barHeight = maxAmt > 0 ? Math.max((m.amount / maxAmt) * 60, m.amount > 0 ? 4 : 0) : 0;
+                    const isCurrentMonth = i === interestCharged.monthlyBreakdown.length - 1;
+                    return (
+                      <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                        {m.amount > 0 && (
+                          <span style={{ fontSize: '0.5625rem', fontWeight: 600, color: colors.textMuted }}>
+                            {fmt(m.amount)}
+                          </span>
+                        )}
+                        <div style={{
+                          width: '60%',
+                          height: barHeight,
+                          borderRadius: 4,
+                          backgroundColor: isCurrentMonth
+                            ? (isDark ? '#F87171' : '#DC2626')
+                            : (isDark ? 'rgba(248,113,113,0.4)' : 'rgba(220,38,38,0.25)'),
+                        }} />
+                        <span style={{ fontSize: '0.625rem', color: isCurrentMonth ? (isDark ? '#F87171' : '#DC2626') : colors.textMuted, fontWeight: isCurrentMonth ? 700 : 500 }}>
+                          {m.shortMonth}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* 12-month total */}
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                marginTop: 8, paddingTop: 10, borderTop: `1px solid ${isDark ? 'rgba(248,113,113,0.15)' : 'rgba(220,38,38,0.1)'}`,
+              }}>
+                <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>12-Month Total</span>
+                <span style={{ fontSize: '1rem', fontWeight: 800, color: isDark ? '#F87171' : '#DC2626' }}>
+                  {fmt(interestCharged.twelveMonthTotal)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
