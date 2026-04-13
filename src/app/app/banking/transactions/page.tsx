@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import AppLayout from '@/components/layout/AppLayout';
 import { ChevronLeft, AlertCircle, Eye, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
+import MerchantLogo from '@/components/MerchantLogo';
 
 // ── Types ──
 
@@ -709,16 +710,13 @@ function AllTransactionsPage() {
                     >
                       {/* Main row: logo + merchant + category + amount */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {/* Merchant logo/initials */}
-                        <div style={{
-                          width: 32, height: 32, borderRadius: '0.4rem', flexShrink: 0,
-                          backgroundColor: isMatched ? (isDark ? 'rgba(10,123,108,0.15)' : 'rgba(10,123,108,0.08)') : (isDark ? 'rgba(56,189,248,0.1)' : 'rgba(56,189,248,0.06)'),
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.75rem', fontWeight: 700,
-                          color: isMatched ? '#0A7B6C' : colors.electric,
-                        }}>
-                          {initials}
-                        </div>
+                        {/* Merchant logo */}
+                        <MerchantLogo
+                          billName={merchantName}
+                          category={txn.personal_finance_category_primary || txn.category || 'Other'}
+                          size={32}
+                          isDark={isDark}
+                        />
 
                         {/* Merchant name + category */}
                         <div style={{ flex: 1, minWidth: 0 }}>

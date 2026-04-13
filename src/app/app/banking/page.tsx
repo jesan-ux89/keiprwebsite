@@ -7,6 +7,7 @@ import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
+import MerchantLogo from '@/components/MerchantLogo';
 import Link from 'next/link';
 import {
   Landmark,
@@ -552,16 +553,13 @@ export default function BankingPage() {
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                            {/* Bank initial circle */}
-                            <div style={{
-                              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                              backgroundColor: isCreditCard ? 'rgba(133,79,11,0.15)' : isLoan ? 'rgba(163,45,45,0.08)' : 'rgba(56,189,248,0.1)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '0.875rem', fontWeight: 700,
-                              color: isCreditCard ? 'rgba(133,79,11,0.6)' : isLoan ? 'rgba(163,45,45,0.6)' : colors.electric,
-                            }}>
-                              {(account.institution_name || 'B')[0].toUpperCase()}
-                            </div>
+                            {/* Bank logo */}
+                            <MerchantLogo
+                              billName={account.institution_name || account.account_name || 'Bank'}
+                              category={isCreditCard ? 'Credit Card' : isLoan ? 'Loans' : 'Banking'}
+                              size={36}
+                              isDark={isDark}
+                            />
 
                             {/* Account name + type */}
                             <div style={{ flex: 1, minWidth: 0 }}>
