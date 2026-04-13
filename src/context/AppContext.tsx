@@ -142,6 +142,7 @@ interface AppContextType {
   // Income sources
   incomeSources: IncomeSource[];
   incomeLoading: boolean;
+  incomeFetchSucceeded: boolean;
   refreshIncomeSources: () => Promise<void>;
   addIncomeSource: (data: Record<string, unknown>) => Promise<IncomeSource>;
   updateIncomeSource: (id: string, data: Record<string, unknown>) => Promise<IncomeSource>;
@@ -245,6 +246,7 @@ const AppContext = createContext<AppContextType>({
 
   incomeSources: [],
   incomeLoading: false,
+  incomeFetchSucceeded: false,
   refreshIncomeSources: async () => {},
   addIncomeSource: async () => ({} as IncomeSource),
   updateIncomeSource: async () => ({} as IncomeSource),
@@ -460,6 +462,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
   const [incomeLoading, setIncomeLoading] = useState(false);
+  const [incomeFetchSucceeded, setIncomeFetchSucceeded] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -558,8 +561,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const mapped = sourcesArray.map((s: Record<string, unknown>) => mapIncomeSource(s));
       const advanced = autoAdvancePayDates(mapped);
       setIncomeSources(advanced);
+      setIncomeFetchSucceeded(true);
     } catch (error) {
       console.error('Failed to fetch income sources:', error);
+      // Don't set incomeFetchSucceeded — prevents false onboarding redirect on API failure
     } finally {
       setIncomeLoading(false);
     }
@@ -1233,6 +1238,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         incomeSources,
         incomeLoading,
+        incomeFetchSucceeded,
         refreshIncomeSources,
         addIncomeSource,
         updateIncomeSource,
