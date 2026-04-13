@@ -95,17 +95,20 @@ export default function BillsPage() {
     });
   }, [bills, searchTerm, sortBy]);
 
-  // Get all category names: bills + spending budgets (if Ultra)
+  // Group bills by expense type
+  const fixedBills = useMemo(() => filteredBills.filter(b => (b.expenseType || 'fixed') === 'fixed'), [filteredBills]);
+  const flexibleBills = useMemo(() => filteredBills.filter(b => b.expenseType === 'flexible'), [filteredBills]);
+
+  // Get all category names from bills
   const allCategoryNames = useMemo(() => {
     const billCategories = new Set(filteredBills.map(b => b.category));
-    const budgetCategories = isUltra ? (spendingBudgets || []).map((b: any) => b.category) : [];
-    const combined = Array.from(new Set([...billCategories, ...budgetCategories]));
+    const combined = Array.from(billCategories);
     return combined.sort((a, b) => {
       const totalA = filteredBills.filter(x => x.category === a).reduce((s, x) => s + x.total, 0);
       const totalB = filteredBills.filter(x => x.category === b).reduce((s, x) => s + x.total, 0);
       return totalB - totalA;
     });
-  }, [filteredBills, isUltra, spendingBudgets]);
+  }, [filteredBills]);
 
   // Group filtered bills by category for display
   const groupedFilteredBills = useMemo(() => {
@@ -130,9 +133,8 @@ export default function BillsPage() {
 
   // Calculate total income, expenses, and remaining
   const totalIncome = useMemo(() => {
-    return filteredBills.reduce((sum, bill) => sum + bill.total, 0) +
-           (isUltra && spendingBudgets ? (spendingBudgets as any[]).reduce((sum, b) => sum + (b.budget_amount || 0), 0) : 0);
-  }, [filteredBills, isUltra, spendingBudgets]);
+    return filteredBills.reduce((sum, bill) => sum + bill.total, 0);
+  }, [filteredBills]);
 
   const totalExpenses = totalIncome; // For the sidebar, this will be the sum of all bills
   const totalActual = useMemo(() => {
@@ -191,32 +193,32 @@ export default function BillsPage() {
           </span>
         </div>
 
-        {/* Fixed expenses row (if any) */}
-        {filteredBills.some(b => b.isRecurring) && (
+        {/* Fixed expenses row */}
+        {fixedBills.length > 0 && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: '0.75rem',
           }}>
-            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Fixed</span>
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Fixed ({fixedBills.length})</span>
             <span style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
-              {fmt(filteredBills.filter(b => b.isRecurring).reduce((s, b) => s + b.total, 0))}
+              {fmt(fixedBills.reduce((s, b) => s + b.total, 0))}
             </span>
           </div>
         )}
 
-        {/* Flexible spending row (if any) */}
-        {isUltra && spendingBudgets && (spendingBudgets as any[]).length > 0 && (
+        {/* Flexible expenses row */}
+        {flexibleBills.length > 0 && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: '0.75rem',
           }}>
-            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Flexible</span>
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Flexible ({flexibleBills.length})</span>
             <span style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
-              {fmt((spendingBudgets as any[]).reduce((s, b) => s + (b.budget_amount || 0), 0))}
+              {fmt(flexibleBills.reduce((s, b) => s + b.total, 0))}
             </span>
           </div>
         )}
@@ -638,27 +640,63 @@ export default function BillsPage() {
               </div>
             </div>
 
-            {/* Expenses by category */}
+            {/* Expenses by category — grouped by Fixed then Flexible */}
             <div>
-              {allCategoryNames.map((catName, idx) => {
-                const categoryBills = groupedFilteredBills[catName] || [];
-                const catBudget = isUltra ? (spendingBudgets || []).find((b: any) => b.category === catName) : null;
-                const catSummary = catBudget ? (spendingSummary || []).find((s: any) => s.category === catName) : null;
+              {[
+                { label: 'Fixed Expenses', bills: fixedBills, prefix: 'fixed' },
+                { label: 'Flexible Expenses', bills: flexibleBills, prefix: 'flex' },
+              ].filter(group => group.bills.length > 0).map((group, gi) => {
+                const groupCategories = Array.from(new Set(group.bills.map(b => b.category || 'Other'))).sort((a, b) => {
+                  const totalA = group.bills.filter(x => x.category === a).reduce((s, x) => s + x.total, 0);
+                  const totalB = group.bills.filter(x => x.category === b).reduce((s, x) => s + x.total, 0);
+                  return totalB - totalA;
+                });
+                return (
+                  <div key={group.prefix}>
+                    {/* Section header */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '1rem 1.25rem',
+                      borderTop: gi > 0 ? `2px solid ${colors.divider}` : 'none',
+                      backgroundColor: colors.background,
+                    }}>
+                      <p style={{
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        color: colors.textMuted,
+                        margin: 0,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}>
+                        {group.label}
+                      </p>
+                      <p style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: colors.text,
+                        margin: 0,
+                      }}>
+                        {fmt(group.bills.reduce((s, b) => s + b.total, 0))}
+                      </p>
+                    </div>
+                    {groupCategories.map((catName, idx) => {
+                const categoryBills = group.bills.filter(b => b.category === catName);
                 const hasBills = categoryBills.length > 0;
-                const hasBudget = isUltra && !!catBudget;
-                const isExpanded = expandedBills[catName];
+                const isExpanded = expandedBills[`${group.prefix}_${catName}`];
 
-                if (!hasBills && !hasBudget) return null;
+                if (!hasBills) return null;
 
-                const catTotalBudget = categoryBills.reduce((s, b) => s + b.total, 0) + (hasBudget ? (catBudget.budget_amount || 0) : 0);
-                const catTotalActual = categoryBills.reduce((s, b) => s + b.funded, 0) + (catSummary ? (catSummary.spentAmount || 0) : 0);
+                const catTotalBudget = categoryBills.reduce((s, b) => s + b.total, 0);
+                const catTotalActual = categoryBills.reduce((s, b) => s + b.funded, 0);
                 const catRemaining = catTotalBudget - catTotalActual;
 
                 return (
-                  <div key={catName} style={{ borderTop: idx === 0 ? 'none' : `1px solid ${colors.divider}` }}>
+                  <div key={`${group.prefix}_${catName}`} style={{ borderTop: idx === 0 ? 'none' : `1px solid ${colors.divider}` }}>
                     {/* Category Group Row */}
                     <div
-                      onClick={() => setExpandedBills(prev => ({ ...prev, [catName]: !prev[catName] }))}
+                      onClick={() => setExpandedBills(prev => ({ ...prev, [`${group.prefix}_${catName}`]: !prev[`${group.prefix}_${catName}`] }))}
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '1fr 100px 100px 100px',
@@ -687,7 +725,7 @@ export default function BillsPage() {
                             {catName}
                           </p>
                           <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                            {categoryBills.length + (hasBudget ? 1 : 0)} item{categoryBills.length + (hasBudget ? 1 : 0) !== 1 ? 's' : ''}
+                            {categoryBills.length} expense{categoryBills.length !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
@@ -793,47 +831,13 @@ export default function BillsPage() {
                           </div>
                         ))}
 
-                        {/* Spending Budget item (if exists) */}
-                        {hasBudget && (
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 100px 100px 100px',
-                              gap: '1rem',
-                              padding: '0.875rem 1.25rem 0.875rem 3.75rem',
-                              borderTop: `1px solid ${colors.divider}`,
-                              alignItems: 'center',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                              <CategoryIcon category={catName} size={24} isDark={isDark} />
-                              <div>
-                                <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.textMuted, margin: 0, fontStyle: 'italic' }}>
-                                  Spending Budget
-                                </p>
-                              </div>
-                            </div>
-                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
-                              {fmt(catBudget.budget_amount || 0)}
-                            </p>
-                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
-                              {fmt(catSummary?.spentAmount || 0)}
-                            </p>
-                            <p style={{
-                              fontSize: '0.875rem',
-                              fontWeight: 600,
-                              color: (catSummary?.spentAmount || 0) >= (catBudget.budget_amount || 0) ? colors.red : colors.green,
-                              margin: 0,
-                              textAlign: 'right',
-                            }}>
-                              {fmt(Math.max(0, (catBudget.budget_amount || 0) - (catSummary?.spentAmount || 0)))}
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
                 );
+              })}
+                  </div>
+                  );
               })}
             </div>
           </Card>

@@ -50,6 +50,7 @@ export interface Bill {
   paidWith?: string | null; // Credit card name or null for bank account (direct)
   isQuickExpense?: boolean; // True for quick spends logged from Dashboard
   isInternalTransfer?: boolean; // True for savings transfers, internal account moves
+  expenseType?: string; // 'fixed' (default) or 'flexible'
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -383,6 +384,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     paidWith: typeof raw.paid_with === 'string' ? raw.paid_with : null,
     isQuickExpense: raw.is_quick_expense === true,
     isInternalTransfer: raw.is_internal_transfer === true,
+    expenseType: (raw.expense_type as string) || 'fixed',
   };
 }
 
@@ -923,6 +925,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       categoryName: (data.category as string) || null,
       isAutoPay: data.isAutoPay || false,
       paidWith: data.paidWith || null,
+      expenseType: data.expenseType || 'fixed',
     };
     const res = await billsAPI.create(apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
@@ -967,6 +970,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       apiData.categoryName = (data.category as string) || null;
     }
     if (data.paidWith !== undefined) apiData.paidWith = data.paidWith;
+    if (data.expenseType !== undefined) apiData.expenseType = data.expenseType;
     const res = await billsAPI.update(id, apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
     setBills(prev => prev.map((b) => (b.id === id ? bill : b)));
