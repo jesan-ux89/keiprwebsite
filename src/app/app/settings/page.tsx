@@ -1882,11 +1882,10 @@ export default function SettingsPage() {
                     const res = await bankingAPI.migrateToUltra();
                     const r = (res as any).data;
                     if (r.autoDiscovery) {
-                      const totalExpenses = (r.autoDiscovery.billsCreated || 0) + (r.autoDiscovery.budgetsCreated || 0);
-                      alert(`Sync Complete!\n\nExpenses created: ${totalExpenses}\nIncome detected: ${r.autoDiscovery.incomeDetected}`);
-                      if (r.autoDiscovery.billsCreated > 0) refreshBills();
+                      const totalExpenses = r.autoDiscovery.billsCreated || 0;
+                      alert(`Sync Complete!\n\nExpenses created: ${totalExpenses}\nIncome detected: ${r.autoDiscovery.incomeDetected || 0}`);
+                      if (totalExpenses > 0) refreshBills();
                       if (r.autoDiscovery.incomeDetected > 0) refreshIncomeSources();
-                      if (r.autoDiscovery.budgetsCreated > 0) fetchSpendingBudgets();
                     } else {
                       alert(`Sync Complete!\n\nMatched: ${r.matched}\nPending review: ${r.pendingConfirmation}\nReclassified: ${r.reclassified}`);
                     }
