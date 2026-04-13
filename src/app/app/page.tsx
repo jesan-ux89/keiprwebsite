@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
@@ -41,6 +41,7 @@ export default function DashboardPage() {
     isPro, isUltra, detectedBills, detectedCount, pendingConfirmationsCount,
     availableNumber, availableBreakdown, spendingSummary, spendingBudgets, fetchAvailableNumber, fetchSpendingSummary,
     logQuickExpense,
+    deleteBill,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [refreshing, setRefreshing] = useState(false);
@@ -52,6 +53,26 @@ export default function DashboardPage() {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseSaving, setExpenseSaving] = useState(false);
+
+  // Undo snackbar state (quick expense)
+  const [undoSnackbar, setUndoSnackbar] = useState<{ billId: string; name: string; amount: number } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const dismissUndo = useCallback(() => {
+    setUndoSnackbar(null);
+    if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+  }, []);
+
+  const handleUndo = useCallback(async () => {
+    if (!undoSnackbar) return;
+    const { billId } = undoSnackbar;
+    dismissUndo();
+    try {
+      await deleteBill(billId);
+    } catch (err) {
+      console.error('Undo quick expense failed:', err);
+    }
+  }, [undoSnackbar, dismissUndo, deleteBill]);
 
   // Ultra: Recent transactions
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
@@ -338,13 +359,22 @@ export default function DashboardPage() {
 
   const handleLogExpense = async () => {
     if (!expenseName.trim() || !expenseAmount.trim()) return;
+    const savedName = expenseName.trim();
+    const savedAmount = parseFloat(expenseAmount);
     setExpenseSaving(true);
     try {
-      await logQuickExpense(expenseName.trim(), parseFloat(expenseAmount), expenseCategory || undefined);
+      const billId = await logQuickExpense(savedName, savedAmount, expenseCategory || undefined);
       setExpenseName('');
       setExpenseAmount('');
       setExpenseCategory('');
       setExpenseModalOpen(false);
+
+      // Show undo snackbar for 2 minutes
+      if (billId) {
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        setUndoSnackbar({ billId, name: savedName, amount: savedAmount });
+        undoTimerRef.current = setTimeout(() => setUndoSnackbar(null), 120000);
+      }
     } catch (err) {
       console.error('Log expense failed:', err);
     } finally {
@@ -1507,6 +1537,43 @@ export default function DashboardPage() {
               {expenseSaving ? 'Saving...' : 'Quick spend'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Undo Quick Expense Snackbar */}
+      {undoSnackbar && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          backgroundColor: '#1A1814', borderRadius: 14, padding: '14px 20px',
+          display: 'flex', alignItems: 'center', gap: '1rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)', zIndex: 9999,
+          minWidth: 320, maxWidth: 480,
+        }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
+              {undoSnackbar.name} — {fmt(undoSnackbar.amount)}
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>Quick expense added</p>
+          </div>
+          <button
+            onClick={handleUndo}
+            style={{
+              backgroundColor: '#38BDF8', border: 'none', borderRadius: 8,
+              padding: '8px 16px', cursor: 'pointer',
+              fontSize: '0.8rem', fontWeight: 700, color: '#1A1814',
+            }}
+          >
+            Undo
+          </button>
+          <button
+            onClick={dismissUndo}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '1rem', color: 'rgba(255,255,255,0.4)', padding: '4px',
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
 

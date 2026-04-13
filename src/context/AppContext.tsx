@@ -217,7 +217,7 @@ interface AppContextType {
   invalidateBankingCache: () => void;
 
   // Quick expense
-  logQuickExpense: (name: string, amount: number, category?: string) => Promise<void>;
+  logQuickExpense: (name: string, amount: number, category?: string) => Promise<string | null>;
 
   // Initial load flag (prevents premature onboarding redirect)
   initialDataLoaded: boolean;
@@ -312,7 +312,7 @@ const AppContext = createContext<AppContextType>({
   invalidateBankingCache: () => {},
 
   // Quick expense
-  logQuickExpense: async () => {},
+  logQuickExpense: async () => null,
 
   // Initial load flag
   initialDataLoaded: false,
@@ -832,11 +832,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── Log quick expense ────────────────────────────────────
-  const logQuickExpense = useCallback(async (name: string, amount: number, category?: string) => {
-    if (!user) return;
+  const logQuickExpense = useCallback(async (name: string, amount: number, category?: string): Promise<string | null> => {
+    if (!user) return null;
     try {
-      await billsAPI.quickExpense({ name, amount, category });
+      const res = await billsAPI.quickExpense({ name, amount, category });
+      const billId = res.data?.bill?.id || null;
       await Promise.all([fetchBills(), fetchAvailableNumber()]);
+      return billId;
     } catch (err) {
       console.log('logQuickExpense error:', (err as any)?.message);
       throw err;
