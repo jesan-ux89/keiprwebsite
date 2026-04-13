@@ -663,7 +663,7 @@ export default function DashboardPage() {
                     background: `linear-gradient(90deg, ${colors.electric}, #0A7B6C)`,
                   }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: colors.textSub' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: colors.textSub }}>
                   <span>{currentPeriod?.start?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   <span>Projected: {fmt(projectedSpending)}</span>
                   <span>{currentPeriod?.end?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
