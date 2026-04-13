@@ -993,6 +993,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteBill = async (id: string) => {
     await billsAPI.delete(id);
     setBills(prev => prev.filter((b) => b.id !== id));
+    // Refresh available number so quick expense deletions restore the balance
+    fetchAvailableNumber();
   };
 
   const getBill = (id: string) => bills.find((b) => b.id === id);
