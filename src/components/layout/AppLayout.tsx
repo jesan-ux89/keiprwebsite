@@ -451,67 +451,63 @@ export default function AppLayout({
         )}
       </nav>
 
-      {/* Top Bar */}
+      {/* Right side: topbar + scrollable content */}
       <div
-        className="app-topbar-container"
+        className="app-right"
         style={{
           marginLeft: '240px',
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
+        {/* Top Bar */}
         <header
           className="app-topbar"
           style={{
             height: '56px',
-            backgroundColor: `${colors.navBg}E6`,
+            minHeight: '56px',
+            backgroundColor: `${colors.background}D9`,
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderBottom: `1px solid ${colors.divider}`,
             display: 'flex',
             alignItems: 'center',
-            paddingLeft: '1.5rem',
-            paddingRight: '1.5rem',
-            gap: '1rem',
+            justifyContent: 'space-between',
+            paddingLeft: '2rem',
+            paddingRight: '2rem',
             position: 'sticky',
             top: 0,
             zIndex: 50,
           }}
         >
-          {/* Page Title (left) */}
-          <div style={{
-            flex: 0,
-            minWidth: 0,
-          }}>
+          {/* Left: Page Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h2
               style={{
                 fontSize: '1.1rem',
                 fontWeight: 700,
                 color: colors.text,
                 margin: 0,
+                letterSpacing: '-0.02em',
               }}
             >
               {pageTitle || 'Dashboard'}
             </h2>
           </div>
 
-          {/* Month Navigation (center) */}
-          {showMonthNav && (
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
+          {/* Center: Month Navigation */}
+          {showMonthNav ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
+                  gap: '0.15rem',
                   backgroundColor: colors.card,
                   border: `1px solid ${colors.cardBorder}`,
-                  borderRadius: '0.75rem',
+                  borderRadius: '0.5rem',
+                  padding: '0.3rem 0.15rem',
                 }}
               >
                 <button
@@ -520,23 +516,25 @@ export default function AppLayout({
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    color: colors.navIcon,
-                    padding: '0.25rem',
+                    color: colors.textMuted,
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '0.35rem',
                     display: 'flex',
                     alignItems: 'center',
-                    transition: 'color 0.2s ease',
+                    transition: 'all 0.15s ease',
+                    fontSize: '0.85rem',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = colors.text)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = colors.navIcon)}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = colors.text; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = colors.textMuted; e.currentTarget.style.background = 'none'; }}
                 >
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={16} />
                 </button>
                 <span
                   style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 500,
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
                     color: colors.text,
-                    minWidth: '140px',
+                    minWidth: '110px',
                     textAlign: 'center',
                   }}
                 >
@@ -548,50 +546,42 @@ export default function AppLayout({
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    color: colors.navIcon,
-                    padding: '0.25rem',
+                    color: colors.textMuted,
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '0.35rem',
                     display: 'flex',
                     alignItems: 'center',
-                    transition: 'color 0.2s ease',
+                    transition: 'all 0.15s ease',
+                    fontSize: '0.85rem',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = colors.text)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = colors.navIcon)}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = colors.text; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = colors.textMuted; e.currentTarget.style.background = 'none'; }}
                 >
-                  <ChevronRight size={18} />
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
+          ) : (
+            <div />
           )}
 
-          {/* Action buttons (right) */}
-          {topBarActions && (
-            <div style={{
-              flex: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}>
-              {topBarActions}
-            </div>
-          )}
+          {/* Right: Action buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {topBarActions}
+          </div>
         </header>
-      </div>
 
-      {/* Main content */}
-      <main
-        className="app-main"
-        style={{
-          marginLeft: '240px',
-          paddingTop: '2rem',
-          paddingBottom: '2rem',
-          paddingLeft: '2rem',
-          paddingRight: '2rem',
-          overflowY: 'auto',
-          flex: 1,
-        }}
-      >
-        {children}
-      </main>
+        {/* Main content */}
+        <main
+          className="app-main"
+          style={{
+            padding: '2rem',
+            flex: 1,
+          }}
+        >
+          {children}
+        </main>
+      </div>
 
       <style>{`
         .app-layout {
@@ -600,11 +590,6 @@ export default function AppLayout({
           min-height: 100vh;
           background-color: ${colors.background};
           position: relative;
-        }
-
-        .app-main {
-          display: flex;
-          flex-direction: column;
         }
 
         @media (max-width: 768px) {
@@ -622,13 +607,8 @@ export default function AppLayout({
             transform: ${sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'};
           }
 
-          .app-topbar-container {
+          .app-right {
             margin-left: 0 !important;
-          }
-
-          .app-main {
-            margin-left: 0 !important;
-            padding-top: 5rem !important;
           }
         }
       `}</style>

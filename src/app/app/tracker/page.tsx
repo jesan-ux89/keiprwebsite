@@ -33,7 +33,7 @@ export default function TrackerPage() {
   const loading = billsLoading || incomeLoading;
 
   if (loading) {
-    return <TrackerSkeleton />;
+    return <AppLayout pageTitle="Tracker"><TrackerSkeleton /></AppLayout>;
   }
 
   if (!payPeriods || !primaryIncome) {
@@ -41,7 +41,6 @@ export default function TrackerPage() {
       <AppLayout pageTitle="Tracker">
         <div style={{ maxWidth: '800px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Payment Tracker</h1>
             <p style={{ fontSize: '13px', color: colors.textMuted }}>Track which bills you've paid this paycheck period</p>
           </div>
           <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted, backgroundColor: colors.card, borderRadius: '12px', border: `1px solid ${colors.cardBorder}` }}>

@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { aiAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
+import AppLayout from '@/components/layout/AppLayout';
 
 /* ── Type Definitions ────────────────────────────────────────────────── */
 interface PipelineStats {
@@ -84,14 +85,14 @@ export default function AIAdminPage() {
   ];
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-        <Link href="/app/settings/ai" style={{ color: colors.electric, textDecoration: 'none', fontSize: '0.875rem' }}>&larr; AI Settings</Link>
-        <button onClick={loadStats} style={{ padding: '0.375rem 0.75rem', backgroundColor: 'transparent', color: colors.electric, border: `1px solid ${colors.electric}`, borderRadius: '0.375rem', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500 }}>Refresh</button>
-      </div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, marginBottom: '0.25rem' }}>AI Admin Dashboard</h1>
-      <p style={{ fontSize: '0.875rem', color: colors.textMuted, marginBottom: '1.25rem' }}>Global view of how AI is improving Keipr across all users.</p>
+    <AppLayout pageTitle="Admin AI Dashboard">
+      <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+        {/* Header navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <Link href="/app/settings/ai" style={{ color: colors.electric, textDecoration: 'none', fontSize: '0.875rem' }}>&larr; AI Settings</Link>
+          <button onClick={loadStats} style={{ padding: '0.375rem 0.75rem', backgroundColor: 'transparent', color: colors.electric, border: `1px solid ${colors.electric}`, borderRadius: '0.375rem', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500 }}>Refresh</button>
+        </div>
+        <p style={{ fontSize: '0.875rem', color: colors.textMuted, marginBottom: '1.25rem' }}>Global view of how AI is improving Keipr across all users.</p>
 
       {/* Status badges */}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
@@ -113,14 +114,15 @@ export default function AIAdminPage() {
         ))}
       </div>
 
-      {activeTab === 'overview' && <OverviewTab stats={stats} colors={colors} />}
-      {activeTab === 'server' && <ServerTab stats={stats} colors={colors} />}
-      {activeTab === 'pipeline' && <PipelineTab stats={stats} colors={colors} />}
-      {activeTab === 'trends' && <TrendsTab trends={stats.accuracyTrends} colors={colors} />}
-      {activeTab === 'detection' && <DetectionTab stats={stats} colors={colors} />}
-      {activeTab === 'merchants' && <MerchantsTab stats={stats} colors={colors} />}
-      {activeTab === 'timeline' && <TimelineTab timeline={stats.timeline} colors={colors} />}
-    </div>
+        {activeTab === 'overview' && <OverviewTab stats={stats} colors={colors} />}
+        {activeTab === 'server' && <ServerTab stats={stats} colors={colors} />}
+        {activeTab === 'pipeline' && <PipelineTab stats={stats} colors={colors} />}
+        {activeTab === 'trends' && <TrendsTab trends={stats.accuracyTrends} colors={colors} />}
+        {activeTab === 'detection' && <DetectionTab stats={stats} colors={colors} />}
+        {activeTab === 'merchants' && <MerchantsTab stats={stats} colors={colors} />}
+        {activeTab === 'timeline' && <TimelineTab timeline={stats.timeline} colors={colors} />}
+      </div>
+    </AppLayout>
   );
 }
 

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import CategoryIcon from '@/components/CategoryIcon';
+import AppLayout from '@/components/layout/AppLayout';
 import {
   Settings,
   Moon,
@@ -492,16 +493,8 @@ export default function SettingsPage() {
   };
 
   return (
+    <AppLayout pageTitle="Settings">
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-          Settings
-        </h1>
-        <p style={{ color: colors.textMuted, margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
-          Manage your account and preferences
-        </p>
-      </div>
 
       {/* Profile Section */}
       <Card style={{ marginBottom: '1.5rem' }}>
@@ -2209,6 +2202,7 @@ export default function SettingsPage() {
         </div>
       </Modal>
     </div>
+    </AppLayout>
   );
 }
 

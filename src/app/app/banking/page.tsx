@@ -648,28 +648,6 @@ export default function BankingPage() {
               ))}
             </>
           )}
-
-          {/* Error / Success / Sync banners */}
-          {error && (
-            <Card style={{ backgroundColor: `${colors.red}15`, marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <AlertCircle size={20} style={{ color: colors.red, flexShrink: 0 }} />
-              <p style={{ color: colors.red, margin: 0, fontSize: '0.95rem', flex: 1 }}>{error}</p>
-              <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-            </Card>
-          )}
-          {success && (
-            <Card style={{ backgroundColor: 'rgba(10,123,108,0.08)', marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <CheckCircle2 size={20} style={{ color: '#0A7B6C', flexShrink: 0 }} />
-              <p style={{ color: '#0A7B6C', margin: 0, fontSize: '0.95rem', flex: 1 }}>{success}</p>
-              <button onClick={() => setSuccess(null)} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-            </Card>
-          )}
-          {syncResult && (
-            <Card style={{ backgroundColor: 'rgba(56,189,248,0.08)', marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-              <p style={{ color: '#38BDF8', margin: 0, fontSize: '0.95rem' }}>{syncResult}</p>
-              <button onClick={() => setSyncResult(null)} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-            </Card>
-          )}
         </div>
       </TwoColumnLayout>
 

@@ -7,6 +7,7 @@ import { planAPI } from '@/lib/api';
 import { getPlanMonths } from '@/lib/payPeriods';
 import { Plus, X, ChevronDown } from 'lucide-react';
 import { CardSkeleton } from '@/components/LoadingSkeleton';
+import AppLayout from '@/components/layout/AppLayout';
 
 interface PlanBill {
   id: string;
@@ -179,18 +180,17 @@ export default function PlanPage() {
 
   if (months.length === 0 || loading) {
     return (
-      <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
-        <CardSkeleton rows={6} />
-      </div>
+      <AppLayout pageTitle="Plan">
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <CardSkeleton rows={6} />
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Forward Planning</h1>
-        <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '16px' }}>Plan and adjust your bills for upcoming months</p>
-      </div>
+    <AppLayout pageTitle="Plan">
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
       {/* Month Selector */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px', alignItems: 'center' }}>
@@ -567,5 +567,6 @@ export default function PlanPage() {
         </div>
       )}
     </div>
+    </AppLayout>
   );
 }

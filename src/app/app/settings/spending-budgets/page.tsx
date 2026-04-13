@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import CategoryIcon from '@/components/CategoryIcon';
 import { ArrowLeft, Plus, Pencil, X } from 'lucide-react';
+import AppLayout from '@/components/layout/AppLayout';
 
 const FALLBACK_CATEGORIES = ['Dining', 'Fun', 'Groceries', 'Healthcare', 'Housing', 'Insurance', 'Other', 'Savings', 'Subscriptions', 'Transport', 'Utilities'];
 
@@ -82,15 +83,15 @@ export default function SpendingBudgetsPage() {
   }
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Link href="/app/bills" style={{ color: colors.textMuted, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <ArrowLeft size={20} />
-          </Link>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text, margin: 0 }}>Spending Budgets</h1>
-        </div>
+    <AppLayout pageTitle="Spending Budgets">
+      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+        {/* Header back button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <Link href="/app/bills" style={{ color: colors.textMuted, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+              <ArrowLeft size={20} />
+            </Link>
+          </div>
         <Button
           variant="primary"
           size="md"
@@ -256,6 +257,7 @@ export default function SpendingBudgetsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }

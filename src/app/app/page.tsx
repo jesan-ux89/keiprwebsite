@@ -435,7 +435,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <AppLayout pageTitle="Dashboard" showMonthNav={true} topBarActions={<button onClick={() => setExpenseModalOpen(true)} style={{ padding: '0.5rem 1rem', backgroundColor: colors.electric, color: '#fff', border: 'none', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>+ Add expense</button>}>
+    <AppLayout pageTitle="Dashboard" showMonthNav={true} topBarActions={<button onClick={() => setExpenseModalOpen(true)} style={{ padding: '0.4rem 0.75rem', backgroundColor: colors.electric, color: '#0c1117', border: `1px solid ${colors.electric}`, borderRadius: '0.5rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>+ Add expense</button>}>
       {isLoading ? (
         <DashboardSkeleton />
       ) : (

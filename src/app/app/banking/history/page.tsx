@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, AlertCircle, Trash2, Filter } from 'lucide-react';
 import Link from 'next/link';
+import AppLayout from '@/components/layout/AppLayout';
 
 interface Match {
   id: string;
@@ -80,23 +81,19 @@ export default function HistoryPage() {
   const totalPages = Math.ceil(filteredMatches.length / itemsPerPage);
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <Link href="/app/banking" style={{ textDecoration: 'none' }}>
-          <Button variant="ghost" size="sm">
-            <ChevronLeft size={18} style={{ color: colors.text }} />
-          </Button>
-        </Link>
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-            Match History
-          </h1>
-          <p style={{ color: colors.textMuted, margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
+    <AppLayout pageTitle="Match History">
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        {/* Header back button */}
+        <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Link href="/app/banking" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" size="sm">
+              <ChevronLeft size={18} style={{ color: colors.text }} />
+            </Button>
+          </Link>
+          <p style={{ color: colors.textMuted, margin: 0, fontSize: '0.95rem' }}>
             View all confirmed transaction-to-bill matches
           </p>
         </div>
-      </div>
 
       {/* Error State */}
       {error && (
@@ -273,6 +270,7 @@ export default function HistoryPage() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }

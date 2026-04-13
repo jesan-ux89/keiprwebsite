@@ -7,6 +7,7 @@ import { useApp } from '@/context/AppContext';
 import { bankingAPI, usersAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import MerchantLogo from '@/components/MerchantLogo';
+import AppLayout from '@/components/layout/AppLayout';
 
 export default function IncomePage() {
   const { colors, isDark } = useTheme();
@@ -92,15 +93,8 @@ export default function IncomePage() {
   const totalDeposits = deposits.reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
-        <Link href="/app" style={{
-          width: 36, height: 36, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backgroundColor: colors.inputBg, textDecoration: 'none', color: colors.text, fontSize: '1.1rem',
-        }}>←</Link>
-        <h1 style={{ fontSize: '1.375rem', fontWeight: 800, color: colors.text, margin: 0 }}>Income</h1>
-      </div>
+    <AppLayout pageTitle="Income">
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
 
       {/* Hero */}
       <Card style={{
@@ -400,6 +394,7 @@ export default function IncomePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }

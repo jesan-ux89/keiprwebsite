@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/Button';
+import AppLayout from '@/components/layout/AppLayout';
 import {
   BarChart3,
   Landmark,
@@ -51,18 +52,19 @@ export default function UltraWelcomePage() {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: colors.background,
-        padding: '2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div style={{ maxWidth: '600px', textAlign: 'center' }}>
+    <AppLayout pageTitle="Welcome to Ultra">
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: colors.background,
+          padding: '2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ maxWidth: '600px', textAlign: 'center' }}>
         {/* Celebration Header */}
         <div style={{ marginBottom: '2.5rem' }}>
           <div
@@ -198,7 +200,8 @@ export default function UltraWelcomePage() {
         >
           Let's Get Started →
         </Button>
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

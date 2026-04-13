@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { aiAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import AppLayout from '@/components/layout/AppLayout';
 import {
   ArrowLeft,
   Zap,
@@ -144,27 +145,25 @@ export default function AISettingsPage() {
   }
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '0 1rem 2rem' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <Link
-          href="/app/settings"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            color: colors.textMuted,
-            textDecoration: 'none',
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = colors.electric)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = colors.textMuted)}
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text, margin: 0, flex: 1 }}>
-          AI Features
-        </h1>
+    <AppLayout pageTitle="AI Settings">
+      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '0 1rem 2rem' }}>
+        {/* Header back link */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+          <Link
+            href="/app/settings"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              color: colors.textMuted,
+              textDecoration: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = colors.electric)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = colors.textMuted)}
+          >
+            <ArrowLeft size={20} />
+          </Link>
         {isAdmin && (
           <Link
             href="/app/settings/ai-admin"
@@ -550,7 +549,8 @@ export default function AISettingsPage() {
           </p>
         </div>
       </Card>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 
