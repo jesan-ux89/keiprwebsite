@@ -141,8 +141,8 @@ function BankImportContent() {
           if (data.incomeDetected > 0) await refreshIncomeSources();
           setImportStatus(
             data.billsCreated > 0
-              ? `Found ${data.billsCreated} bill${data.billsCreated > 1 ? 's' : ''}${data.incomeDetected > 0 ? ' and your income' : ''}`
-              : 'Connected — you can add bills manually'
+              ? `Found ${data.billsCreated} expense${data.billsCreated > 1 ? 's' : ''}${data.incomeDetected > 0 ? ' and your income' : ''}`
+              : 'Connected — expenses will be detected automatically'
           );
         } catch (_) {
           setImportStatus(null);
@@ -492,19 +492,6 @@ function BankImportContent() {
               )}
             </button>
 
-            <button
-              style={{
-                ...styles.button,
-                ...styles.buttonSecondary,
-              }}
-              onClick={handleSkipTrial}
-            >
-              Skip trial, just connect bank
-            </button>
-
-            <a style={styles.skipLink} onClick={handleSkipBankImport}>
-              Skip — I'll review bills later
-            </a>
           </div>
         </div>
 
@@ -577,11 +564,6 @@ function BankImportContent() {
             )}
           </div>
 
-          <div style={styles.footer}>
-            <a style={styles.skipLink} onClick={handleSkipBankImport}>
-              Skip for now
-            </a>
-          </div>
         </div>
 
         <style>{`
@@ -650,23 +632,23 @@ function BankImportContent() {
             </h2>
 
             <div style={styles.successMessage}>
-              <strong>What happens next:</strong>
+              <strong>How bank import works:</strong>
               <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                <li>We'll scan your recent transactions</li>
-                <li>New recurring charges will appear as detected bills</li>
-                <li>You can confirm them as bills or dismiss them</li>
-                <li>Transactions stay private — we never store them</li>
+                <li>We track recurring bills, subscriptions, loans, utilities, dining, gas, and everyday purchases from your bank.</li>
+                <li>Your paycheck deposits are automatically detected. You can fine-tune income sources and add one-time funds (cash, gifts) in Settings.</li>
               </ul>
             </div>
 
+            {importStatus && (
+              <p style={{ fontSize: '13px', color: colors.textMuted, textAlign: 'center', marginBottom: '16px' }}>
+                {importStatus}
+              </p>
+            )}
+
             <div style={styles.footer}>
               <button style={styles.button} onClick={handleContinueFromSuccess}>
-                Continue to allocate →
+                Continue →
               </button>
-
-              <a style={styles.skipLink} onClick={handleSkipBankImport}>
-                Skip for now
-              </a>
             </div>
           </div>
         </div>
