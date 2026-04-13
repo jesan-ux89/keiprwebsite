@@ -410,7 +410,7 @@ export default function AllTransactionsPage() {
     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
       <button style={{
         padding: '0.5rem 1rem', borderRadius: '0.625rem',
-        border: `1px solid ${colors.divider}`, backgroundColor: colors.cardBackground,
+        border: `1px solid ${colors.divider}`, backgroundColor: colors.card,
         color: colors.textMuted, fontSize: '0.875rem', fontWeight: 500,
         cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
       }}>
@@ -419,7 +419,7 @@ export default function AllTransactionsPage() {
       </button>
       <button style={{
         padding: '0.5rem 1rem', borderRadius: '0.625rem',
-        border: `1px solid ${colors.divider}`, backgroundColor: colors.cardBackground,
+        border: `1px solid ${colors.divider}`, backgroundColor: colors.card,
         color: colors.textMuted, fontSize: '0.875rem', fontWeight: 500,
         cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
       }}>
@@ -825,7 +825,7 @@ export default function AllTransactionsPage() {
                         padding: '0.875rem',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
-                        backgroundColor: isExpanded ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)') : colors.cardBackground,
+                        backgroundColor: isExpanded ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)') : colors.card,
                       }}
                       onClick={() => setExpandedId(isExpanded ? null : txn.id)}
                       onMouseEnter={(e) => {
@@ -837,7 +837,7 @@ export default function AllTransactionsPage() {
                       onMouseLeave={(e) => {
                         if (!isExpanded) {
                           (e.currentTarget as HTMLElement).style.borderColor = colors.divider;
-                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardBackground;
+                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.card;
                         }
                       }}
                     >
