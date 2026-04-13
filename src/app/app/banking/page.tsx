@@ -118,6 +118,7 @@ export default function BankingPage() {
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [syncCooldown, setSyncCooldown] = useState(0);
   const [refreshingBalances, setRefreshingBalances] = useState(false);
+  const [syncSettingsOpen, setSyncSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (syncCooldown <= 0) return;
@@ -397,15 +398,6 @@ export default function BankingPage() {
   const topBarActions = (
     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
       <Button
-        variant="secondary" size="sm"
-        onClick={handleManualSync}
-        disabled={accounts.length === 0 || syncCooldown > 0}
-        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: syncCooldown > 0 ? 0.5 : 1 }}
-      >
-        <RefreshCw size={16} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-        {syncCooldown > 0 ? `${syncCooldown}s` : 'Sync'}
-      </Button>
-      <Button
         variant="secondary" size="sm" disabled={true}
         title="Plaid Link for web is coming soon. Use mobile app for now."
         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -658,45 +650,93 @@ export default function BankingPage() {
               ))}
             </>
           )}
-          {/* Refresh all balances — subtle link at bottom */}
+          {/* ═══ Sync Settings (collapsible) ═══ */}
           {!loading && accounts.length > 0 && (
-            <div style={{ textAlign: 'center', paddingTop: '1.5rem', paddingBottom: '1rem' }}>
+            <div style={{ paddingTop: '1.5rem', paddingBottom: '1rem' }}>
               <button
-                onClick={async () => {
-                  try {
-                    setRefreshingBalances(true);
-                    setError(null);
-                    const balancesRes = await bankingAPI.getBalances(true);
-                    const balMap: Record<string, AccountBalance> = {};
-                    if (balancesRes?.data?.accounts) {
-                      balancesRes.data.accounts.forEach((bal: any) => {
-                        balMap[bal.id] = {
-                          id: bal.id,
-                          current: bal.current_balance ?? bal.current ?? 0,
-                          available: bal.available_balance ?? bal.available ?? 0,
-                        };
-                      });
-                    }
-                    setAccounts(prev => prev.map(acc => ({ ...acc, balance: balMap[acc.id] || acc.balance })));
-                  } catch {
-                    setError('Failed to refresh balances.');
-                  } finally {
-                    setRefreshingBalances(false);
-                  }
-                }}
-                disabled={refreshingBalances}
+                onClick={() => setSyncSettingsOpen(prev => !prev)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: colors.textMuted,
-                  fontSize: '0.8125rem',
-                  cursor: refreshingBalances ? 'default' : 'pointer',
-                  opacity: refreshingBalances ? 0.5 : 1,
-                  padding: '0.5rem 1rem',
+                  background: 'none', border: 'none', color: colors.textMuted,
+                  fontSize: '0.8125rem', cursor: 'pointer', padding: '0.5rem 1rem',
+                  display: 'block', margin: '0 auto',
                 }}
               >
-                {refreshingBalances ? 'Refreshing...' : 'Refresh all balances'}
+                {syncSettingsOpen ? '▾ Sync Settings' : '▸ Sync Settings'}
               </button>
+
+              {syncSettingsOpen && (
+                <div style={{
+                  marginTop: '0.75rem', borderRadius: '12px', border: `1px solid ${colors.cardBorder}`,
+                  backgroundColor: colors.card, overflow: 'hidden',
+                }}>
+                  {/* Sync Transactions */}
+                  <button
+                    onClick={handleManualSync}
+                    disabled={syncing || syncCooldown > 0}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '0.875rem 1rem', background: 'none', border: 'none',
+                      borderBottom: `1px solid ${colors.cardBorder}`, cursor: syncing || syncCooldown > 0 ? 'default' : 'pointer',
+                      opacity: syncing || syncCooldown > 0 ? 0.5 : 1, textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ color: colors.text, fontSize: '0.875rem', fontWeight: 500 }}>Sync Transactions</div>
+                      <div style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '2px' }}>Pull latest purchases & deposits</div>
+                    </div>
+                    {syncing ? (
+                      <RefreshCw size={16} style={{ color: '#38BDF8', animation: 'spin 1s linear infinite' }} />
+                    ) : (
+                      <span style={{ color: syncCooldown > 0 ? colors.textMuted : '#38BDF8', fontSize: '0.8125rem', fontWeight: 500 }}>
+                        {syncCooldown > 0 ? `${syncCooldown}s` : 'Sync'}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Refresh Balances */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        setRefreshingBalances(true);
+                        setError(null);
+                        const balancesRes = await bankingAPI.getBalances(true);
+                        const balMap: Record<string, AccountBalance> = {};
+                        if (balancesRes?.data?.accounts) {
+                          balancesRes.data.accounts.forEach((bal: any) => {
+                            balMap[bal.id] = {
+                              id: bal.id,
+                              current: bal.current_balance ?? bal.current ?? 0,
+                              available: bal.available_balance ?? bal.available ?? 0,
+                            };
+                          });
+                        }
+                        setAccounts(prev => prev.map(acc => ({ ...acc, balance: balMap[acc.id] || acc.balance })));
+                      } catch {
+                        setError('Failed to refresh balances.');
+                      } finally {
+                        setRefreshingBalances(false);
+                      }
+                    }}
+                    disabled={refreshingBalances}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '0.875rem 1rem', background: 'none', border: 'none',
+                      cursor: refreshingBalances ? 'default' : 'pointer',
+                      opacity: refreshingBalances ? 0.5 : 1, textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ color: colors.text, fontSize: '0.875rem', fontWeight: 500 }}>Refresh Balances</div>
+                      <div style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '2px' }}>Get live account balances</div>
+                    </div>
+                    {refreshingBalances ? (
+                      <RefreshCw size={16} style={{ color: '#38BDF8', animation: 'spin 1s linear infinite' }} />
+                    ) : (
+                      <span style={{ color: '#38BDF8', fontSize: '0.8125rem', fontWeight: 500 }}>Refresh</span>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
