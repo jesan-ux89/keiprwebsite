@@ -664,14 +664,14 @@ export default function BillsPage() {
                         gridTemplateColumns: '1fr 100px 100px 100px',
                         gap: '1rem',
                         padding: '1.25rem',
-                        backgroundColor: isExpanded ? colors.cardHover || colors.background : colors.card,
+                        backgroundColor: isExpanded ? colors.background : colors.card,
                         cursor: 'pointer',
                         borderBottom: isExpanded ? `1px solid ${colors.divider}` : 'none',
                         transition: 'background-color 0.2s ease',
                       }}
                       onMouseEnter={(e) => {
                         if (!isExpanded) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover || colors.background;
+                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.background;
                         }
                       }}
                       onMouseLeave={(e) => {
@@ -729,7 +729,7 @@ export default function BillsPage() {
                               alignItems: 'center',
                             }}
                             onMouseEnter={(e) => {
-                              (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover || colors.background;
+                              (e.currentTarget as HTMLElement).style.backgroundColor = colors.background;
                             }}
                             onMouseLeave={(e) => {
                               (e.currentTarget as HTMLElement).style.backgroundColor = colors.background;
