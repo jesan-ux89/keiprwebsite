@@ -1882,7 +1882,8 @@ export default function SettingsPage() {
                     const res = await bankingAPI.migrateToUltra();
                     const r = (res as any).data;
                     if (r.autoDiscovery) {
-                      alert(`Sync Complete!\n\nBills created: ${r.autoDiscovery.billsCreated}\nIncome detected: ${r.autoDiscovery.incomeDetected}\nBudgets created: ${r.autoDiscovery.budgetsCreated}`);
+                      const totalExpenses = (r.autoDiscovery.billsCreated || 0) + (r.autoDiscovery.budgetsCreated || 0);
+                      alert(`Sync Complete!\n\nExpenses created: ${totalExpenses}\nIncome detected: ${r.autoDiscovery.incomeDetected}`);
                       if (r.autoDiscovery.billsCreated > 0) refreshBills();
                       if (r.autoDiscovery.incomeDetected > 0) refreshIncomeSources();
                       if (r.autoDiscovery.budgetsCreated > 0) fetchSpendingBudgets();
