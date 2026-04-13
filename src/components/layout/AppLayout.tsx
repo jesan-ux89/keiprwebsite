@@ -464,9 +464,9 @@ export default function AppLayout({
           className="app-topbar"
           style={{
             height: '56px',
-            backgroundColor: colors.navBg,
+            backgroundColor: `${colors.navBg}E6`,
             backdropFilter: 'blur(12px)',
-            opacity: 0.85,
+            WebkitBackdropFilter: 'blur(12px)',
             borderBottom: `1px solid ${colors.divider}`,
             display: 'flex',
             alignItems: 'center',

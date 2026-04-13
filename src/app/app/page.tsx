@@ -361,87 +361,34 @@ export default function DashboardPage() {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* Available Number Hero */}
-        {isUltra && availableNumber !== null && (
-          <Card style={{ textAlign: 'center', padding: '1.5rem', background: `linear-gradient(135deg, ${colors.midnight}, #0E6494)`, color: '#fff', borderColor: 'transparent' }}>
-            <p style={{ fontSize: '0.75rem', opacity: 0.85, margin: '0 0 0.5rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available</p>
-            <p style={{ fontSize: '2rem', fontWeight: 700, color: availableNumber < 0 ? '#EF4444' : '#fff', margin: '0 0 0.75rem 0' }}>
-              {fmt(availableNumber)}
-            </p>
-            <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: '0 0 1rem 0', lineHeight: 1.5 }}>
-              Available this paycheck
-            </p>
-            <button
-              onClick={() => setExpenseModalOpen(true)}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                borderRadius: '24px',
-                padding: '10px 24px',
-                color: '#fff',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              + Quick spend
-            </button>
-          </Card>
-        )}
+        {/* Available Number */}
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ fontSize: '2rem', fontWeight: 700, color: (isUltra && availableNumber !== null ? availableNumber : remaining) >= 0 ? colors.text : '#EF4444', margin: '0 0 0.25rem 0' }}>
+            {fmt(isUltra && availableNumber !== null ? availableNumber : remaining)}
+          </p>
+          <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>
+            Available this paycheck
+          </p>
+        </div>
 
-        {/* Income / Bills / Spent Row (clickable) */}
-        {isUltra && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <a href="/app/income" style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.875rem',
-                backgroundColor: colors.card,
-                border: `1px solid ${colors.cardBorder}`,
-                borderRadius: '0.625rem',
-                cursor: 'pointer',
-              }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
-                <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Income</span>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: colors.text }}>{fmt(totalPaycheck)}</span>
-              </div>
-            </a>
-            <a href="/app/bills" style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.875rem',
-                backgroundColor: colors.card,
-                border: `1px solid ${colors.cardBorder}`,
-                borderRadius: '0.625rem',
-                cursor: 'pointer',
-              }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-                <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Bills</span>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: colors.text }}>{fmt(totalBillsThisCheck)}</span>
-              </div>
-            </a>
-            <a href="/app/banking/transactions" style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.875rem',
-                backgroundColor: colors.card,
-                border: `1px solid ${colors.cardBorder}`,
-                borderRadius: '0.625rem',
-                cursor: 'pointer',
-              }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#EF4444' }} />
-                <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Spent</span>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: colors.text }}>{fmt(totalSpendingThisPeriod)}</span>
-              </div>
-            </a>
-          </div>
-        )}
+        {/* Income / Bills / Spent Breakdown */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          <a href="/app/income" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Income</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalPaycheck)}</span>
+          </a>
+          <a href="/app/bills" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#F59E0B' }} />
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Bills</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalBillsThisCheck)}</span>
+          </a>
+          <a href="/app/banking/transactions" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#EF4444' }} />
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Spent</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalSpendingThisPeriod)}</span>
+          </a>
+        </div>
 
         <div style={{ height: '1px', backgroundColor: colors.divider }} />
 
@@ -571,29 +518,39 @@ export default function DashboardPage() {
 
             {/* Detected Transactions Alert */}
             {isUltra && detectedCount > 0 && (
-              <a href="/app/bills?showDetected=true" style={{ textDecoration: 'none' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                backgroundColor: colors.card, borderRadius: '0.75rem',
+                padding: '0.875rem 1.25rem',
+                border: `1px solid ${colors.cardBorder}`,
+              }}>
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  backgroundColor: 'rgba(56,189,248,0.12)', borderRadius: '0.75rem',
-                  padding: '0.875rem 1rem',
-                  border: '1px solid rgba(56,189,248,0.20)', cursor: 'pointer',
-                }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 18,
-                    backgroundColor: 'rgba(56,189,248,0.18)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                  }}>🔔</div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
-                      {detectedCount >= 5 ? `We found ${detectedCount} recurring expenses` : `${detectedCount} new ${detectedCount === 1 ? 'expense' : 'expenses'} detected`}
-                    </p>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: colors.textSub }}>
-                      {detectedBills.slice(0, 2).map(b => b.name).join(', ')}{detectedCount > 2 ? ` +${detectedCount - 2} more` : ''}
-                    </p>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.electric }}>Review →</span>
-                </div>
-              </a>
+                  width: 32, height: 32, borderRadius: '50%',
+                  backgroundColor: '#0A7B6C',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: '0.875rem', fontWeight: 700, flexShrink: 0,
+                }}>!</div>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: colors.text, flex: 1 }}>
+                  <span style={{ fontWeight: 600, color: '#0A7B6C' }}>{detectedCount} new recurring expense{detectedCount !== 1 ? 's' : ''}</span>
+                  {' '}detected from your bank transactions
+                </p>
+                <a
+                  href="/app/bills?showDetected=true"
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: colors.text,
+                    color: colors.background,
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    flexShrink: 0,
+                  }}
+                >
+                  Review
+                </a>
+              </div>
             )}
 
             {/* Pending Confirmations Alert */}
@@ -624,7 +581,7 @@ export default function DashboardPage() {
             )}
 
             {/* Hero Stats Row (3-column grid) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Available</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: remaining >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(remaining)}</p>
@@ -638,32 +595,35 @@ export default function DashboardPage() {
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsThisCheck + totalSpendingBudgetsAmount)}</p>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{spentPct}% of paycheck covered</p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{bills.length} expenses · {spentPct}% covered</p>
               </Card>
             </div>
 
             {/* Spending Pace Card (Ultra only) */}
             {isUltra && (
-              <Card style={{ padding: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>Spending Pace</span>
-                  <span style={{ fontSize: '0.8rem', color: colors.textSub }}>This paycheck</span>
+              <Card style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>Spending Pace</span>
+                  <span style={{ fontSize: '0.8rem', color: colors.electric, fontWeight: 500 }}>This paycheck</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text }}>{fmt(spendingPerDay)}</span>
-                  <span style={{ fontSize: '0.9rem', color: colors.textSub }}>/day</span>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.text, marginLeft: 'auto' }}>
-                    {fmt(totalSpendingThisPeriod)} / {fmt(availableBreakdown?.paycheckIncome || 0)}
-                  </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text }}>{fmt(totalSpendingThisPeriod)}</span>
+                    <span style={{ fontSize: '0.9rem', color: colors.textMuted }}> of {fmt(availableBreakdown?.paycheckIncome || totalPaycheck)}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.electric }}>{fmt(spendingPerDay)}/day</span>
+                    <span style={{ fontSize: '0.8rem', color: colors.textMuted }}> · {Math.max(0, totalPeriodDays - daysIntoPeriod)} days left</span>
+                  </div>
                 </div>
-                <div style={{ height: '4px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '2px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                <div style={{ height: '6px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden', marginBottom: '0.625rem' }}>
                   <div style={{
-                    height: '100%', borderRadius: '2px',
+                    height: '100%', borderRadius: '3px',
                     width: `${Math.min(100, (daysIntoPeriod / totalPeriodDays) * 100)}%`,
                     background: `linear-gradient(90deg, ${colors.electric}, #0A7B6C)`,
                   }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: colors.textSub }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: colors.textMuted }}>
                   <span>{currentPeriod?.start?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   <span>Projected: {fmt(projectedSpending)}</span>
                   <span>{currentPeriod?.end?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
@@ -674,54 +634,84 @@ export default function DashboardPage() {
             {/* Upcoming Expenses Card */}
             {upcomingBills.length > 0 && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Upcoming expenses</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Upcoming Expenses</h3>
                   <a href="/app/bills" style={{ fontSize: '0.85rem', fontWeight: 500, color: colors.electric, textDecoration: 'none' }}>View all →</a>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <Card style={{ padding: 0, overflow: 'hidden' }}>
                   {upcomingBills.map((b, idx) => {
-                    const suffix = (d: number) => d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+                    const today = new Date();
+                    const dueDate = new Date(today.getFullYear(), today.getMonth(), b.dueDay || 1);
+                    const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    const isPaid = b.isSplit ? isSplitPaid(b.id, currentPaycheckNum) : isBillPaid(b.id);
+                    const monthAbbr = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    let badgeText = '';
+                    let badgeBg = '';
+                    let badgeColor = '';
+                    if (isPaid) {
+                      badgeText = 'Paid \u2713';
+                      badgeBg = 'rgba(16,185,129,0.15)';
+                      badgeColor = '#10B981';
+                    } else if (daysUntil >= 0 && daysUntil <= 7) {
+                      badgeText = daysUntil === 0 ? 'Due today' : `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`;
+                      badgeBg = 'rgba(239,68,68,0.12)';
+                      badgeColor = '#EF4444';
+                    } else {
+                      badgeText = 'Recurring';
+                      badgeBg = `${colors.electric}1A`;
+                      badgeColor = colors.electric;
+                    }
+
                     return (
                       <a key={b.id} href={`/app/bills?edit=${b.id}`} style={{ textDecoration: 'none' }}>
-                        <Card style={{ padding: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-                          <MerchantLogo billName={b.name} category={b.category || 'Other'} size={32} isDark={isDark} />
+                        <div style={{
+                          padding: '0.875rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer',
+                          borderBottom: idx < upcomingBills.length - 1 ? `1px solid ${colors.divider}` : 'none',
+                        }}>
+                          <MerchantLogo billName={b.name} category={b.category || 'Other'} size={36} isDark={isDark} />
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>{b.name}</p>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.25rem', fontSize: '0.75rem', color: colors.textSub }}>
-                              <span>Due {b.dueDay}{suffix(b.dueDay || 1)}</span>
-                              <span>•</span>
-                              <span>{b.category || 'Other'}</span>
+                            <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.text, margin: 0 }}>{b.name}</p>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.3rem' }}>
+                              <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '0.15rem 0.5rem',
+                                borderRadius: '4px', backgroundColor: badgeBg, color: badgeColor,
+                              }}>{badgeText}</span>
+                              <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>{b.category || 'Other'}</span>
                             </div>
                           </div>
-                          <span style={{ fontSize: '1rem', fontWeight: 600, color: colors.text }}>
-                            {fmt(billAmountForPaycheck(b, currentPaycheckNum))}
-                          </span>
-                        </Card>
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                              {fmt(billAmountForPaycheck(b, currentPaycheckNum))}
+                            </p>
+                            <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>{monthAbbr}</p>
+                          </div>
+                        </div>
                       </a>
                     );
                   })}
-                </div>
+                </Card>
               </div>
             )}
 
             {/* Recent Activity Card (Ultra only) */}
             {isUltra && recentTransactions.length > 0 && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Recent activity</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>Recent Activity</h3>
                   <a href="/app/banking/transactions" style={{ fontSize: '0.85rem', fontWeight: 500, color: colors.electric, textDecoration: 'none' }}>All transactions →</a>
                 </div>
-                <Card style={{ padding: '0.75rem 1rem' }}>
-                  {recentTransactions.map((txn, idx) => (
+                <Card style={{ padding: 0, overflow: 'hidden' }}>
+                  {recentTransactions.map((txn: any, idx: number) => (
                     <div key={txn.id || idx} style={{
                       display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '0.75rem 0',
-                      borderBottom: idx < recentTransactions.length - 1 ? `0.5px solid ${colors.divider}` : 'none',
+                      padding: '0.875rem 1rem',
+                      borderBottom: idx < recentTransactions.length - 1 ? `1px solid ${colors.divider}` : 'none',
                     }}>
                       <div style={{
                         width: 32, height: 32, borderRadius: 8,
-                        backgroundColor: txn.amount < 0 ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.9rem',
+                        backgroundColor: txn.amount < 0 ? 'rgba(239,68,68,0.10)' : 'rgba(16,185,129,0.10)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.85rem',
                       }}>
                         {txn.amount < 0 ? '↗' : '↙'}
                       </div>
@@ -729,7 +719,7 @@ export default function DashboardPage() {
                         <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {txn.merchant_name || txn.name || 'Transaction'}
                         </p>
-                        <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0.1rem 0 0 0' }}>
+                        <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.15rem 0 0 0' }}>
                           {txn.transaction_date ? new Date(txn.transaction_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} · {txn.category || ''}
                         </p>
                       </div>
