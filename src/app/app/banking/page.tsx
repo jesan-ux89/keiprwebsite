@@ -548,7 +548,7 @@ export default function BankingPage() {
                           }}
                           onMouseLeave={(e) => {
                             (e.currentTarget as HTMLElement).style.borderColor = colors.divider;
-                            (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardBackground;
+                            (e.currentTarget as HTMLElement).style.backgroundColor = colors.card;
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
