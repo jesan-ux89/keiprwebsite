@@ -26,8 +26,16 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ size?: number }>;
+  section: string;
+  hasBadge?: boolean;
+};
+
 // Free/Pro: Dashboard, Bills, Tracker, Plan, Settings
-const FREE_PRO_NAV = [
+const FREE_PRO_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/app', icon: LayoutDashboard, section: 'Overview' },
   { label: 'Bills', href: '/app/bills', icon: Receipt, section: 'Planning' },
   { label: 'Tracker', href: '/app/tracker', icon: CheckSquare, section: 'Planning' },
@@ -35,7 +43,7 @@ const FREE_PRO_NAV = [
 ];
 
 // Ultra: Dashboard, Accounts, Transactions, Budget, Tracker, Reports
-const ULTRA_NAV = [
+const ULTRA_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/app', icon: LayoutDashboard, section: 'Overview' },
   { label: 'Accounts', href: '/app/banking', icon: Landmark, section: 'Overview' },
   { label: 'Transactions', href: '/app/banking/transactions', icon: CreditCard, section: 'Overview' },
