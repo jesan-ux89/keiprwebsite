@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useSearchParams } from 'next/navigation';
@@ -120,7 +120,15 @@ function unmatchedReasonColor(txn: Transaction, isDark: boolean): string {
 
 // ── Main component ──
 
-export default function AllTransactionsPage() {
+export default function AllTransactionsPageWrapper() {
+  return (
+    <Suspense fallback={<AppLayout pageTitle="Transactions"><div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>Loading...</div></AppLayout>}>
+      <AllTransactionsPage />
+    </Suspense>
+  );
+}
+
+function AllTransactionsPage() {
   const { colors, isDark } = useTheme();
   const { isUltra, fmt, bills } = useApp();
   const searchParams = useSearchParams();

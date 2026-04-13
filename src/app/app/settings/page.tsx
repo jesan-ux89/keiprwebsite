@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
@@ -100,7 +100,15 @@ const TIERS = [
   },
 ];
 
-export default function SettingsPage() {
+export default function SettingsPageWrapper() {
+  return (
+    <Suspense fallback={<AppLayout pageTitle="Settings"><div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>Loading...</div></AppLayout>}>
+      <SettingsPage />
+    </Suspense>
+  );
+}
+
+function SettingsPage() {
   const { colors, isDark } = useTheme();
   const { themeMode, setThemeMode } = useTheme();
   const { incomeSources, bills, categories, currency, setCurrencyCode, addIncomeSource, updateIncomeSource, deleteIncomeSource, setPrimaryIncomeSource, refreshIncomeSources, refreshBills, fetchSpendingBudgets, fmt, isPro, isUltra, refreshSubscription } = useApp();
