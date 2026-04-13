@@ -7,7 +7,8 @@ import { useSearchParams } from 'next/navigation';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, AlertCircle, Eye } from 'lucide-react';
+import AppLayout from '@/components/layout/AppLayout';
+import { ChevronLeft, AlertCircle, Eye, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 
 // ── Types ──
@@ -404,52 +405,67 @@ export default function AllTransactionsPage() {
 
   // ── Main render ──
 
-  return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <Link href="/app/banking" style={{ textDecoration: 'none' }}>
-          <Button variant="ghost" size="sm"><ChevronLeft size={18} style={{ color: colors.text }} /></Button>
-        </Link>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-          {searchParams?.get('accountName') || 'All Transactions'}
-        </h1>
-      </div>
+  // Build topBarActions with search and filter buttons
+  const topBarActions = (
+    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+      <button style={{
+        padding: '0.5rem 1rem', borderRadius: '0.625rem',
+        border: `1px solid ${colors.divider}`, backgroundColor: colors.cardBackground,
+        color: colors.textMuted, fontSize: '0.875rem', fontWeight: 500,
+        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
+      }}>
+        <Search size={16} />
+        Search
+      </button>
+      <button style={{
+        padding: '0.5rem 1rem', borderRadius: '0.625rem',
+        border: `1px solid ${colors.divider}`, backgroundColor: colors.cardBackground,
+        color: colors.textMuted, fontSize: '0.875rem', fontWeight: 500,
+        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
+      }}>
+        <Filter size={16} />
+        Filter
+      </button>
+    </div>
+  );
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        {TABS.map(tab => {
-          const count = tabCount(tab.key);
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => { setActiveTab(tab.key); setExpandedId(null); }}
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                padding: '0.6rem 0.75rem', borderRadius: '0.625rem', fontSize: '0.875rem', fontWeight: 600,
-                border: 'none', cursor: 'pointer',
-                backgroundColor: isActive
-                  ? (isDark ? 'rgba(56,189,248,0.15)' : 'rgba(12,74,110,0.08)')
-                  : (isDark ? 'rgba(232,229,220,0.04)' : 'rgba(0,0,0,0.03)'),
-                color: isActive ? colors.electric : colors.textMuted,
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {tab.label}
-              <span style={{
-                fontSize: '0.75rem', fontWeight: 700,
-                backgroundColor: isActive
-                  ? (isDark ? 'rgba(56,189,248,0.25)' : 'rgba(12,74,110,0.12)')
-                  : (isDark ? 'rgba(232,229,220,0.08)' : 'rgba(0,0,0,0.06)'),
-                padding: '1px 6px', borderRadius: '8px', minWidth: '22px', textAlign: 'center',
-              }}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+  return (
+    <AppLayout
+      pageTitle={searchParams?.get('accountName') || 'Transactions'}
+      topBarActions={topBarActions}
+    >
+      <div style={{ maxWidth: '900px' }}>
+        {/* Tab Bar with underline style */}
+        <Card style={{ padding: '0 1rem', marginBottom: '1.5rem', borderBottom: 'none' }}>
+          <div style={{ display: 'flex', gap: '0', borderBottom: `1px solid ${colors.divider}` }}>
+            {TABS.map(tab => {
+              const count = tabCount(tab.key);
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => { setActiveTab(tab.key); setExpandedId(null); }}
+                  style={{
+                    flex: 1, padding: '0.6rem 1rem', fontSize: '0.8rem', fontWeight: 500,
+                    border: 'none', backgroundColor: 'transparent', cursor: 'pointer',
+                    color: isActive ? colors.electric : colors.textMuted,
+                    borderBottom: isActive ? `2px solid ${colors.electric}` : '2px solid transparent',
+                    transition: 'all 0.15s ease',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                  }}
+                >
+                  {tab.label}
+                  <span style={{
+                    fontSize: '0.7rem', fontWeight: 700,
+                    color: isActive ? colors.electric : colors.textMuted,
+                  }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
 
       {/* Banners */}
       {error && (
@@ -593,6 +609,148 @@ export default function AllTransactionsPage() {
         </div>
       )}
 
+        {/* Banners */}
+        {error && (
+          <div style={{ padding: '0.6rem 1rem', marginBottom: '0.75rem', borderRadius: '0.5rem',
+            backgroundColor: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(185,28,28,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: isDark ? '#F87171' : '#B91C1C' }}>{error}</span>
+            <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textMuted }}>✕</button>
+          </div>
+        )}
+        {success && (
+          <div style={{ padding: '0.6rem 1rem', marginBottom: '0.75rem', borderRadius: '0.5rem',
+            backgroundColor: isDark ? 'rgba(52,211,153,0.1)' : 'rgba(4,120,87,0.08)' }}>
+            <span style={{ fontSize: '0.8rem', color: isDark ? '#34D399' : '#047857' }}>{success}</span>
+          </div>
+        )}
+
+        {/* Interest Earned Card */}
+        {searchParams?.get('accountType')?.toLowerCase().includes('saving') && interestEarned.count > 0 && (
+          <div style={{
+            background: isDark ? 'rgba(10,123,108,0.08)' : 'rgba(10,123,108,0.06)',
+            borderRadius: 14,
+            padding: 16,
+            marginBottom: 16,
+            border: `1px solid ${isDark ? 'rgba(10,123,108,0.2)' : 'rgba(10,123,108,0.15)'}`,
+          }}>
+            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#0A7B6C', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 10px 0' }}>
+              Interest Earned
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>This Month</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0A7B6C', margin: 0 }}>{fmt(interestEarned.thisMonth)}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>Year to Date</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0A7B6C', margin: 0 }}>{fmt(interestEarned.thisYear)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Interest Costs Card (Credit Cards) */}
+        {isCreditAccount && interestCharged.count > 0 && (
+          <div
+            onClick={() => setInterestExpanded(!interestExpanded)}
+            style={{
+              background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(220,38,38,0.06)',
+              borderRadius: 14,
+              padding: 16,
+              marginBottom: 16,
+              border: `1px solid ${isDark ? 'rgba(248,113,113,0.2)' : 'rgba(220,38,38,0.15)'}`,
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: isDark ? '#F87171' : '#DC2626', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
+                Interest Costs
+              </p>
+              <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>
+                {interestExpanded ? '▲' : '▼'}
+              </span>
+            </div>
+
+            {/* Collapsed: this month + trend + average */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>This Month</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <p style={{ fontSize: '1.125rem', fontWeight: 800, color: isDark ? '#F87171' : '#DC2626', margin: 0 }}>
+                    {fmt(interestCharged.thisMonth)}
+                  </p>
+                  {interestCharged.lastMonth > 0 && (
+                    <span style={{
+                      fontSize: '0.75rem', fontWeight: 700,
+                      color: interestCharged.thisMonth > interestCharged.lastMonth
+                        ? (isDark ? '#F87171' : '#DC2626')
+                        : (isDark ? '#34D399' : '#059669'),
+                    }}>
+                      {interestCharged.thisMonth > interestCharged.lastMonth ? '↑' : interestCharged.thisMonth < interestCharged.lastMonth ? '↓' : '→'}
+                      {' '}{Math.abs(Math.round(((interestCharged.thisMonth - interestCharged.lastMonth) / interestCharged.lastMonth) * 100))}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.6875rem', color: colors.textMuted, margin: '0 0 2px 0' }}>Monthly Avg</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 800, color: isDark ? '#F87171' : '#DC2626', margin: 0 }}>
+                  {fmt(interestCharged.monthlyAverage)}
+                </p>
+              </div>
+            </div>
+
+            {/* Expanded: 6-month bar chart + 12-month total */}
+            {interestExpanded && (
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${isDark ? 'rgba(248,113,113,0.15)' : 'rgba(220,38,38,0.1)'}` }}>
+                {/* Mini bar chart */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 80, marginBottom: 8 }}>
+                  {(() => {
+                    const maxAmt = Math.max(...interestCharged.monthlyBreakdown.map(m => m.amount), 1);
+                    return interestCharged.monthlyBreakdown.map((m, i) => {
+                      const barHeight = maxAmt > 0 ? Math.max((m.amount / maxAmt) * 60, m.amount > 0 ? 4 : 0) : 0;
+                      const isCurrentMonth = i === interestCharged.monthlyBreakdown.length - 1;
+                      return (
+                        <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                          {m.amount > 0 && (
+                            <span style={{ fontSize: '0.5625rem', fontWeight: 600, color: colors.textMuted }}>
+                              {fmt(m.amount)}
+                            </span>
+                          )}
+                          <div style={{
+                            width: '60%',
+                            height: barHeight,
+                            borderRadius: 4,
+                            backgroundColor: isCurrentMonth
+                              ? (isDark ? '#F87171' : '#DC2626')
+                              : (isDark ? 'rgba(248,113,113,0.4)' : 'rgba(220,38,38,0.25)'),
+                          }} />
+                          <span style={{ fontSize: '0.625rem', color: isCurrentMonth ? (isDark ? '#F87171' : '#DC2626') : colors.textMuted, fontWeight: isCurrentMonth ? 700 : 500 }}>
+                            {m.shortMonth}
+                          </span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                {/* 12-month total */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  marginTop: 8, paddingTop: 10, borderTop: `1px solid ${isDark ? 'rgba(248,113,113,0.15)' : 'rgba(220,38,38,0.1)'}`,
+                }}>
+                  <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>12-Month Total</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 800, color: isDark ? '#F87171' : '#DC2626' }}>
+                    {fmt(interestCharged.twelveMonthTotal)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       {/* Content */}
       {loading ? (
         <Card style={{ padding: '2rem', textAlign: 'center' }}>
@@ -613,26 +771,28 @@ export default function AllTransactionsPage() {
           </p>
         </Card>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {dateGroups.map(group => (
             <div key={group.dateKey}>
-              {/* Date section header */}
+              {/* Date section header with background */}
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '0.5rem 0', marginBottom: '0.25rem',
-                position: 'sticky', top: 0, zIndex: 10,
-                backgroundColor: colors.background,
+                padding: '0.6rem 0.75rem',
+                marginBottom: '0.5rem',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                borderRadius: '0.5rem',
               }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: colors.text, letterSpacing: '0.2px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: colors.text, letterSpacing: '0.3px', textTransform: 'uppercase' }}>
                   {group.label}
                 </span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: colors.textMuted }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: colors.textMuted }}>
                   {fmt(group.dailyTotal)}
                 </span>
               </div>
 
-              <Card style={{ padding: 0, overflow: 'hidden' }}>
-                {group.transactions.map((txn, idx) => {
+              {/* Transaction rows */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {group.transactions.map((txn) => {
                   const isMatched = txn.display_category === 'matched';
                   const isDeposit = txn.display_category === 'income' || txn.display_category === 'income_matched';
                   const isTransfer = txn.display_category === 'transfer';
@@ -651,113 +811,143 @@ export default function AllTransactionsPage() {
                     ? (txn.matched_bill_name || 'Bill')
                     : unmatchedReason(txn);
 
+                  // Get merchant initials for logo
+                  const merchantName = cleanMerchantName(txn.merchant_name || txn.cleaned_name || '');
+                  const initials = merchantName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+
+                  // Category color dot
+                  const categoryDotColor = unmatchedReasonColor(txn, isDark);
+
                   return (
-                    <div
+                    <Card
                       key={txn.id}
                       style={{
-                        borderBottom: idx < group.transactions.length - 1 ? `1px solid ${colors.divider}` : 'none',
+                        padding: '0.875rem',
                         cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        backgroundColor: isExpanded ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)') : colors.cardBackground,
                       }}
                       onClick={() => setExpandedId(isExpanded ? null : txn.id)}
+                      onMouseEnter={(e) => {
+                        if (!isExpanded) {
+                          (e.currentTarget as HTMLElement).style.borderColor = colors.electric;
+                          (e.currentTarget as HTMLElement).style.backgroundColor = isDark ? 'rgba(56,189,248,0.03)' : 'rgba(56,189,248,0.02)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isExpanded) {
+                          (e.currentTarget as HTMLElement).style.borderColor = colors.divider;
+                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardBackground;
+                        }
+                      }}
                     >
-                      <div style={{ padding: '0.75rem 1rem' }}>
-                        {/* Row: name + amount */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: '0.9rem', fontWeight: 600, color: colors.text,
-                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                            }}>
-                              {cleanMerchantName(txn.merchant_name || txn.cleaned_name || '')}
-                            </div>
-                            {/* Category line */}
-                            <div style={{ marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: unmatchedReasonColor(txn, isDark) }}>
-                                {isMatched ? `✓ ${categoryLabel}` : categoryLabel}
-                                {txn.display_category === 'possible_bill' && txn.matched_bill_name
-                                  ? ` — could be "${txn.matched_bill_name}"`
-                                  : ''}
-                              </span>
-                              {txn.budget_category && !isMatched && txn.budget_category !== categoryLabel && (
-                                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: unmatchedReasonColor(txn, isDark), opacity: 0.7 }}>
-                                  {txn.budget_category}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <span style={{
-                            fontSize: '0.9rem', fontWeight: 700,
-                            color: amountColor,
-                            flexShrink: 0, marginLeft: '0.75rem',
-                          }}>
-                            {(isDeposit || isCredit) ? '+' : ''}{fmt(Math.abs(txn.amount ?? 0))}
-                          </span>
+                      {/* Main row: logo + merchant + category + amount */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {/* Merchant logo/initials */}
+                        <div style={{
+                          width: 32, height: 32, borderRadius: '0.4rem', flexShrink: 0,
+                          backgroundColor: isMatched ? (isDark ? 'rgba(10,123,108,0.15)' : 'rgba(10,123,108,0.08)') : (isDark ? 'rgba(56,189,248,0.1)' : 'rgba(56,189,248,0.06)'),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '0.75rem', fontWeight: 700,
+                          color: isMatched ? '#0A7B6C' : colors.electric,
+                        }}>
+                          {initials}
                         </div>
 
-                        {/* Expanded actions */}
-                        {isExpanded && (
+                        {/* Merchant name + category */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{
-                            display: 'flex', gap: '0.4rem', marginTop: '0.6rem', paddingTop: '0.6rem',
-                            borderTop: `1px solid ${colors.divider}`, flexWrap: 'wrap',
+                            fontSize: '0.82rem', fontWeight: 500, color: colors.text,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            marginBottom: '0.2rem',
                           }}>
-                            {isMatched ? (
-                              <>
-                                {txn.matched_bill_id && (
-                                  <Link href="/app/bills" style={{ textDecoration: 'none' }} onClick={(e) => e.stopPropagation()}>
-                                    <ActionBtn color={colors.electric}>View Bill</ActionBtn>
-                                  </Link>
-                                )}
-                                <ActionBtn
-                                  color={isDark ? '#F87171' : '#DC2626'}
-                                  onClick={() => handleUnlink(txn)}
-                                  disabled={actioning === txn.id}
-                                >
-                                  {actioning === txn.id ? 'Unlinking...' : 'Unlink'}
-                                </ActionBtn>
-                              </>
-                            ) : (
-                              <>
-                                <ActionBtn
-                                  color={colors.electric}
-                                  primary
-                                  onClick={() => handleAddAsBill(txn, false)}
-                                  disabled={actioning === txn.id}
-                                >
-                                  {actioning === txn.id ? 'Adding...' : 'Recurring Bill'}
-                                </ActionBtn>
-                                <ActionBtn
-                                  color={colors.electric}
-                                  onClick={() => handleAddAsBill(txn, true)}
-                                  disabled={actioning === txn.id}
-                                >
-                                  One-Time Bill
-                                </ActionBtn>
-                                <ActionBtn
-                                  color={colors.electric}
-                                  onClick={() => handleLinkToExisting(txn)}
-                                >
-                                  Link to Existing
-                                </ActionBtn>
-                                <ActionBtn
-                                  color={isDark ? '#9CA3AF' : '#6B7280'}
-                                  onClick={() => handleAlwaysIgnore(txn)}
-                                  disabled={actioning === txn.id}
-                                >
-                                  {actioning === txn.id ? 'Ignoring...' : 'Always Ignore'}
-                                </ActionBtn>
-                              </>
-                            )}
+                            {merchantName}
                           </div>
-                        )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <div style={{
+                              width: 6, height: 6, borderRadius: '50%',
+                              backgroundColor: categoryDotColor, flexShrink: 0,
+                            }} />
+                            <span style={{ fontSize: '0.7rem', color: categoryDotColor, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {categoryLabel}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Amount */}
+                        <span style={{
+                          fontSize: '0.82rem', fontWeight: 600,
+                          color: amountColor,
+                          flexShrink: 0, whiteSpace: 'nowrap',
+                        }}>
+                          {(isDeposit || isCredit) ? '+' : ''}{fmt(Math.abs(txn.amount ?? 0))}
+                        </span>
                       </div>
-                    </div>
+
+                      {/* Expanded actions */}
+                      {isExpanded && (
+                        <div style={{
+                          display: 'flex', gap: '0.4rem', marginTop: '0.75rem', paddingTop: '0.75rem',
+                          borderTop: `1px solid ${colors.divider}`, flexWrap: 'wrap',
+                        }}>
+                          {isMatched ? (
+                            <>
+                              {txn.matched_bill_id && (
+                                <Link href="/app/bills" style={{ textDecoration: 'none' }} onClick={(e) => e.stopPropagation()}>
+                                  <ActionBtn color={colors.electric}>View Bill</ActionBtn>
+                                </Link>
+                              )}
+                              <ActionBtn
+                                color={isDark ? '#F87171' : '#DC2626'}
+                                onClick={() => handleUnlink(txn)}
+                                disabled={actioning === txn.id}
+                              >
+                                {actioning === txn.id ? 'Unlinking...' : 'Unlink'}
+                              </ActionBtn>
+                            </>
+                          ) : (
+                            <>
+                              <ActionBtn
+                                color={colors.electric}
+                                primary
+                                onClick={() => handleAddAsBill(txn, false)}
+                                disabled={actioning === txn.id}
+                              >
+                                {actioning === txn.id ? 'Adding...' : 'Recurring Bill'}
+                              </ActionBtn>
+                              <ActionBtn
+                                color={colors.electric}
+                                onClick={() => handleAddAsBill(txn, true)}
+                                disabled={actioning === txn.id}
+                              >
+                                One-Time Bill
+                              </ActionBtn>
+                              <ActionBtn
+                                color={colors.electric}
+                                onClick={() => handleLinkToExisting(txn)}
+                              >
+                                Link to Existing
+                              </ActionBtn>
+                              <ActionBtn
+                                color={isDark ? '#9CA3AF' : '#6B7280'}
+                                onClick={() => handleAlwaysIgnore(txn)}
+                                disabled={actioning === txn.id}
+                              >
+                                {actioning === txn.id ? 'Ignoring...' : 'Always Ignore'}
+                              </ActionBtn>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </Card>
                   );
                 })}
-              </Card>
+              </div>
             </div>
           ))}
         </div>
       )}
+      </div>
 
       {/* Bill Picker Modal */}
       {billPickerTxn && (
@@ -835,7 +1025,7 @@ export default function AllTransactionsPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppLayout>
   );
 }
 

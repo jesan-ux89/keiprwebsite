@@ -5,24 +5,25 @@ import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
 import type { Bill } from '@/context/AppContext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
+import CategoryIcon from '@/components/CategoryIcon';
 import { TrackerSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
 
 /**
- * Payment Tracker — PORTED FROM MOBILE TrackerScreen.tsx
- * Uses mobile's exact pay period + bill filtering + split tracking logic.
+ * Payment Tracker — REDESIGNED with modern UI
+ * Preserves all mobile logic: pay period filtering, split tracking, bank match badges
  */
 
 export default function TrackerPage() {
   const { colors } = useTheme();
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
-    isBillPaid, isSplitPaid, toggleSplitPaid, categories, creditCards, isUltra,
+    isBillPaid, isSplitPaid, toggleSplitPaid, isUltra,
   } = useApp();
   const [showNext, setShowNext] = useState(false);
 
-  // Derive pay period from income source (MATCHES MOBILE)
+  // Derive pay period from income source
   const primaryIncome = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
   const freq = primaryIncome?.frequency || '';
   const payPeriods = primaryIncome
@@ -37,14 +38,18 @@ export default function TrackerPage() {
 
   if (!payPeriods || !primaryIncome) {
     return (
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Payment Tracker</h1>
-        <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '24px' }}>Track which bills you've paid this paycheck period</p>
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted, backgroundColor: colors.card, borderRadius: '12px', border: `1px solid ${colors.cardBorder}` }}>
-          <p style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '8px' }}>No pay schedule found</p>
-          <p style={{ fontSize: '13px' }}>Add an income source in Settings to start tracking your bills by paycheck.</p>
+      <AppLayout pageTitle="Tracker">
+        <div style={{ maxWidth: '800px' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Payment Tracker</h1>
+            <p style={{ fontSize: '13px', color: colors.textMuted }}>Track which bills you've paid this paycheck period</p>
+          </div>
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted, backgroundColor: colors.card, borderRadius: '12px', border: `1px solid ${colors.cardBorder}` }}>
+            <p style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '8px' }}>No pay schedule found</p>
+            <p style={{ fontSize: '13px' }}>Add an income source in Settings to start tracking your bills by paycheck.</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
@@ -52,12 +57,12 @@ export default function TrackerPage() {
   const period = showNext ? nextPeriod : currentPeriod;
   const paycheckNumber = period.paycheckNumber;
 
-  // Filter bills for this period (MATCHES MOBILE: split bills always included)
+  // Filter bills for this period
   const billsInPeriod = isTwiceMonthly
     ? bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, period))
     : bills;
 
-  // billAmountForPaycheck (MATCHES MOBILE)
+  // billAmountForPaycheck
   function billAmountForPaycheck(b: Bill, paycheck: number): number {
     if (b.isSplit) {
       if (paycheck === 1) return b.p1 || 0;
@@ -69,7 +74,7 @@ export default function TrackerPage() {
     return b.total || 0;
   }
 
-  // Count paid bills (MATCHES MOBILE: uses isSplitPaid for splits, isBillPaid for non-splits)
+  // Count paid bills
   const paidCount = billsInPeriod.reduce((count, bill) => {
     if (bill.isSplit) {
       return count + (isSplitPaid(bill.id, paycheckNumber) ? 1 : 0);
@@ -80,245 +85,289 @@ export default function TrackerPage() {
   const totalCount = billsInPeriod.length;
   const progressPercent = totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
 
-  // Total bill amount for this paycheck
+  // Totals
   const totalBillsThisCheck = billsInPeriod.reduce((s, b) => s + billAmountForPaycheck(b, paycheckNumber), 0);
   const paycheckIncome = primaryIncome.typicalAmount;
   const remaining = paycheckIncome - totalBillsThisCheck;
 
-  return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Payment Tracker</h1>
-        <p style={{ fontSize: '13px', color: colors.textMuted }}>Track which bills you've paid this paycheck period</p>
-      </div>
+  // Paycheck toggle in top bar
+  const paycheckToggle = isTwiceMonthly && (
+    <div style={{ display: 'flex', gap: '0.25rem', backgroundColor: colors.card, border: `1px solid ${colors.cardBorder}`, padding: '0.25rem', borderRadius: '0.5rem' }}>
+      <button
+        onClick={() => setShowNext(false)}
+        style={{
+          padding: '0.35rem 0.75rem',
+          borderRadius: '0.375rem',
+          fontSize: '0.8rem',
+          fontWeight: showNext ? 500 : 600,
+          backgroundColor: !showNext ? colors.electric : 'transparent',
+          color: !showNext ? '#fff' : colors.text,
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        This Check
+      </button>
+      <button
+        onClick={() => setShowNext(true)}
+        style={{
+          padding: '0.35rem 0.75rem',
+          borderRadius: '0.375rem',
+          fontSize: '0.8rem',
+          fontWeight: showNext ? 600 : 500,
+          backgroundColor: showNext ? colors.electric : 'transparent',
+          color: showNext ? '#fff' : colors.text,
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        Next Check
+      </button>
+    </div>
+  );
 
-      {isUltra && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.5rem',
-          margin: '0 0 1rem 0', padding: '0.625rem 0.875rem',
-          backgroundColor: 'rgba(56,189,248,0.06)',
-          borderRadius: '10px', border: '0.5px solid rgba(56,189,248,0.15)',
-        }}>
-          <span style={{ fontSize: '0.9rem' }}>🏦</span>
-          <span style={{ fontSize: '0.75rem', color: colors.textSub }}>
-            Bills matched to bank transactions are auto-verified. Look for the 🏦 badge.
-          </span>
-        </div>
-      )}
-
-      {/* Progress */}
-      <div style={{
+  // Summary sidebar
+  const TrackerSummary = () => (
+    <div
+      style={{
         backgroundColor: colors.card,
         borderRadius: '12px',
         padding: '16px',
-        marginBottom: '24px',
         border: `1px solid ${colors.cardBorder}`,
-      }}>
-        <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textMuted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          Overall Progress
-        </div>
-        <div style={{ fontSize: '18px', fontWeight: '700', color: colors.text, marginBottom: '12px' }}>
-          {paidCount} of {totalCount} bills paid
-        </div>
-        <div style={{ height: '8px', backgroundColor: colors.progressTrack, borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', backgroundColor: colors.green, transition: 'width 0.3s ease', width: `${progressPercent}%` }} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
-          <span style={{ fontSize: '12px', color: colors.textMuted }}>Bills: {fmt(totalBillsThisCheck)}</span>
-          <span style={{ fontSize: '12px', color: remaining >= 0 ? colors.green : colors.red }}>Remaining: {fmt(remaining)}</span>
+      }}
+    >
+      <div style={{ fontSize: '12px', fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
+        {showNext ? 'Next' : 'This'} Paycheck
+      </div>
+
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '4px' }}>Total Due</div>
+        <div style={{ fontSize: '18px', fontWeight: '700', color: colors.text }}>
+          {fmt(totalBillsThisCheck)}
         </div>
       </div>
 
-      {/* Navigation */}
-      {isTwiceMonthly && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px',
-          gap: '16px',
-        }}>
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              border: `1px solid ${colors.inputBorder}`,
-              backgroundColor: colors.card,
-              color: showNext ? colors.text : colors.textMuted,
-              cursor: showNext ? 'pointer' : 'default',
-              padding: 0,
-            }}
-            onClick={() => setShowNext(false)}
-            disabled={!showNext}
-          >
-            <ChevronLeft size={20} />
-          </button>
-
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '4px' }}>
-              {showNext ? 'Next Check' : 'This Check'} — Paycheck {paycheckNumber}
-            </div>
-            <div style={{ fontSize: '12px', color: colors.textMuted }}>
-              {period.label}
-            </div>
-          </div>
-
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              border: `1px solid ${colors.inputBorder}`,
-              backgroundColor: colors.card,
-              color: !showNext ? colors.text : colors.textMuted,
-              cursor: !showNext ? 'pointer' : 'default',
-              padding: 0,
-            }}
-            onClick={() => setShowNext(true)}
-            disabled={showNext}
-          >
-            <ChevronRight size={20} />
-          </button>
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '4px' }}>Paid</div>
+        <div style={{ fontSize: '18px', fontWeight: '700', color: colors.green }}>
+          {fmt(billsInPeriod.reduce((s, b) => {
+            const amt = billAmountForPaycheck(b, paycheckNumber);
+            const isPaid = b.isSplit ? isSplitPaid(b.id, paycheckNumber) : isBillPaid(b.id);
+            return s + (isPaid ? amt : 0);
+          }, 0))}
         </div>
-      )}
+      </div>
 
-      {/* Bills List */}
-      {billsInPeriod.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {billsInPeriod.map((bill) => {
-            const amt = billAmountForPaycheck(bill, paycheckNumber);
-            const isPaid = bill.isSplit
-              ? isSplitPaid(bill.id, paycheckNumber)
-              : isBillPaid(bill.id);
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '4px' }}>Remaining</div>
+        <div style={{ fontSize: '18px', fontWeight: '700', color: colors.amber }}>
+          {fmt(remaining)}
+        </div>
+      </div>
 
-            return (
-              <div
-                key={bill.id}
-                style={{
-                  backgroundColor: colors.card,
-                  borderRadius: '12px',
-                  padding: '12px',
-                  border: `1px solid ${colors.cardBorder}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer',
-                }}
-                onClick={() => toggleSplitPaid(bill.id, paycheckNumber)}
+      <div style={{ borderTop: `1px solid ${colors.cardBorder}`, paddingTop: '12px' }}>
+        {isUltra && (
+          <div style={{ fontSize: '11px', color: colors.textMuted, lineHeight: '1.4' }}>
+            Bills matched to bank transactions are auto-verified. Look for the 🏦 badge.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <AppLayout pageTitle="Tracker" topBarActions={paycheckToggle}>
+      <TwoColumnLayout sidebar={<TrackerSummary />}>
+        {/* Progress Ring Card */}
+        <div
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: '12px',
+            padding: '20px',
+            border: `1px solid ${colors.cardBorder}`,
+            marginBottom: '24px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
+            {/* SVG Progress Ring */}
+            <svg width="120" height="120" viewBox="0 0 120 120" style={{ flexShrink: 0 }}>
+              {/* Background circle */}
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke={colors.progressTrack}
+                strokeWidth="8"
+              />
+              {/* Progress circle */}
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke={colors.green}
+                strokeWidth="8"
+                strokeDasharray={`${(progressPercent / 100) * 2 * Math.PI * 54} ${2 * Math.PI * 54}`}
+                strokeLinecap="round"
+                transform="rotate(-90 60 60)"
+                style={{ transition: 'stroke-dasharray 0.3s ease' }}
+              />
+              {/* Center text */}
+              <text
+                x="60"
+                y="56"
+                textAnchor="middle"
+                fontSize="24"
+                fontWeight="700"
+                fill={colors.text}
               >
-                {/* Checkbox */}
-                <div
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '6px',
-                    border: `2px solid ${isPaid ? colors.green : colors.inputBorder}`,
-                    backgroundColor: isPaid ? colors.green : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {isPaid && (
-                    <span style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
-                  )}
-                </div>
+                {Math.round(progressPercent)}%
+              </text>
+              <text
+                x="60"
+                y="72"
+                textAnchor="middle"
+                fontSize="11"
+                fill={colors.textMuted}
+                fontWeight="500"
+              >
+                covered
+              </text>
+            </svg>
 
-                {/* Bill info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: isPaid ? colors.textMuted : colors.text,
-                    textDecoration: isPaid ? 'line-through' : 'none',
-                    marginBottom: '4px',
-                  }}>
-                    {bill.name}
-                    {bill.isSplit && ` · P${paycheckNumber}`}
-                  </div>
-                  <div style={{ fontSize: '12px', color: colors.textMuted }}>
-                    {bill.category} · Due day {bill.dueDay}
-                    {bill.isAutoPay && ' · AutoPay'}
+            {/* Stats column */}
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '4px' }}>Paid</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: colors.green }}>
+                    {paidCount}
                   </div>
                 </div>
-
-                {/* Amount */}
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: isPaid ? colors.green : colors.text,
-                  }}>
-                    {fmt(amt)}
+                <div>
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '4px' }}>Remaining</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: colors.amber }}>
+                    {totalCount - paidCount}
                   </div>
-                  {isPaid && (
-                    <div style={{ fontSize: '11px', color: colors.green }}>Paid</div>
-                  )}
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '4px' }}>Total</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: colors.text }}>
+                    {totalCount}
+                  </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <EmptyState icon="tracker" title="No bills this period" description={`No bills are due during ${period.label}`} />
-      )}
-
-      {/* Credit Card Summary (Full Dollar Tracking) */}
-      {creditCards.length > 0 && (
-        <div style={{ marginTop: '24px' }}>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: colors.textMuted, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Credit Cards
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {creditCards.map((cc: any) => {
-              const ccBills = (cc.bills || []).filter((b: any) => billsInPeriod.some(bp => bp.id === b.id));
-              const ccTotal = ccBills.reduce((sum: number, b: any) => sum + (b.total_amount || 0), 0);
-              const ccPaid = ccBills.filter((b: any) => {
-                const bill = billsInPeriod.find(bp => bp.id === b.id);
-                if (!bill) return false;
-                return bill.isSplit ? isSplitPaid(bill.id, paycheckNumber) : isBillPaid(bill.id);
-              }).length;
+
+          <div style={{ borderTop: `1px solid ${colors.cardBorder}` }} />
+        </div>
+
+        {/* Bills List */}
+        {billsInPeriod.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {billsInPeriod.map((bill) => {
+              const amt = billAmountForPaycheck(bill, paycheckNumber);
+              const isPaid = bill.isSplit
+                ? isSplitPaid(bill.id, paycheckNumber)
+                : isBillPaid(bill.id);
+              const isBankMatched = bill.status === 'confirmed' && isUltra;
 
               return (
                 <div
-                  key={cc.cardName}
+                  key={bill.id}
+                  onClick={() => toggleSplitPaid(bill.id, paycheckNumber)}
                   style={{
                     backgroundColor: colors.card,
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     padding: '12px',
                     border: `1px solid ${colors.cardBorder}`,
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    opacity: isPaid ? 0.65 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.85';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: colors.text, marginBottom: '4px' }}>
-                      💳 {cc.cardName}
+                  {/* Circular Checkbox */}
+                  <div
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '50%',
+                      border: `2px solid ${isPaid ? colors.green : colors.inputBorder}`,
+                      backgroundColor: isPaid ? colors.green : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {isPaid && (
+                      <span style={{ color: '#fff', fontSize: '12px', fontWeight: '700' }}>✓</span>
+                    )}
+                  </div>
+
+                  {/* Category Icon */}
+                  <CategoryIcon
+                    category={bill.category}
+                    size={32}
+                    iconScale={0.6}
+                    isDark={colors.isDark}
+                  />
+
+                  {/* Bill info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: isPaid ? colors.textMuted : colors.text,
+                      textDecoration: isPaid ? 'line-through' : 'none',
+                      marginBottom: '2px',
+                    }}>
+                      {bill.name}
+                      {bill.isSplit && ` · P${paycheckNumber}`}
                     </div>
-                    <div style={{ fontSize: '12px', color: colors.textMuted }}>
-                      {ccPaid} of {ccBills.length} charged
+                    <div style={{ fontSize: '11px', color: colors.textMuted, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {isBankMatched ? (
+                        <>
+                          <span style={{ color: colors.green }}>🏦 Paid</span>
+                        </>
+                      ) : (
+                        <>Due {new Date(new Date().getFullYear(), new Date().getMonth(), bill.dueDay).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
+                      )}
                     </div>
                   </div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: colors.text }}>
-                    {fmt(ccTotal)}
+
+                  {/* Amount */}
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      color: isPaid ? colors.green : colors.text,
+                    }}>
+                      {fmt(amt)}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <EmptyState icon="tracker" title="No bills this period" description={`No bills are due during ${period.label}`} />
+        )}
+      </TwoColumnLayout>
+    </AppLayout>
   );
 }

@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { bankingAPI, aiAPI } from '@/lib/api';
+import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { Plus, Search, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
 import CategoryIcon from '@/components/CategoryIcon';
 import AISuggestionCard, { AISuggestion } from '@/components/AISuggestionCard';
@@ -50,6 +51,13 @@ export default function BillsPage() {
       setAiSuggestions(prev => prev.filter(s => s.id !== id));
     } catch (err: any) {
       alert(err?.response?.data?.error || 'Failed to process suggestion');
+    }
+  };
+
+  const handleDeleteAll = () => {
+    if (window.confirm('Delete all bills and spending budgets? This action cannot be undone.')) {
+      // TODO: Implement deleteAllBills action in AppContext if needed
+      // deleteAllBills();
     }
   };
 
@@ -120,139 +128,418 @@ export default function BillsPage() {
     }));
   };
 
-  return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Header */}
-      <div
-        style={{
+  // Calculate total income, expenses, and remaining
+  const totalIncome = useMemo(() => {
+    return filteredBills.reduce((sum, bill) => sum + bill.total, 0) +
+           (isUltra && spendingBudgets ? (spendingBudgets as any[]).reduce((sum, b) => sum + (b.budget_amount || 0), 0) : 0);
+  }, [filteredBills, isUltra, spendingBudgets]);
+
+  const totalExpenses = totalIncome; // For the sidebar, this will be the sum of all bills
+  const totalActual = useMemo(() => {
+    // Actual is the sum of what was paid/spent
+    const billsPaid = filteredBills.reduce((sum, bill) => sum + bill.funded, 0);
+    const spendingActual = isUltra && spendingSummary
+      ? (spendingSummary as any[]).reduce((sum, s) => sum + (s.spentAmount || 0), 0)
+      : 0;
+    return billsPaid + spendingActual;
+  }, [filteredBills, isUltra, spendingSummary]);
+
+  const leftToSpend = totalExpenses - totalActual;
+
+  // Budget Summary Sidebar
+  const BudgetSummary = () => (
+    <Card style={{ padding: '1.5rem' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <p style={{
+          fontSize: '0.875rem',
+          color: colors.textMuted,
+          margin: '0 0 0.5rem 0',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          fontWeight: 600,
+        }}>
+          Total Expenses
+        </p>
+        <p style={{
+          fontSize: '2rem',
+          fontWeight: 700,
+          color: colors.text,
+          margin: 0,
+        }}>
+          {fmt(totalExpenses)}
+        </p>
+        <p style={{
+          fontSize: '0.75rem',
+          color: colors.textMuted,
+          margin: '0.5rem 0 0 0',
+        }}>
+          This month
+        </p>
+      </div>
+
+      <div style={{ paddingBottom: '1.5rem', borderBottom: `1px solid ${colors.divider}` }}>
+        {/* Income row */}
+        <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '2rem',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: colors.text,
-              margin: 0,
-            }}
-          >
-            {isUltra ? 'Budget' : 'Bills'}
-          </h1>
-          <p
-            style={{
-              color: colors.textMuted,
-              margin: '0.5rem 0 0 0',
-              fontSize: '0.95rem',
-            }}
-          >
-            Manage and track all your bills
-          </p>
+          marginBottom: '0.75rem',
+        }}>
+          <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Income</span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.green }}>
+            {fmt(totalExpenses)}
+          </span>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => setShowAddModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <Plus size={20} />
-            Add expense
-          </Button>
-        </div>
+
+        {/* Fixed expenses row (if any) */}
+        {filteredBills.some(b => b.isRecurring) && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem',
+          }}>
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Fixed</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
+              {fmt(filteredBills.filter(b => b.isRecurring).reduce((s, b) => s + b.total, 0))}
+            </span>
+          </div>
+        )}
+
+        {/* Flexible spending row (if any) */}
+        {isUltra && spendingBudgets && (spendingBudgets as any[]).length > 0 && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem',
+          }}>
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>Flexible</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
+              {fmt((spendingBudgets as any[]).reduce((s, b) => s + (b.budget_amount || 0), 0))}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Search and Sort */}
-      <Card
-        style={{
-          marginBottom: '2rem',
-          display: 'grid',
-          gridTemplateColumns: '1fr auto',
-          gap: '1rem',
-          alignItems: 'end',
-        }}
-      >
-        <div style={{ position: 'relative' }}>
-          <Input
-            type="text"
-            placeholder="Search bills by name or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+      <div style={{ paddingTop: '1.5rem' }}>
+        <p style={{
+          fontSize: '0.875rem',
+          color: colors.textMuted,
+          margin: '0 0 0.5rem 0',
+        }}>
+          Left to spend
+        </p>
+        <p style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: leftToSpend >= 0 ? colors.green : colors.red,
+          margin: 0,
+        }}>
+          {fmt(leftToSpend)}
+        </p>
+      </div>
+
+      <div style={{ paddingTop: '1.5rem', borderTop: `1px solid ${colors.divider}` }}>
+        <p style={{
+          fontSize: '0.875rem',
+          color: colors.textMuted,
+          margin: '0 0 0.75rem 0',
+        }}>
+          Coverage
+        </p>
+        <div style={{
+          width: '100%',
+          height: '8px',
+          backgroundColor: colors.progressTrack,
+          borderRadius: '4px',
+          overflow: 'hidden',
+          marginBottom: '0.5rem',
+        }}>
+          <div
             style={{
-              paddingLeft: '2.5rem',
-            }}
-          />
-          <Search
-            size={18}
-            style={{
-              position: 'absolute',
-              left: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: colors.textMuted,
-              pointerEvents: 'none',
+              height: '100%',
+              width: `${totalExpenses > 0 ? Math.min((totalActual / totalExpenses) * 100, 100) : 0}%`,
+              backgroundColor: colors.electric,
+              transition: 'width 0.3s ease',
             }}
           />
         </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <label
-            style={{
-              fontSize: '0.875rem',
-              color: colors.textMuted,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Sort by:
-          </label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            style={{
-              backgroundColor: colors.inputBg,
-              color: colors.text,
-              border: `1px solid ${colors.inputBorder}`,
-              borderRadius: '0.5rem',
-              padding: '0.5rem 0.75rem',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="name">Name</option>
-            <option value="dueDate">Due Date</option>
-            <option value="amount">Amount</option>
-          </select>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '0.75rem',
+          color: colors.textMuted,
+        }}>
+          <span>{fmt(totalActual)} paid</span>
+          <span>{totalExpenses > 0 ? Math.round((totalActual / totalExpenses) * 100) : 0}%</span>
         </div>
-      </Card>
+      </div>
+    </Card>
+  );
 
-      {/* Bills List */}
-      {billsLoading ? (
-        <BillsSkeleton />
-      ) : filteredBills.length === 0 ? (
-        <EmptyState
-          icon="bills"
-          title="No bills yet"
-          description="Add your first bill to start tracking your budget."
-          actionLabel="Add a bill"
-          onAction={() => setShowAddModal(true)}
-        />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Credit Cards Visualizer (Full Dollar Tracking) */}
+  return (
+    <AppLayout
+      pageTitle={isUltra ? 'Budget' : 'Bills'}
+      showMonthNav={true}
+      topBarActions={
+        <Button
+          variant="primary"
+          size="md"
+          onClick={() => setShowAddModal(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}
+        >
+          <Plus size={20} />
+          Add expense
+        </Button>
+      }
+    >
+      <TwoColumnLayout sidebar={<BudgetSummary />}>
+
+        {/* Search and Sort Controls */}
+        <Card
+          style={{
+            marginBottom: '2rem',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto',
+            gap: '1rem',
+            alignItems: 'end',
+          }}
+        >
+          <div style={{ position: 'relative' }}>
+            <Input
+              type="text"
+              placeholder="Search expenses by name or category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                paddingLeft: '2.5rem',
+              }}
+            />
+            <Search
+              size={18}
+              style={{
+                position: 'absolute',
+                left: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: colors.textMuted,
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <label
+              style={{
+                fontSize: '0.875rem',
+                color: colors.textMuted,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Sort by:
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              style={{
+                backgroundColor: colors.inputBg,
+                color: colors.text,
+                border: `1px solid ${colors.inputBorder}`,
+                borderRadius: '0.5rem',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="name">Name</option>
+              <option value="dueDate">Due Date</option>
+              <option value="amount">Amount</option>
+            </select>
+          </div>
+        </Card>
+
+        {/* Detected Expenses Banner (when detected bills exist) */}
+        {detectedCount > 0 && (
+          <Card
+            style={{
+              marginBottom: '2rem',
+              padding: '1.25rem',
+              backgroundColor: isDark ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.05)',
+              border: `1px solid ${colors.electric}33`,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                <span style={{ fontSize: '1.5rem' }}>🔔</span>
+                <div>
+                  <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                    {detectedCount} new recurring expense{detectedCount !== 1 ? 's' : ''} detected
+                  </p>
+                  <p style={{
+                    fontSize: '0.8rem',
+                    color: colors.textMuted,
+                    margin: '0.25rem 0 0 0',
+                  }}>
+                    {detectedBills.slice(0, 2).map(b => b.name).join(', ')}{detectedCount > 2 ? ' and more...' : ''}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setExpandedBills(prev => ({ ...prev, '__detected__': !prev['__detected__'] }))}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: colors.electric,
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Review
+              </button>
+            </div>
+          </Card>
+        )}
+
+        {/* Detected Section (expandable) */}
+        {detectedCount > 0 && expandedBills['__detected__'] && (
+          <Card style={{ marginBottom: '2rem', padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                Review Detected Expenses
+              </h3>
+              {detectedCount >= 3 && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Confirm all ${detectedCount} as recurring expenses?`)) {
+                      detectedBills.forEach(b => confirmDetectedBill(b.id));
+                    }
+                  }}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: colors.electric,
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Confirm all
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {detectedBills.map((bill) => (
+                <div
+                  key={bill.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '1rem',
+                    backgroundColor: colors.background,
+                    borderRadius: '0.5rem',
+                    border: `1px solid ${colors.cardBorder}`,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                    <MerchantLogo billName={bill.name} category={bill.category} size={28} isDark={isDark} />
+                    <div>
+                      <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>{bill.name}</p>
+                      <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                        {bill.category}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <p style={{ fontSize: '0.95rem', fontWeight: 700, color: colors.text, margin: 0, minWidth: '60px', textAlign: 'right' }}>
+                      {fmt(bill.total)}
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.375rem' }}>
+                      <button
+                        onClick={() => confirmDetectedBill(bill.id)}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          backgroundColor: colors.electric,
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Recurring
+                      </button>
+                      <button
+                        onClick={() => confirmAsOneTime(bill.id)}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
+                          color: colors.textMuted,
+                          border: 'none',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        One-time
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* AI Suggestions Card (Ultra only) */}
+        {isUltra && aiSuggestions.length > 0 && (
+          <div style={{ marginBottom: '2rem' }}>
+            <AISuggestionCard
+              suggestions={aiSuggestions}
+              onAction={handleSuggestionAction}
+            />
+          </div>
+        )}
+
+        {/* Bills List / Budget Table */}
+        {billsLoading ? (
+          <BillsSkeleton />
+        ) : filteredBills.length === 0 ? (
+          <EmptyState
+            icon="bills"
+            title="No expenses yet"
+            description="Add your first expense to start tracking your budget."
+            actionLabel="Add an expense"
+            onAction={() => setShowAddModal(true)}
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Credit Cards Section */}
           {creditCards.length > 0 && (
-            <div>
-              <h2 style={{
-                fontSize: '1.1rem', fontWeight: 600, color: colors.text,
-                margin: '0 0 1rem 0', paddingBottom: '0.75rem',
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: colors.text,
+                margin: '0 0 1rem 0',
+                paddingBottom: '0.75rem',
                 borderBottom: `1px solid ${colors.divider}`,
-              }}>Bills paid by credit card</h2>
+              }}>
+                Bills paid by credit card
+              </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {creditCards.map((cc: any) => (
                   <Card
@@ -298,132 +585,264 @@ export default function BillsPage() {
             </div>
           )}
 
-          {/* Detected Transactions Section */}
-          {detectedCount > 0 && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{
-                  fontSize: '1.1rem', fontWeight: 600, color: colors.electric,
-                  margin: 0, paddingBottom: '0.75rem',
-                  borderBottom: `1px solid rgba(56,189,248,0.25)`,
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  flex: 1,
-                }}>
-                  <span>🔔</span> New expenses detected ({detectedCount})
-                </h2>
+          {/* Monarch-style Budget Table */}
+          <Card>
+            {/* Column Headers */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 100px 100px 100px',
+                gap: '1rem',
+                padding: '1.25rem',
+                borderBottom: `1px solid ${colors.divider}`,
+              }}
+            >
+              <div style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: colors.textMuted,
+              }}>
+                Expenses
               </div>
+              <div style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: colors.textMuted,
+                textAlign: 'right',
+              }}>
+                Budget
+              </div>
+              <div style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: colors.textMuted,
+                textAlign: 'right',
+              }}>
+                Actual
+              </div>
+              <div style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: colors.textMuted,
+                textAlign: 'right',
+              }}>
+                Remaining
+              </div>
+            </div>
 
-              {/* Bulk Actions Bar */}
-              {detectedCount >= 3 && (
-                <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1rem' }}>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`Confirm all ${detectedCount} as recurring expenses?`)) {
-                        detectedBills.forEach(b => confirmDetectedBill(b.id));
-                      }
-                    }}
-                    style={{
-                      flex: 1, padding: '0.625rem', borderRadius: '0.5rem', border: 'none',
-                      backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
-                      fontSize: '0.8rem', cursor: 'pointer',
-                    }}
-                  >Confirm all</button>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`Dismiss all ${detectedCount} detected expenses?`)) {
-                        detectedBills.forEach(b => dismissDetectedBill(b.id));
-                      }
-                    }}
-                    style={{
-                      flex: 1, padding: '0.625rem', borderRadius: '0.5rem', border: 'none',
-                      backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
-                      color: colors.textSub, fontWeight: 600,
-                      fontSize: '0.8rem', cursor: 'pointer',
-                    }}
-                  >Dismiss all</button>
-                </div>
-              )}
+            {/* Expenses by category */}
+            <div>
+              {allCategoryNames.map((catName, idx) => {
+                const categoryBills = groupedFilteredBills[catName] || [];
+                const catBudget = isUltra ? (spendingBudgets || []).find((b: any) => b.category === catName) : null;
+                const catSummary = catBudget ? (spendingSummary || []).find((s: any) => s.category === catName) : null;
+                const hasBills = categoryBills.length > 0;
+                const hasBudget = isUltra && !!catBudget;
+                const isExpanded = expandedBills[catName];
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {detectedBills.map((bill) => (
-                  <Card key={bill.id} style={{ borderLeft: `3px solid ${colors.electric}` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
-                        <MerchantLogo billName={bill.name} category={bill.category} size={32} isDark={isDark} />
+                if (!hasBills && !hasBudget) return null;
+
+                const catTotalBudget = categoryBills.reduce((s, b) => s + b.total, 0) + (hasBudget ? (catBudget.budget_amount || 0) : 0);
+                const catTotalActual = categoryBills.reduce((s, b) => s + b.funded, 0) + (catSummary ? (catSummary.spentAmount || 0) : 0);
+                const catRemaining = catTotalBudget - catTotalActual;
+
+                return (
+                  <div key={catName} style={{ borderTop: idx === 0 ? 'none' : `1px solid ${colors.divider}` }}>
+                    {/* Category Group Row */}
+                    <div
+                      onClick={() => setExpandedBills(prev => ({ ...prev, [catName]: !prev[catName] }))}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 100px 100px 100px',
+                        gap: '1rem',
+                        padding: '1.25rem',
+                        backgroundColor: isExpanded ? colors.cardHover || colors.background : colors.card,
+                        cursor: 'pointer',
+                        borderBottom: isExpanded ? `1px solid ${colors.divider}` : 'none',
+                        transition: 'background-color 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isExpanded) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover || colors.background;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isExpanded) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.card;
+                        }
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <CategoryIcon category={catName} size={20} isDark={isDark} />
                         <div>
-                          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>{bill.name}</h3>
-                          <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: 0 }}>
-                            {bill.category} · {bill.detectedAt
-                              ? `Last charged ${new Date(bill.detectedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-                              : `Due day ${bill.dueDay}`}
+                          <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                            {catName}
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
+                            {categoryBills.length + (hasBudget ? 1 : 0)} item{categoryBills.length + (hasBudget ? 1 : 0) !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
-                      <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: '0 1rem 0 0' }}>{fmt(bill.total)}/mo</p>
+                      <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
+                        {fmt(catTotalBudget)}
+                      </p>
+                      <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
+                        {fmt(catTotalActual)}
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
+                        <p style={{
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          color: catRemaining >= 0 ? colors.green : colors.red,
+                          margin: 0,
+                        }}>
+                          {fmt(catRemaining)}
+                        </p>
+                        {isExpanded ? <ChevronUp size={18} color={colors.textMuted} /> : <ChevronDown size={18} color={colors.textMuted} />}
+                      </div>
                     </div>
 
-                    {/* Duplicate Prompt */}
-                    {bill.possibleDuplicateOf && bill.possibleDuplicateName ? (
-                      <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.75rem' }}>
-                        <button
-                          onClick={() => linkDuplicateBill(bill.id, bill.possibleDuplicateOf!)}
-                          style={{
-                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                            backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
-                            fontSize: '0.8rem', cursor: 'pointer',
-                          }}
-                        >Yes, same expense</button>
-                        <button
-                          onClick={() => confirmDetectedBill(bill.id)}
-                          style={{
-                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                            backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
-                            color: colors.textSub, fontWeight: 600,
-                            fontSize: '0.8rem', cursor: 'pointer',
-                          }}
-                        >No, keep both</button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.75rem' }}>
-                        <button
-                          onClick={() => confirmDetectedBill(bill.id)}
-                          style={{
-                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                            backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
-                            fontSize: '0.8rem', cursor: 'pointer',
-                          }}
-                        >Recurring expense</button>
-                        <button
-                          onClick={() => confirmAsOneTime(bill.id)}
-                          style={{
-                            flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: 'none',
-                            backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
-                            color: colors.textSub, fontWeight: 600,
-                            fontSize: '0.8rem', cursor: 'pointer',
-                          }}
-                        >One-time expense</button>
+                    {/* Expanded Items */}
+                    {isExpanded && (
+                      <div style={{ backgroundColor: colors.background }}>
+                        {/* Bill items */}
+                        {categoryBills.map((bill) => (
+                          <div
+                            key={bill.id}
+                            onClick={() => toggleExpanded(bill.id)}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 100px 100px 100px',
+                              gap: '1rem',
+                              padding: '0.875rem 1.25rem 0.875rem 3.75rem',
+                              borderTop: `1px solid ${colors.divider}`,
+                              cursor: 'pointer',
+                              transition: 'background-color 0.2s ease',
+                              alignItems: 'center',
+                            }}
+                            onMouseEnter={(e) => {
+                              (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover || colors.background;
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLElement).style.backgroundColor = colors.background;
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                              <MerchantLogo billName={bill.name} category={bill.category} size={24} isDark={isDark} />
+                              <div>
+                                <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>
+                                  {bill.name}
+                                </p>
+                                <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                                  {bill.isSplit && (
+                                    <span style={{
+                                      fontSize: '0.65rem',
+                                      fontWeight: 600,
+                                      padding: '0.125rem 0.375rem',
+                                      borderRadius: '8px',
+                                      backgroundColor: isDark ? 'rgba(168,130,255,0.15)' : 'rgba(109,40,217,0.1)',
+                                      color: isDark ? '#A882FF' : '#6D28D9',
+                                    }}>Split</span>
+                                  )}
+                                  {bill.isRecurring && (
+                                    <span style={{
+                                      fontSize: '0.65rem',
+                                      fontWeight: 600,
+                                      padding: '0.125rem 0.375rem',
+                                      borderRadius: '8px',
+                                      backgroundColor: isDark ? 'rgba(56,189,248,0.15)' : 'rgba(3,105,161,0.1)',
+                                      color: isDark ? '#38BDF8' : '#0369A1',
+                                    }}>Recurring</span>
+                                  )}
+                                  {matchedBillIds.has(bill.id) && (
+                                    <span style={{
+                                      fontSize: '0.65rem',
+                                      fontWeight: 600,
+                                      padding: '0.125rem 0.375rem',
+                                      borderRadius: '8px',
+                                      backgroundColor: isDark ? 'rgba(52,211,153,0.15)' : 'rgba(4,120,87,0.1)',
+                                      color: isDark ? '#34D399' : '#047857',
+                                    }}>Bank Synced</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
+                              {fmt(bill.total)}
+                            </p>
+                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
+                              {fmt(bill.funded)}
+                            </p>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                              color: bill.funded >= bill.total ? colors.green : colors.amber,
+                              margin: 0,
+                              textAlign: 'right',
+                            }}>
+                              {fmt(Math.max(0, bill.total - bill.funded))}
+                            </p>
+                          </div>
+                        ))}
+
+                        {/* Spending Budget item (if exists) */}
+                        {hasBudget && (
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 100px 100px 100px',
+                              gap: '1rem',
+                              padding: '0.875rem 1.25rem 0.875rem 3.75rem',
+                              borderTop: `1px solid ${colors.divider}`,
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                              <CategoryIcon category={catName} size={24} isDark={isDark} />
+                              <div>
+                                <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.textMuted, margin: 0, fontStyle: 'italic' }}>
+                                  Spending Budget
+                                </p>
+                              </div>
+                            </div>
+                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
+                              {fmt(catBudget.budget_amount || 0)}
+                            </p>
+                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: 0, textAlign: 'right' }}>
+                              {fmt(catSummary?.spentAmount || 0)}
+                            </p>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                              color: (catSummary?.spentAmount || 0) >= (catBudget.budget_amount || 0) ? colors.red : colors.green,
+                              margin: 0,
+                              textAlign: 'right',
+                            }}>
+                              {fmt(Math.max(0, (catBudget.budget_amount || 0) - (catSummary?.spentAmount || 0)))}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </Card>
-                ))}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-
-          {/* AI SUGGESTIONS (Ultra only) */}
-          {isUltra && aiSuggestions.length > 0 && (
-            <AISuggestionCard
-              suggestions={aiSuggestions}
-              onAction={handleSuggestionAction}
-            />
-          )}
-
+          </Card>
 
           {/* Plan ahead card — Ultra only */}
           {isUltra && (
             <Link href="/app/plan">
               <Card style={{
-                marginBottom: '1.5rem',
+                marginTop: '2rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -443,475 +862,17 @@ export default function BillsPage() {
                   <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>Plan ahead</h3>
                   <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: 0 }}>Draft next month's budget</p>
                 </div>
-                <span style={{ color: colors.textMuted, fontSize: '1.25rem' }}>›</span>
+                <ChevronRight size={20} style={{ color: colors.textMuted }} />
               </Card>
             </Link>
           )}
 
-          {allCategoryNames.map((catName) => {
-            const categoryBills = groupedFilteredBills[catName] || [];
-            const catBudget = isUltra ? (spendingBudgets || []).find((b: any) => b.category === catName) : null;
-            const catSummary = catBudget ? (spendingSummary || []).find((s: any) => s.category === catName) : null;
-            const hasBills = categoryBills.length > 0;
-            const hasBudget = isUltra && !!catBudget;
-
-            const itemCount = categoryBills.length + (hasBudget ? 1 : 0);
-            const catHeaderSub = `${itemCount} expense${itemCount !== 1 ? 's' : ''}`;
-
-            return (
-            <div key={catName}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '1rem',
-                  paddingBottom: '0.75rem',
-                  borderBottom: `1px solid ${colors.divider}`,
-                  cursor: 'pointer',
-                }}
-                onClick={() => setExpandedBills(prev => ({ ...prev, [catName]: !prev[catName] }))}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <h2
-                      style={{
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        color: colors.text,
-                        margin: 0,
-                      }}
-                    >
-                      {catName}
-                    </h2>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: '0.875rem',
-                      color: colors.textMuted,
-                      margin: 0,
-                    }}
-                  >
-                    {catHeaderSub}
-                  </p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <p
-                    style={{
-                      fontSize: '1rem',
-                      fontWeight: 700,
-                      color: colors.text,
-                      margin: 0,
-                    }}
-                  >
-                    {fmt(categoryBills.reduce((s, b) => s + b.total, 0) + (hasBudget ? (catBudget.budget_amount || 0) : 0))}
-                  </p>
-                  <span style={{ color: colors.textMuted, fontSize: '1rem' }}>
-                    {expandedBills[catName] ? '▲' : '▼'}
-                  </span>
-                </div>
-              </div>
-
-              {expandedBills[catName] && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
-                {categoryBills.map((bill) => {
-                  const isExpanded = expandedBills[bill.id];
-
-                  return (
-                    <Card
-                      key={bill.id}
-                      onClick={() => toggleExpanded(bill.id)}
-                      style={{
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', flex: 1 }}>
-                          <MerchantLogo billName={bill.name} category={bill.category} size={32} isDark={isDark} />
-                          <div style={{ flex: 1 }}>
-                          <h3
-                            style={{
-                              fontSize: '1rem',
-                              fontWeight: 600,
-                              color: colors.text,
-                              margin: '0 0 0.375rem 0',
-                            }}
-                          >
-                            {bill.name}
-                          </h3>
-
-                          {/* Pill badges */}
-                          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginBottom: '0.375rem' }}>
-                            {bill.isSplit && (
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                padding: '0.125rem 0.5rem',
-                                borderRadius: '10px',
-                                backgroundColor: isDark ? 'rgba(168,130,255,0.15)' : 'rgba(109,40,217,0.1)',
-                                color: isDark ? '#A882FF' : '#6D28D9',
-                                letterSpacing: '0.3px',
-                              }}>Split</span>
-                            )}
-                            {bill.isQuickExpense && (
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                padding: '0.125rem 0.5rem',
-                                borderRadius: '10px',
-                                backgroundColor: isDark ? 'rgba(251,191,36,0.15)' : 'rgba(217,119,6,0.1)',
-                                color: isDark ? '#FBBF24' : '#D97706',
-                                letterSpacing: '0.3px',
-                              }}>Quick Spend</span>
-                            )}
-                            {!bill.isQuickExpense && bill.isRecurring && (
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                padding: '0.125rem 0.5rem',
-                                borderRadius: '10px',
-                                backgroundColor: isDark ? 'rgba(56,189,248,0.15)' : 'rgba(3,105,161,0.1)',
-                                color: isDark ? '#38BDF8' : '#0369A1',
-                                letterSpacing: '0.3px',
-                              }}>Recurring</span>
-                            )}
-                            {matchedBillIds.has(bill.id) && (
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                padding: '0.125rem 0.5rem',
-                                borderRadius: '10px',
-                                backgroundColor: isDark ? 'rgba(52,211,153,0.15)' : 'rgba(4,120,87,0.1)',
-                                color: isDark ? '#34D399' : '#047857',
-                                letterSpacing: '0.3px',
-                              }}>Bank Synced</span>
-                            )}
-                            {bill.paidWith && (
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                padding: '0.125rem 0.5rem',
-                                borderRadius: '10px',
-                                backgroundColor: isDark ? 'rgba(251,146,60,0.15)' : 'rgba(194,102,2,0.1)',
-                                color: isDark ? '#FB923C' : '#B45309',
-                                letterSpacing: '0.3px',
-                              }}>💳 {bill.paidWith}</span>
-                            )}
-                            {!bill.isQuickExpense && <span style={{
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              padding: '0.125rem 0.5rem',
-                              borderRadius: '10px',
-                              backgroundColor: isDark ? 'rgba(214,209,199,0.1)' : 'rgba(12,74,110,0.08)',
-                              color: isDark ? '#D6D1C7' : '#4A5568',
-                              letterSpacing: '0.3px',
-                            }}>Due the {bill.dueDay}{bill.dueDay === 1 ? 'st' : bill.dueDay === 2 ? 'nd' : bill.dueDay === 3 ? 'rd' : 'th'}</span>}
-                          </div>
-
-                          {/* Split progress */}
-                          {bill.isSplit && (() => {
-                            const splits = [
-                              { amount: bill.p1, done: bill.p1done },
-                              { amount: bill.p2, done: bill.p2done },
-                              { amount: bill.p3, done: bill.p3done },
-                              { amount: bill.p4, done: bill.p4done },
-                            ].filter(s => s.amount > 0);
-                            const splitsTotal = splits.length;
-                            const splitsDone = splits.filter(s => s.done).length;
-                            const allDone = splitsDone === splitsTotal && splitsTotal > 0;
-                            return (
-                              <p style={{
-                                fontSize: '0.8rem',
-                                color: allDone ? (isDark ? '#34D399' : '#047857') : (isDark ? '#A882FF' : '#6D28D9'),
-                                margin: '0 0 0.25rem 0',
-                              }}>
-                                {allDone
-                                  ? `${splitsTotal} of ${splitsTotal} splits ✓ Fully saved!`
-                                  : `${splitsDone} of ${splitsTotal} splits ✓`}
-                              </p>
-                            );
-                          })()}
-
-                        </div>
-                        </div>
-
-                        <div
-                          style={{
-                            textAlign: 'right',
-                            marginRight: '1rem',
-                          }}
-                        >
-                          <p
-                            style={{
-                              fontSize: '1.25rem',
-                              fontWeight: 700,
-                              color: colors.text,
-                              margin: 0,
-                            }}
-                          >
-                            {fmt(bill.total)}
-                          </p>
-                        </div>
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            color: colors.textMuted,
-                          }}
-                        >
-                          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </div>
-                      </div>
-
-                      {/* Expanded content */}
-                      {isExpanded && (
-                        <div
-                          style={{
-                            marginTop: '1.5rem',
-                            paddingTop: '1.5rem',
-                            borderTop: `1px solid ${colors.divider}`,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                              gap: '1rem',
-                              marginBottom: '1.5rem',
-                            }}
-                          >
-                            <div>
-                              <p
-                                style={{
-                                  fontSize: '0.875rem',
-                                  color: colors.textMuted,
-                                  margin: '0 0 0.5rem 0',
-                                }}
-                              >
-                                Total Amount
-                              </p>
-                              <p
-                                style={{
-                                  fontSize: '1.25rem',
-                                  fontWeight: 700,
-                                  color: colors.text,
-                                  margin: 0,
-                                }}
-                              >
-                                {fmt(bill.total)}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p
-                                style={{
-                                  fontSize: '0.875rem',
-                                  color: colors.textMuted,
-                                  margin: '0 0 0.5rem 0',
-                                }}
-                              >
-                                Funded
-                              </p>
-                              <p
-                                style={{
-                                  fontSize: '1.25rem',
-                                  fontWeight: 700,
-                                  color: colors.text,
-                                  margin: 0,
-                                }}
-                              >
-                                {fmt(bill.funded)}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p
-                                style={{
-                                  fontSize: '0.875rem',
-                                  color: colors.textMuted,
-                                  margin: '0 0 0.5rem 0',
-                                }}
-                              >
-                                Remaining
-                              </p>
-                              <p
-                                style={{
-                                  fontSize: '1.25rem',
-                                  fontWeight: 700,
-                                  color: bill.funded >= bill.total ? colors.green : colors.amber,
-                                  margin: 0,
-                                }}
-                              >
-                                {fmt(Math.max(0, bill.total - bill.funded))}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Split breakdown */}
-                          {bill.isSplit && (
-                            <div
-                              style={{
-                                marginBottom: '1.5rem',
-                                padding: '1rem',
-                                backgroundColor: colors.background,
-                                borderRadius: '0.5rem',
-                              }}
-                            >
-                              <p
-                                style={{
-                                  fontSize: '0.875rem',
-                                  fontWeight: 600,
-                                  color: colors.text,
-                                  margin: '0 0 0.75rem 0',
-                                }}
-                              >
-                                Split Across Paychecks
-                              </p>
-                              <div
-                                style={{
-                                  display: 'grid',
-                                  gridTemplateColumns: 'repeat(2, 1fr)',
-                                  gap: '0.75rem',
-                                }}
-                              >
-                                {[
-                                  { num: 1, amount: bill.p1, paid: bill.p1done },
-                                  { num: 2, amount: bill.p2, paid: bill.p2done },
-                                  { num: 3, amount: bill.p3, paid: bill.p3done },
-                                  { num: 4, amount: bill.p4, paid: bill.p4done },
-                                ].map(({ num, amount, paid }) => (
-                                  <div
-                                    key={num}
-                                    style={{
-                                      padding: '0.75rem',
-                                      backgroundColor: colors.card,
-                                      borderRadius: '0.375rem',
-                                      border: `1px solid ${colors.cardBorder}`,
-                                      display: 'flex',
-                                      justifyContent: 'space-between',
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    <div>
-                                      <p
-                                        style={{
-                                          fontSize: '0.875rem',
-                                          color: colors.textMuted,
-                                          margin: 0,
-                                        }}
-                                      >
-                                        Paycheck {num}
-                                      </p>
-                                    </div>
-                                    <div
-                                      style={{
-                                        textAlign: 'right',
-                                      }}
-                                    >
-                                      <p
-                                        style={{
-                                          fontSize: '0.95rem',
-                                          fontWeight: 600,
-                                          color: colors.text,
-                                          margin: 0,
-                                        }}
-                                      >
-                                        {fmt(amount)}
-                                      </p>
-                                      <p
-                                        style={{
-                                          fontSize: '0.75rem',
-                                          color: paid ? colors.green : colors.textMuted,
-                                          margin: '0.125rem 0 0 0',
-                                        }}
-                                      >
-                                        {paid ? 'Paid' : 'Unpaid'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Progress bar */}
-                          <div>
-                            <div
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: '0.5rem',
-                              }}
-                            >
-                              <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>
-                                Progress
-                              </span>
-                              <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>
-                                {bill.total > 0 ? Math.round((bill.funded / bill.total) * 100) : 0}%
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                width: '100%',
-                                height: '8px',
-                                backgroundColor: colors.progressTrack,
-                                borderRadius: '4px',
-                                overflow: 'hidden',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  height: '100%',
-                                  width: `${bill.total > 0 ? Math.min((bill.funded / bill.total) * 100, 100) : 0}%`,
-                                  backgroundColor: colors.electric,
-                                  transition: 'width 0.3s ease',
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </Card>
-                  );
-                })}
-                {hasBudget && (
-                  <Card style={{ cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.625rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1 }}>
-                        <CategoryIcon category={catName} size={32} isDark={isDark} />
-                        <div>
-                          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-                            {catName}
-                          </h3>
-                          <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                            {catSummary ? `${fmt(catSummary.spentAmount)} of ${fmt(catBudget.budget_amount)} spent` : `~${fmt(catBudget.budget_amount)} per paycheck`}
-                          </p>
-                        </div>
-                      </div>
-                      <p style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                        {fmt(catBudget.budget_amount)}
-                      </p>
-                    </div>
-                  </Card>
-                )}
-              </div>
-              )}
-            </div>
-            );
-          })}
-        </div>
-      )}
+          </div>
+        )}
+      </TwoColumnLayout>
 
       {/* Add Expense Modal */}
       <AddBillModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
-    </div>
+    </AppLayout>
   );
 }

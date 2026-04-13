@@ -35,18 +35,19 @@ src/
 │   ├── providers.tsx               ← AppProvider + AuthProvider + ThemeProvider wrapper
 │   ├── auth/                       ← login, signup, forgot-password
 │   └── app/
-│       ├── layout.tsx              ← Authenticated shell (tier-based sidebar nav)
-│       ├── page.tsx                ← Dashboard (tier-based tabs: Ultra Overview vs Free/Pro Monthly)
-│       ├── bills/page.tsx          ← Bills list (becomes "Budget" for Ultra, adds spending progress bars)
-│       ├── tracker/page.tsx        ← Per-paycheck bill tracker (adds auto-verify hint for Ultra)
+│       ├── layout.tsx              ← Authenticated shell
+│       ├── page.tsx                ← Dashboard (hero stats + spending pace + upcoming + recent activity)
+│       ├── bills/page.tsx          ← Budget page (Monarch-style Budget/Actual/Remaining columns)
+│       ├── tracker/page.tsx        ← Tracker (SVG ring progress + bill checklist)
 │       ├── plan/page.tsx           ← Forward month planning (Free/Pro only in nav)
+│       ├── reports/page.tsx        ← Reports (NEW — spending charts + trends, Ultra only)
 │       ├── settings/page.tsx       ← Settings hub
 │       └── banking/                ← Connected banking (Ultra tier)
-│           ├── page.tsx            ← Banking hub / "Accounts" for Ultra
-│           ├── transactions/page.tsx ← All transactions / "Transactions" for Ultra
+│           ├── page.tsx            ← Accounts page (hero stats + account groups + sparklines)
+│           ├── transactions/page.tsx ← Transactions (date-grouped + daily totals + category dots)
 │           └── exclusions/page.tsx ← Manage ignored merchants
 ├── components/
-│   ├── layout/AppLayout.tsx        ← Sidebar + top bar shell (tier-based nav: FREE_PRO_NAV vs ULTRA_NAV)
+│   ├── layout/AppLayout.tsx        ← Monarch-inspired: 240px sidebar + sticky top bar + TwoColumnLayout export
 │   ├── ui/                         ← Button, Card, Input, Modal
 │   ├── CategoryIcon.tsx            ← ** MIRRORED ** Lucide SVG icon
 │   ├── MerchantLogo.tsx            ← ** MIRRORED ** Real company logo with fallback
@@ -65,28 +66,37 @@ src/
     └── merchantLogos.ts           ← ** MIRRORED ** merchant domain map
 ```
 
-## Dual UI Design (Mirrors Mobile)
+## Website Design System (Monarch-Inspired Redesign)
 
-### Free/Pro — Manual Control
-- **Sidebar Nav:** Dashboard · Bills · Tracker · Plan · Settings
-- **Dashboard Tabs:** Monthly · This Check · Next Check · Cycles
-- Standard header, no TopBar-style elements
+The website has its own web-native design, inspired by Monarch. NOT a direct mirror of the mobile app's visual style — the data logic is mirrored, but the UI is purpose-built for desktop web.
 
-### Ultra — Automated Intelligence
-- **Sidebar Nav:** Dashboard · Accounts · Transactions · Budget · Tracker (+ Settings link + notification bell in top section)
-- **Dashboard Tabs:** Overview · This Check · Next Check
-- **Overview tab:** Available Number hero, spending velocity, quick stats, upcoming bills, recent activity, category summary
-- **Bills page:** Title "Budget", spending budget progress bars added
-- **Tracker page:** Auto-verify hint banner for bank-matched bills
-- **Banking page:** Title "Accounts" for Ultra
-- **Transactions page:** Serves as "Transactions" tab for Ultra
+### AppLayout.tsx Architecture
+- **Sidebar:** 240px fixed, section labels (Overview/Planning/Insights), user profile footer
+- **Top Bar:** 56px sticky, glassmorphism (`backdrop-filter: blur(12px)`), page title + month nav + action buttons
+- **TwoColumnLayout:** Exported helper — main content (1fr) + sticky sidebar (340px), single-column under 1100px
+- **Props:** `pageTitle`, `showMonthNav`, `topBarActions` (React nodes for right side buttons)
 
-### AppLayout.tsx (Tier-Based Nav)
-```tsx
-const FREE_PRO_NAV = [Dashboard, Bills, Tracker, Plan, Settings];
-const ULTRA_NAV = [Dashboard, Accounts, Transactions, Budget, Tracker];
-```
-Ultra top section adds Settings link + Bell notification icon with `detectedCount` badge.
+### Free/Pro Navigation
+- **Sections:** Overview (Dashboard) · Planning (Bills, Tracker, Plan) · Settings
+- **Dashboard Tabs:** Monthly · This Check · Next Check · Cycles (pill-style)
+
+### Ultra Navigation
+- **Sections:** Overview (Dashboard, Accounts, Transactions) · Planning (Budget + detected badge, Tracker) · Insights (Reports) · Settings
+- **Dashboard Tabs:** Overview · This Check · Next Check (pill-style)
+
+### Page Designs
+
+**Dashboard** — Hero stats row (Available/Income/Expenses) + detected alert banner + spending pace card + upcoming expenses + recent activity. Right sidebar: available number, income/bills/spent breakdown, paycheck progress, top spending categories.
+
+**Budget (Bills)** — Monarch-style columns: Expenses | Budget | Actual | Remaining. Groups: Fixed (recurring) and Flexible (discretionary). Items show category icon + name + budget/actual/remaining. Detected expenses banner with review CTA. Right sidebar: total expenses, income/fixed/flexible breakdown, left to spend, coverage progress.
+
+**Transactions** — Date-grouped list with daily totals. Rows: colored merchant initials square + name + category dot + account name + amount. Tab filter: All / Expenses / Income. Search in top bar.
+
+**Accounts** — Hero stats (Net Worth + Cash Balance). Account groups (Cash, Credit, Loans) with rows: circle bank icon + name/type + sparkline + balance/sync time. Right sidebar: assets/liabilities summary.
+
+**Tracker** — SVG ring progress (120x120) with stats (Paid/Remaining/Total). Bill checklist: circular checkboxes + category icons + name/meta + amount. Right sidebar: paycheck totals + auto-verify hint.
+
+**Reports** (NEW, Ultra only) — Spending by category bar chart + monthly trend chart (6 months). Right sidebar: category breakdown with dots + totals + month-over-month comparison. Export to CSV.
 
 ## Mirrored Files (CRITICAL)
 | Website File | Mobile Source | What's Shared |
@@ -95,7 +105,7 @@ Ultra top section adds Settings link + Bell notification icon with `detectedCoun
 | `src/lib/payPeriods.ts` | `src/utils/payPeriods.ts` | `getPayPeriods()`, `isBillInPeriod()` |
 | `src/app/app/page.tsx` | `src/screens/dashboard/DashboardScreen.tsx` | Tier-based tabs, Ultra Overview, `billAmountForPaycheck()` |
 | `src/app/app/tracker/page.tsx` | `src/screens/tracker/TrackerScreen.tsx` | Payment tracking, auto-verify hint |
-| `src/app/app/bills/page.tsx` | `src/screens/bills/BillsScreen.tsx` | Budget title for Ultra, spending budgets |
+| `src/app/app/bills/page.tsx` | `src/screens/bills/BillsScreen.tsx` | Budget title for Ultra, unified expenses |
 | `src/lib/categoryIcons.ts` | `src/utils/categoryIcons.ts` | Category icons |
 | `src/components/CategoryIcon.tsx` | `src/components/CategoryIcon.tsx` | Category icon component |
 | `src/lib/merchantLogos.ts` | `src/utils/merchantLogos.ts` | Merchant domain map |
@@ -178,6 +188,12 @@ npm run build        # Production build
 - Dashboard quick stats (INCOME / BILLS / SPENT) are clickable: Income → `/app/income`, Bills → `/app/bills`, Spent → `/app/banking/transactions`
 - `/app/income` page shows income sources + recent bank deposits (fetches `income`, `income_matched`, and `transfer` categories filtered for deposits)
 - `bankingAPI.migrateToUltra()` available in `src/lib/api.ts`
+
+## Unified Expenses (IMPORTANT)
+All user-facing text uses "expenses" instead of "bills" or "spending budgets." The spending budgets DB table still exists but:
+- **Auto-creation disabled:** Backend no longer auto-creates spending budgets during sync/migration
+- **UI unified:** Spending budgets render as bill-style rows — no TARGET/OVER badges, no separate progress bars
+- **Text standardized:** "expenses" everywhere — detection alerts, sync dialogs, settings
 
 ## What's Left to Build
 1. **Onboarding split** — Manual vs Automated path recommendation
