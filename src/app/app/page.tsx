@@ -175,9 +175,9 @@ export default function DashboardPage() {
   const todayDay = now.getDate();
   const upcomingBills = (() => {
     const thisCheckUpcoming = thisPaycheckBills
-      .filter(b => (b.dueDay || 1) >= todayDay && !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, currentPaycheckNum)));
+      .filter(b => !b.isQuickExpense && (b.dueDay || 1) >= todayDay && !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, currentPaycheckNum)));
     const nextCheckUpcoming = nextPaycheckBills
-      .filter(b => !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, nextPaycheckNum)));
+      .filter(b => !b.isQuickExpense && !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, nextPaycheckNum)));
     return [...thisCheckUpcoming, ...nextCheckUpcoming]
       .sort((a, b) => {
         const aInThis = thisCheckUpcoming.includes(a);
