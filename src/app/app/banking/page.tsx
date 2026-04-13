@@ -117,6 +117,7 @@ export default function BankingPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [syncCooldown, setSyncCooldown] = useState(0);
+  const [refreshingBalances, setRefreshingBalances] = useState(false);
 
   useEffect(() => {
     if (syncCooldown <= 0) return;
@@ -656,6 +657,47 @@ export default function BankingPage() {
                 </div>
               ))}
             </>
+          )}
+          {/* Refresh all balances — subtle link at bottom */}
+          {!loading && accounts.length > 0 && (
+            <div style={{ textAlign: 'center', paddingTop: '1.5rem', paddingBottom: '1rem' }}>
+              <button
+                onClick={async () => {
+                  try {
+                    setRefreshingBalances(true);
+                    setError(null);
+                    const balancesRes = await bankingAPI.getBalances(true);
+                    const balMap: Record<string, AccountBalance> = {};
+                    if (balancesRes?.data?.accounts) {
+                      balancesRes.data.accounts.forEach((bal: any) => {
+                        balMap[bal.id] = {
+                          id: bal.id,
+                          current: bal.current_balance ?? bal.current ?? 0,
+                          available: bal.available_balance ?? bal.available ?? 0,
+                        };
+                      });
+                    }
+                    setAccounts(prev => prev.map(acc => ({ ...acc, balance: balMap[acc.id] || acc.balance })));
+                  } catch {
+                    setError('Failed to refresh balances.');
+                  } finally {
+                    setRefreshingBalances(false);
+                  }
+                }}
+                disabled={refreshingBalances}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: colors.textMuted,
+                  fontSize: '0.8125rem',
+                  cursor: refreshingBalances ? 'default' : 'pointer',
+                  opacity: refreshingBalances ? 0.5 : 1,
+                  padding: '0.5rem 1rem',
+                }}
+              >
+                {refreshingBalances ? 'Refreshing...' : 'Refresh all balances'}
+              </button>
+            </div>
           )}
         </div>
       </TwoColumnLayout>

@@ -125,7 +125,7 @@ export const bankingAPI = {
   getLinkToken:        () => api.post('/banking/link-token'),
   exchangeToken:       (data: Record<string, unknown>) => api.post('/banking/exchange-token', data),
   getAccounts:         () => api.get('/banking/accounts'),
-  getBalances:         () => api.get('/banking/balances'),
+  getBalances:         (force = false) => api.get(`/banking/balances${force ? '?force=true' : ''}`),
   toggleAccountSync:   (id: string, isSynced: boolean) => api.patch(`/banking/accounts/${id}`, { is_synced: isSynced }),
   getReconnectToken:   (id: string) => api.post(`/banking/accounts/${id}/reconnect`),
   reconnectComplete:   (id: string) => api.post(`/banking/accounts/${id}/reconnect-complete`),
