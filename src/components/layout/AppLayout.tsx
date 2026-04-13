@@ -51,7 +51,7 @@ interface AppLayoutProps {
   topBarActions?: React.ReactNode;
 }
 
-export function AppLayout({
+export default function AppLayout({
   children,
   pageTitle,
   showMonthNav = false,

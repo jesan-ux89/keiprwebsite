@@ -633,7 +633,7 @@ export default function DashboardPage() {
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: '0 0 0.25rem 0' }}>{fmt(totalPaycheck)}</p>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{paycheckCount} paycheck{paycheckCount > 1 ? 's' : '} this month</p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{paycheckCount} paycheck{paycheckCount > 1 ? 's' : ''} this month</p>
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
