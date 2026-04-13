@@ -645,6 +645,10 @@ function BankImportContent() {
               </p>
             )}
 
+            <p style={{ fontSize: '12px', color: colors.textMuted, textAlign: 'center', marginBottom: '16px', lineHeight: 1.6 }}>
+              We recommend accepting all discovered expenses for now — you can always adjust or remove them later from the Budget screen.
+            </p>
+
             <div style={styles.footer}>
               <button style={styles.button} onClick={handleContinueFromSuccess}>
                 Continue →
