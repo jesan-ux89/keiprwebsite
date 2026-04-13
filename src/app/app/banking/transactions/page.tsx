@@ -32,6 +32,8 @@ interface Transaction {
   user_action?: string;
   budget_category?: string;
   classification?: string;
+  personal_finance_category_primary?: string;
+  category?: string;
 }
 
 interface TransactionCounts {
