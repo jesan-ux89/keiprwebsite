@@ -154,9 +154,15 @@ export default function IncomePage() {
       {/* One-Time Funds */}
       {oneTimeSources.length > 0 && (
         <>
-          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '1px', margin: '1.5rem 0 0.75rem 0' }}>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '1px', margin: '1.5rem 0 0.25rem 0' }}>
             One-Time Funds
           </h2>
+          {isUltra && (
+            <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: '0 0 0.75rem 0' }}>
+              For money not deposited into your connected accounts (cash, gifts, etc.)
+            </p>
+          )}
+          {!isUltra && <div style={{ height: '0.5rem' }} />}
           {oneTimeSources.map((source: any) => (
             <Card key={source.id} style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0.5rem' }}>
               <div style={{

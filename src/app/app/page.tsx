@@ -589,8 +589,8 @@ export default function DashboardPage() {
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: '0 0 0.25rem 0' }}>{fmt(totalPaycheck)}</p>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{paycheckCount} paycheck{paycheckCount > 1 ? 's' : ''} this month</p>
+                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: '0 0 0.25rem 0' }}>{fmt(isUltra && availableBreakdown?.depositsThisPeriod ? availableBreakdown.depositsThisPeriod : totalPaycheck)}</p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{isUltra && availableBreakdown?.depositsThisPeriod ? 'Bank deposits this period' : `${paycheckCount} paycheck${paycheckCount > 1 ? 's' : ''} this month`}</p>
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
@@ -1089,6 +1089,19 @@ export default function DashboardPage() {
                       </div>
                     </Card>
 
+                    {/* Rollover projection for Ultra */}
+                    {isUltra && availableNumber !== null && (
+                      <Card style={{ backgroundColor: `${colors.green}10`, border: `1px solid ${colors.green}30` }}>
+                        <p style={{ fontSize: '0.65rem', fontWeight: 600, color: colors.green, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.25rem 0' }}>Projected available</p>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 800, color: colors.green, margin: '0 0 0.25rem 0' }}>
+                          {fmt(availableNumber + totalPaycheck - nextBillsTotal)}
+                        </p>
+                        <p style={{ fontSize: '0.75rem', color: colors.textSub, margin: 0 }}>
+                          {fmt(availableNumber)} current + {fmt(totalPaycheck)} next paycheck − {fmt(nextBillsTotal)} bills
+                        </p>
+                      </Card>
+                    )}
+
                     {nextPaycheckBills.length === 0 ? (
                       <Card style={{ textAlign: 'center', padding: '2rem' }}>
                         <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>✨</p>
@@ -1157,7 +1170,7 @@ export default function DashboardPage() {
 
                     <Card style={{ backgroundColor: 'rgba(56,189,248,0.06)', border: `1px solid rgba(56,189,248,0.15)` }}>
                       <p style={{ margin: 0, fontSize: '0.95rem' }}>
-                        <span style={{ fontWeight: 700, color: colors.midnight }}>After expenses: {fmt(nextRemaining)} </span>
+                        <span style={{ fontWeight: 700, color: colors.midnight }}>After expenses: {fmt(isUltra && availableNumber !== null ? availableNumber + totalPaycheck - nextBillsTotal : nextRemaining)} </span>
                         <span style={{ color: colors.midnight }}>available for spending & savings</span>
                       </p>
                     </Card>
