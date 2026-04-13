@@ -507,7 +507,7 @@ export default function DashboardPage() {
             }}>🔔</div>
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>
-                {detectedCount >= 5 ? `We found ${detectedCount} recurring charges` : `${detectedCount} new ${detectedCount === 1 ? 'transaction' : 'transactions'} detected`}
+                {detectedCount >= 5 ? `We found ${detectedCount} recurring expenses` : `${detectedCount} new ${detectedCount === 1 ? 'expense' : 'expenses'} detected`}
               </p>
               <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: colors.textSub }}>
                 {detectedBills.slice(0, 2).map(b => b.name).join(', ')}{detectedCount > 2 ? ` +${detectedCount - 2} more` : ''}

@@ -309,7 +309,7 @@ export default function BillsPage() {
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   flex: 1,
                 }}>
-                  <span>🔔</span> New transactions detected ({detectedCount})
+                  <span>🔔</span> New expenses detected ({detectedCount})
                 </h2>
               </div>
 
@@ -318,7 +318,7 @@ export default function BillsPage() {
                 <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1rem' }}>
                   <button
                     onClick={() => {
-                      if (window.confirm(`Confirm all ${detectedCount} as recurring bills?`)) {
+                      if (window.confirm(`Confirm all ${detectedCount} as recurring expenses?`)) {
                         detectedBills.forEach(b => confirmDetectedBill(b.id));
                       }
                     }}
@@ -327,10 +327,10 @@ export default function BillsPage() {
                       backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
                       fontSize: '0.8rem', cursor: 'pointer',
                     }}
-                  >Confirm all recurring</button>
+                  >Confirm all</button>
                   <button
                     onClick={() => {
-                      if (window.confirm(`Dismiss all ${detectedCount} detected bills?`)) {
+                      if (window.confirm(`Dismiss all ${detectedCount} detected expenses?`)) {
                         detectedBills.forEach(b => dismissDetectedBill(b.id));
                       }
                     }}
@@ -372,7 +372,7 @@ export default function BillsPage() {
                             backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
                             fontSize: '0.8rem', cursor: 'pointer',
                           }}
-                        >Yes, same bill</button>
+                        >Yes, same expense</button>
                         <button
                           onClick={() => confirmDetectedBill(bill.id)}
                           style={{
@@ -392,7 +392,7 @@ export default function BillsPage() {
                             backgroundColor: colors.electric, color: '#fff', fontWeight: 600,
                             fontSize: '0.8rem', cursor: 'pointer',
                           }}
-                        >Recurring bill</button>
+                        >Recurring expense</button>
                         <button
                           onClick={() => confirmAsOneTime(bill.id)}
                           style={{
