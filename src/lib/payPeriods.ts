@@ -76,7 +76,7 @@ export function getPayPeriods(
 
   // Semi-monthly / twice-monthly
   if (isTwiceMonthlyFreq(freqLower)) {
-    return getSemiMonthlyPeriods(today);
+    return getSemiMonthlyPeriods(today, nextPayDateStr);
   }
 
   // Monthly / irregular / unknown — one period = full month
@@ -213,8 +213,10 @@ function getBiweeklyPeriods(anchorStr: string, today: Date): PayPeriodInfo {
   const nextEnd = new Date(nextStart);
   nextEnd.setDate(nextEnd.getDate() + 13);
 
-  const currentPaycheckNum = currentStart.getDate() <= 15 ? 1 : 2;
-  const nextPaycheckNum = nextStart.getDate() <= 15 ? 1 : 2;
+  // Determine paycheck number within the month by counting how many periods
+  // start in the same month before this one. Replaces the old <= 15 heuristic.
+  const currentPaycheckNum = biweeklyPaycheckNum(currentStart);
+  const nextPaycheckNum = biweeklyPaycheckNum(nextStart);
 
   return {
     current: {
@@ -236,19 +238,73 @@ function getBiweeklyPeriods(anchorStr: string, today: Date): PayPeriodInfo {
   };
 }
 
-// ── Semi-monthly: fixed 1st-15th / 16th-end ─────────────────
+/**
+ * Calculate which paycheck number a biweekly period is within its month.
+ * Walks backward 14 days at a time from periodStart to count how many
+ * earlier periods also start in the same month.
+ */
+function biweeklyPaycheckNum(periodStart: Date): number {
+  const targetMonth = periodStart.getMonth();
+  const targetYear = periodStart.getFullYear();
 
-function getSemiMonthlyPeriods(today: Date): PayPeriodInfo {
+  let count = 1;
+  const check = new Date(periodStart);
+  check.setDate(check.getDate() - 14);
+
+  while (check.getMonth() === targetMonth && check.getFullYear() === targetYear) {
+    count++;
+    check.setDate(check.getDate() - 14);
+  }
+
+  return Math.min(count, 3); // Cap at 3 (rare but possible for some months)
+}
+
+// ── Semi-monthly: anchor-aware pay day split ────────────────
+
+/**
+ * Semi-monthly periods using the anchor date to determine custom pay days.
+ * If anchor is provided:
+ *   - anchorDay <= 15 → payDay1 = anchorDay, payDay2 = anchorDay + 15
+ *   - anchorDay > 15  → payDay2 = anchorDay, payDay1 = anchorDay - 15
+ * Falls back to 1st/16th if no anchor.
+ */
+function getSemiMonthlyPeriods(today: Date, anchorStr?: string): PayPeriodInfo {
   const year = today.getFullYear();
   const month = today.getMonth();
   const day = today.getDate();
   const lastDay = new Date(year, month + 1, 0).getDate();
 
-  if (day <= 15) {
-    const currentStart = new Date(year, month, 1);
-    const currentEnd = new Date(year, month, 15);
-    const nextStart = new Date(year, month, 16);
-    const nextEnd = new Date(year, month, lastDay);
+  // Derive two pay days from anchor (or default to 1/16)
+  let payDay1 = 1;
+  let payDay2 = 16;
+
+  if (anchorStr) {
+    const anchor = new Date(anchorStr.includes('T') ? anchorStr : anchorStr + 'T00:00:00');
+    if (!isNaN(anchor.getTime())) {
+      const anchorDay = anchor.getDate();
+      if (anchorDay <= 15) {
+        payDay1 = anchorDay;
+        payDay2 = Math.min(anchorDay + 15, 28); // Cap at 28 for month-safety
+      } else {
+        payDay2 = anchorDay;
+        payDay1 = Math.max(anchorDay - 15, 1);
+      }
+    }
+  }
+
+  // Semi-monthly periods run payDay1→(payDay2-1) then payDay2→(payDay1-1 of next month).
+  // This ensures no gap at month boundaries (e.g. paid 5th/20th: Apr 5-19, Apr 20-May 4, May 5-19...).
+  const nextMonth = month + 1;
+  const nextYear = nextMonth > 11 ? year + 1 : year;
+  const nextMonthIdx = nextMonth > 11 ? 0 : nextMonth;
+
+  if (day < payDay2) {
+    // In first half: payDay1 to payDay2 - 1
+    const currentStart = new Date(year, month, payDay1);
+    const currentEnd = new Date(year, month, payDay2 - 1);
+    // Next period: payDay2 of this month to payDay1-1 of next month
+    const nextStart = new Date(year, month, payDay2);
+    const nextEnd = new Date(nextYear, nextMonthIdx, payDay1 - 1);
 
     return {
       current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: 1 },
@@ -259,13 +315,12 @@ function getSemiMonthlyPeriods(today: Date): PayPeriodInfo {
       frequency: 'semimonthly',
     };
   } else {
-    const currentStart = new Date(year, month, 16);
-    const currentEnd = new Date(year, month, lastDay);
-    const nextMonth = month + 1;
-    const nextYear = nextMonth > 11 ? year + 1 : year;
-    const nextMonthIdx = nextMonth > 11 ? 0 : nextMonth;
-    const nextStart = new Date(nextYear, nextMonthIdx, 1);
-    const nextEnd = new Date(nextYear, nextMonthIdx, 15);
+    // In second half: payDay2 of this month to payDay1-1 of next month
+    const currentStart = new Date(year, month, payDay2);
+    const currentEnd = new Date(nextYear, nextMonthIdx, payDay1 - 1);
+    // Next period: payDay1 to payDay2-1 of next month
+    const nextStart = new Date(nextYear, nextMonthIdx, payDay1);
+    const nextEnd = new Date(nextYear, nextMonthIdx, payDay2 - 1);
 
     return {
       current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: 2 },
