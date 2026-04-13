@@ -151,12 +151,15 @@ function AllocateContent() {
     try {
       // Save income source
       const freq = SCHEDULE_TO_FREQ[schedule] || schedule;
-      await addIncomeSource({
+      const savedSource = await addIncomeSource({
         name: nickname,
         frequency: freq,
         typicalAmount: amount,
         nextPayDate: nextPayday || undefined,
       });
+      if (!savedSource?.id) {
+        throw new Error('Income source was not saved — please try again.');
+      }
 
       // Save all bills
       for (const bill of onboardingBills) {
