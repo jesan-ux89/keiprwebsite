@@ -16,7 +16,7 @@ import { DashboardSkeleton } from '@/components/LoadingSkeleton';
  */
 
 export default function ReportsPage() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isUltra, billsLoading, spendingSummary, fmt } = useApp();
   const router = useRouter();
   const [data, setData] = useState<any[]>([]);
@@ -167,7 +167,7 @@ export default function ReportsPage() {
                         category={category.category}
                         size={24}
                         iconScale={0.6}
-                        isDark={colors.isDark}
+                        isDark={isDark}
                       />
                       <span style={{ fontSize: '12px', fontWeight: '500', color: colors.text }}>
                         {category.category}

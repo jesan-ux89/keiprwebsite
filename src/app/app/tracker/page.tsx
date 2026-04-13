@@ -16,7 +16,7 @@ import EmptyState from '@/components/EmptyState';
  */
 
 export default function TrackerPage() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
     isBillPaid, isSplitPaid, toggleSplitPaid, isUltra,
@@ -324,7 +324,7 @@ export default function TrackerPage() {
                     category={bill.category}
                     size={32}
                     iconScale={0.6}
-                    isDark={colors.isDark}
+                    isDark={isDark}
                   />
 
                   {/* Bill info */}
