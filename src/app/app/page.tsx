@@ -373,7 +373,7 @@ export default function DashboardPage() {
       if (billId) {
         if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
         setUndoSnackbar({ billId, name: savedName, amount: savedAmount });
-        undoTimerRef.current = setTimeout(() => setUndoSnackbar(null), 120000);
+        undoTimerRef.current = setTimeout(() => setUndoSnackbar(null), 30000);
       }
     } catch (err) {
       console.error('Log expense failed:', err);
