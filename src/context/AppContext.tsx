@@ -218,6 +218,9 @@ interface AppContextType {
 
   // Quick expense
   logQuickExpense: (name: string, amount: number, category?: string) => Promise<void>;
+
+  // Initial load flag (prevents premature onboarding redirect)
+  initialDataLoaded: boolean;
 }
 
 const defaultCurrency = CURRENCIES[0];
@@ -310,6 +313,9 @@ const AppContext = createContext<AppContextType>({
 
   // Quick expense
   logQuickExpense: async () => {},
+
+  // Initial load flag
+  initialDataLoaded: false,
 });
 
 // ── Map API response to app Bill type (MATCHES MOBILE mapApiBill) ──
@@ -454,6 +460,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
   const [incomeLoading, setIncomeLoading] = useState(false);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -838,7 +845,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Initial fetch + sync user profile ─────────────────────
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setInitialDataLoaded(false);
+      return;
+    }
 
     async function syncAndFetch() {
       // Sync user profile (currency, tier, etc.)
@@ -875,6 +885,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Fetch data
       await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards(), refreshPendingConfirmations()]);
+      setInitialDataLoaded(true);
     }
 
     syncAndFetch();
@@ -1272,6 +1283,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         pendingConfirmationsCount,
         refreshPendingConfirmations,
+
+        initialDataLoaded,
       }}
     >
       {children}

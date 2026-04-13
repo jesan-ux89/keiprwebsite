@@ -376,7 +376,7 @@ export default function DashboardPage() {
           <a href="/app/income" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
             <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Income</span>
-            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalPaycheck)}</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(isUltra && availableBreakdown?.depositsThisPeriod ? availableBreakdown.depositsThisPeriod : totalPaycheck)}</span>
           </a>
           <a href="/app/bills" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#F59E0B' }} />

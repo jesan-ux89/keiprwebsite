@@ -67,7 +67,7 @@ export default function AppLayout({
 }: AppLayoutProps) {
   const { colors } = useTheme();
   const { user, loading, signOut, isAdmin } = useAuth();
-  const { incomeSources, incomeLoading, isUltra, isPro, detectedCount } = useApp();
+  const { incomeSources, incomeLoading, isUltra, isPro, detectedCount, initialDataLoaded } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -80,13 +80,14 @@ export default function AppLayout({
   }, [user, loading, router]);
 
   // Redirect to onboarding if user has no income sources (not already on onboarding page)
+  // Wait for initialDataLoaded to prevent false redirect during async fetch
   useEffect(() => {
-    if (!loading && !incomeLoading && user && !pathname.startsWith('/onboarding')) {
+    if (!loading && initialDataLoaded && user && !pathname.startsWith('/onboarding')) {
       if (incomeSources.length === 0) {
         router.push('/onboarding/pay-schedule');
       }
     }
-  }, [user, loading, incomeLoading, incomeSources, pathname, router]);
+  }, [user, loading, initialDataLoaded, incomeSources, pathname, router]);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
