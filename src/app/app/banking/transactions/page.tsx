@@ -131,7 +131,7 @@ export default function AllTransactionsPageWrapper() {
 
 function AllTransactionsPage() {
   const { colors, isDark } = useTheme();
-  const { isUltra, fmt, bills } = useApp();
+  const { isUltra, fmt, bills, bankTransactions: cachedTransactions, fetchBankTransactions: ctxFetchBankTransactions } = useApp();
   const searchParams = useSearchParams();
 
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -196,11 +196,15 @@ function AllTransactionsPage() {
   // ── Data fetching ──
 
   useEffect(() => {
-    if (isUltra) {
-      fetchTransactions();
-      fetchInterestEarned();
-      fetchInterestCharged();
+    if (!isUltra) return;
+    const accountId = searchParams?.get('accountId');
+    // Use cached transactions for instant render (global view only)
+    if (!accountId && cachedTransactions.length > 0) {
+      setAllTransactions(cachedTransactions as Transaction[]);
     }
+    fetchTransactions();
+    fetchInterestEarned();
+    fetchInterestCharged();
   }, [isUltra, searchParams]);
 
   const fetchInterestEarned = async () => {
@@ -289,7 +293,8 @@ function AllTransactionsPage() {
   };
 
   const fetchTransactions = async (isRetryAfterBackfill = false) => {
-    setLoading(true);
+    // Only show loading if no cached data to display
+    if (allTransactions.length === 0 && cachedTransactions.length === 0) setLoading(true);
     try {
       const accountId = searchParams?.get('accountId') || undefined;
       const res = await bankingAPI.getAllTransactions({ category: 'all', limit: accountId ? 500 : 300, offset: 0, days: accountId ? 365 : 90, accountId });
@@ -322,6 +327,8 @@ function AllTransactionsPage() {
       setAllTransactions(txns);
       setCounts(cts);
       setError(null);
+      // Update context cache for global views
+      if (!accountId) ctxFetchBankTransactions(undefined, true);
     } catch (err) {
       console.error('Failed to fetch transactions:', err);
       setError('Failed to load transactions');

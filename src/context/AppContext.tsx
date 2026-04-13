@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI, bankingAPI, subscriptionsAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
 
@@ -205,6 +205,17 @@ interface AppContextType {
   fetchAvailableNumber: () => Promise<void>;
   fetchCreditCards: () => Promise<void>;
 
+  // Banking cache (stale-while-revalidate)
+  bankAccounts: any[];
+  bankAccountsLoading: boolean;
+  bankTransactions: any[];
+  bankTransactionsLoading: boolean;
+  bankAccountsLastFetched: number | null;
+  bankTransactionsLastFetched: number | null;
+  fetchBankAccounts: (force?: boolean) => Promise<void>;
+  fetchBankTransactions: (params?: { accountId?: string; days?: number; limit?: number }, force?: boolean) => Promise<void>;
+  invalidateBankingCache: () => void;
+
   // Quick expense
   logQuickExpense: (name: string, amount: number, category?: string) => Promise<void>;
 }
@@ -285,6 +296,17 @@ const AppContext = createContext<AppContextType>({
   fetchSpendingSummary: async () => {},
   fetchAvailableNumber: async () => {},
   fetchCreditCards: async () => {},
+
+  // Banking cache
+  bankAccounts: [],
+  bankAccountsLoading: false,
+  bankTransactions: [],
+  bankTransactionsLoading: false,
+  bankAccountsLastFetched: null,
+  bankTransactionsLastFetched: null,
+  fetchBankAccounts: async () => {},
+  fetchBankTransactions: async () => {},
+  invalidateBankingCache: () => {},
 
   // Quick expense
   logQuickExpense: async () => {},
@@ -448,6 +470,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [availableNumber, setAvailableNumber] = useState<number | null>(null);
   const [availableBreakdown, setAvailableBreakdown] = useState<any>(null);
   const [creditCards, setCreditCards] = useState<any[]>([]);
+
+  // Banking cache state (stale-while-revalidate)
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [bankAccountsLoading, setBankAccountsLoading] = useState(false);
+  const [bankTransactions, setBankTransactions] = useState<any[]>([]);
+  const [bankTransactionsLoading, setBankTransactionsLoading] = useState(false);
+  const [bankAccountsLastFetched, setBankAccountsLastFetched] = useState<number | null>(null);
+  const [bankTransactionsLastFetched, setBankTransactionsLastFetched] = useState<number | null>(null);
+  const bankTxnParamsRef = useRef<string>('');
+
+  const BANKING_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   const [currencyCode, setCurrencyCodeState] = useState('USD');
   const [tier, setTier] = useState<'free' | 'pro' | 'ultra'>('free');
@@ -740,6 +773,57 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // ── Banking cache fetchers (stale-while-revalidate) ──────
+  const fetchBankAccounts = useCallback(async (force?: boolean) => {
+    if (!user || !isUltra) return;
+    const now = Date.now();
+    const isFresh = bankAccountsLastFetched && (now - bankAccountsLastFetched) < BANKING_CACHE_TTL;
+    if (isFresh && !force && bankAccounts.length > 0) return;
+    if (bankAccounts.length === 0) setBankAccountsLoading(true);
+    try {
+      const res = await bankingAPI.getAccounts();
+      const accts = res.data?.accounts || [];
+      setBankAccounts(accts);
+      setBankAccountsLastFetched(Date.now());
+    } catch (err) {
+      console.log('fetchBankAccounts failed:', (err as any)?.message);
+    } finally {
+      setBankAccountsLoading(false);
+    }
+  }, [user, isUltra, bankAccountsLastFetched, bankAccounts.length]);
+
+  const fetchBankTransactions = useCallback(async (params?: { accountId?: string; days?: number; limit?: number }, force?: boolean) => {
+    if (!user || !isUltra) return;
+    const now = Date.now();
+    const paramsKey = JSON.stringify(params || {});
+    const isFresh = bankTransactionsLastFetched && (now - bankTransactionsLastFetched) < BANKING_CACHE_TTL;
+    const sameParams = bankTxnParamsRef.current === paramsKey;
+    if (isFresh && sameParams && !force && bankTransactions.length > 0) return;
+    if (bankTransactions.length === 0 || !sameParams) setBankTransactionsLoading(true);
+    bankTxnParamsRef.current = paramsKey;
+    try {
+      const res = await bankingAPI.getAllTransactions({
+        category: 'all',
+        days: params?.days || 90,
+        limit: params?.limit || 300,
+        offset: 0,
+        ...(params?.accountId ? { accountId: params.accountId } : {}),
+      });
+      const txns = res.data?.transactions || [];
+      setBankTransactions(txns);
+      setBankTransactionsLastFetched(Date.now());
+    } catch (err) {
+      console.log('fetchBankTransactions failed:', (err as any)?.message);
+    } finally {
+      setBankTransactionsLoading(false);
+    }
+  }, [user, isUltra, bankTransactionsLastFetched, bankTransactions.length]);
+
+  const invalidateBankingCache = useCallback(() => {
+    setBankAccountsLastFetched(null);
+    setBankTransactionsLastFetched(null);
+  }, []);
+
   // ── Log quick expense ────────────────────────────────────
   const logQuickExpense = useCallback(async (name: string, amount: number, category?: string) => {
     if (!user) return;
@@ -795,6 +879,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     syncAndFetch();
   }, [user, fetchBills, fetchIncomeSources, fetchCategories, fetchPayments, fetchRollover, fetchSideIncome]);
+
+  // ── Auto-fetch banking data once tier is known as Ultra ───
+  useEffect(() => {
+    if (user && isUltra) {
+      fetchBankAccounts(true);
+      fetchBankTransactions(undefined, true);
+    }
+  }, [user, isUltra, fetchBankAccounts, fetchBankTransactions]);
 
   // ── Bill CRUD ─────────────────────────────────────────────
   const addBill = async (data: Record<string, unknown>): Promise<Bill> => {
@@ -1171,6 +1263,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchSpendingSummary,
         fetchAvailableNumber,
         fetchCreditCards,
+
+        bankAccounts, bankAccountsLoading, bankTransactions, bankTransactionsLoading,
+        bankAccountsLastFetched, bankTransactionsLastFetched,
+        fetchBankAccounts, fetchBankTransactions, invalidateBankingCache,
 
         logQuickExpense,
 

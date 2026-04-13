@@ -104,7 +104,7 @@ function formatAccountType(accountType?: string): string {
 
 export default function BankingPage() {
   const { colors, isDark } = useTheme();
-  const { isUltra, fmt } = useApp();
+  const { isUltra, fmt, bankAccounts: cachedAccounts, fetchBankAccounts } = useApp();
   const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [loanPayments, setLoanPayments] = useState<Record<string, Array<{ date: string; amount: number }>>>({});
 
@@ -125,7 +125,15 @@ export default function BankingPage() {
   }, [syncCooldown]);
 
   useEffect(() => {
-    if (isUltra) loadAll();
+    if (!isUltra) return;
+    // Use cached accounts for instant render
+    if (cachedAccounts.length > 0) {
+      const accts = cachedAccounts.filter((a: any) => a.is_active !== false);
+      setAccounts(accts.map((acc: any) => ({ ...acc })));
+      setLoading(false);
+    }
+    // Always fetch fresh data (includes balances which aren't cached)
+    loadAll();
   }, [isUltra]);
 
   // Fetch recent loan payments when accounts load
@@ -152,7 +160,8 @@ export default function BankingPage() {
   }, [accounts]);
 
   async function loadAll() {
-    setLoading(true);
+    // Only show loading if no cached data
+    if (cachedAccounts.length === 0) setLoading(true);
     try {
       const [accountsRes, statusRes, balancesRes] = await Promise.allSettled([
         bankingAPI.getAccounts(),
@@ -182,6 +191,8 @@ export default function BankingPage() {
 
       setAccounts(accountsWithBalance);
       setError(null);
+      // Update context cache
+      fetchBankAccounts(true);
       fetchTxnCounts();
     } catch (err) {
       console.error('Failed to load banking data:', err);
