@@ -118,7 +118,7 @@ export default function DashboardPage() {
   const totalBillsThisCheck = thisPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
   const totalSpendingBudgetsAmount = isUltra ? (spendingBudgets || []).reduce((s: number, b: any) => s + (b.budget_amount || 0), 0) : 0;
   const remaining = (totalPaycheck || 0) - totalBillsThisCheck - totalSpendingBudgetsAmount;
-  const spentPct = totalPaycheck > 0 ? Math.round(((totalBillsThisCheck + totalSpendingBudgetsAmount) / totalPaycheck) * 100) : 0;
+  const spentPct = totalPaycheck > 0 ? Math.round((totalBillsThisCheck / totalPaycheck) * 100) : 0;
 
   const nextBillsTotal = nextPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
   const nextRemaining = (totalPaycheck || 0) - nextBillsTotal;
@@ -584,7 +584,7 @@ export default function DashboardPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Available</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: remaining >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(remaining)}</p>
+                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: (isUltra && availableNumber !== null ? availableNumber : remaining) >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(isUltra && availableNumber !== null ? availableNumber : remaining)}</p>
                 <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>After bills & spending</p>
               </Card>
               <Card style={{ padding: '1.25rem' }}>
@@ -594,7 +594,7 @@ export default function DashboardPage() {
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsThisCheck + totalSpendingBudgetsAmount)}</p>
+                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsThisCheck)}</p>
                 <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{bills.length} expenses · {spentPct}% covered</p>
               </Card>
             </div>
