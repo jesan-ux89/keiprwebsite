@@ -123,12 +123,30 @@ export default function DashboardPage() {
   }
 
   // ── Filter bills by pay period (MATCHES MOBILE) ────────────
+  // Helper: find the actual date a dueDay lands within a pay period (handles periods that span months).
+  function occurrenceInPeriod(dueDay: number, period: { start: Date; end: Date }) {
+    const start = period.start instanceof Date ? period.start : new Date(period.start);
+    const end = period.end instanceof Date ? period.end : new Date(period.end);
+    const d1 = new Date(start.getFullYear(), start.getMonth(), dueDay);
+    if (d1 >= start && d1 <= end) return d1;
+    const d2 = new Date(end.getFullYear(), end.getMonth(), dueDay);
+    if (d2 >= start && d2 <= end) return d2;
+    return start;
+  }
+  function sortByOccurrence(list: any[], period: { start: Date; end: Date }) {
+    return [...list].sort((a, b) => {
+      const da = occurrenceInPeriod(a.dueDay || 1, period).getTime();
+      const db = occurrenceInPeriod(b.dueDay || 1, period).getTime();
+      return da - db;
+    });
+  }
+
   const thisPaycheckBills = isTwiceMonthly
-    ? bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, currentPeriod))
-    : bills;
+    ? sortByOccurrence(bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, currentPeriod)), currentPeriod)
+    : sortByOccurrence(bills, currentPeriod);
 
   const nextPaycheckBills = isTwiceMonthly
-    ? bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, nextPeriod))
+    ? sortByOccurrence(bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, nextPeriod)), nextPeriod)
     : [];
 
   // ── Monthly totals (full bill amounts) ─────────────────────
