@@ -199,7 +199,9 @@ export default function DashboardPage() {
       .filter(b => !b.isQuickExpense && (b.dueDay || 1) >= todayDay && !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, currentPaycheckNum)));
     const nextCheckUpcoming = nextPaycheckBills
       .filter(b => !b.isQuickExpense && !isBillPaid(b.id) && (!b.isSplit || !isSplitPaid(b.id, nextPaycheckNum)));
-    return [...thisCheckUpcoming, ...nextCheckUpcoming]
+    const seenIds = new Set(thisCheckUpcoming.map(b => b.id));
+    const dedupedNext = nextCheckUpcoming.filter(b => !seenIds.has(b.id));
+    return [...thisCheckUpcoming, ...dedupedNext]
       .sort((a, b) => {
         const aInThis = thisCheckUpcoming.includes(a);
         const bInThis = thisCheckUpcoming.includes(b);
