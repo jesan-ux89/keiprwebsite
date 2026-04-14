@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { bankingAPI, aiAPI } from '@/lib/api';
+import { bankingAPI } from '@/lib/api';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -15,7 +15,6 @@ import EmptyState from '@/components/EmptyState';
 import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
 import CategoryIcon from '@/components/CategoryIcon';
-import AISuggestionCard, { AISuggestion } from '@/components/AISuggestionCard';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
 
@@ -32,27 +31,14 @@ export default function BillsPage() {
   const [expandedBills, setExpandedBills] = useState<ExpandedBills>({});
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [matchedBillIds, setMatchedBillIds] = useState<Set<string>>(new Set());
-  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
 
   useEffect(() => {
     if (isUltra) {
       bankingAPI.getMatchedBills()
         .then(res => setMatchedBillIds(new Set(res.data?.matched_bill_ids || [])))
         .catch(() => {});
-      aiAPI.getSuggestions()
-        .then(res => setAiSuggestions(res.data?.suggestions || []))
-        .catch(() => {});
     }
   }, [isUltra, bills]);
-
-  const handleSuggestionAction = async (id: string, action: 'apply' | 'dismiss') => {
-    try {
-      await aiAPI.handleSuggestion(id, action);
-      setAiSuggestions(prev => prev.filter(s => s.id !== id));
-    } catch (err: any) {
-      alert(err?.response?.data?.error || 'Failed to process suggestion');
-    }
-  };
 
   const handleDeleteAll = () => {
     if (window.confirm('Delete all bills and spending budgets? This action cannot be undone.')) {
@@ -504,16 +490,6 @@ export default function BillsPage() {
               ))}
             </div>
           </Card>
-        )}
-
-        {/* AI Suggestions Card (Ultra only) */}
-        {isUltra && aiSuggestions.length > 0 && (
-          <div style={{ marginBottom: '2rem' }}>
-            <AISuggestionCard
-              suggestions={aiSuggestions}
-              onAction={handleSuggestionAction}
-            />
-          </div>
         )}
 
         {/* Bills List / Budget Table */}

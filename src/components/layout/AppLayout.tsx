@@ -19,7 +19,6 @@ import {
   Menu,
   X,
   Bell,
-  BrainCircuit,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
@@ -66,7 +65,7 @@ export default function AppLayout({
   topBarActions,
 }: AppLayoutProps) {
   const { colors } = useTheme();
-  const { user, loading, signOut, isAdmin } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { incomeSources, incomeLoading, incomeFetchSucceeded, isUltra, isPro, detectedCount, initialDataLoaded } = useApp();
   const pathname = usePathname();
   const router = useRouter();
@@ -310,34 +309,6 @@ export default function AppLayout({
               </div>
             ))}
 
-            {/* Admin-only link */}
-            {isAdmin && (
-              <div style={{
-                paddingTop: '1rem',
-                borderTop: `1px solid ${colors.divider}`,
-              }}>
-                <Link
-                  href="/app/settings/ai-admin"
-                  onClick={() => setSidebarOpen(false)}
-                  style={{
-                    padding: '0.55rem 0.75rem',
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.65rem',
-                    textDecoration: 'none',
-                    color: pathname.startsWith('/app/settings/ai-admin') ? colors.navActive : colors.navIcon,
-                    backgroundColor: pathname.startsWith('/app/settings/ai-admin') ? `${colors.electric}15` : 'transparent',
-                    transition: 'all 0.2s ease',
-                    fontSize: '0.85rem',
-                    fontWeight: pathname.startsWith('/app/settings/ai-admin') ? 600 : 500,
-                  }}
-                >
-                  <BrainCircuit size={18} />
-                  Admin AI Dashboard
-                </Link>
-              </div>
-            )}
           </div>
         </div>
 
