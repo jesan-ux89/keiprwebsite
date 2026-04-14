@@ -189,6 +189,18 @@ npm run build        # Production build
 - `/app/income` page shows income sources + recent bank deposits (fetches `income`, `income_matched`, and `transfer` categories filtered for deposits)
 - `bankingAPI.migrateToUltra()` available in `src/lib/api.ts`
 
+## Detection Engine — BACKEND-ONLY
+All rules for recurring-expense detection (when a transaction becomes a bill, how splits are calculated, how names are cleaned, variable-amount handling for CC/ATM) live in `_keipr-complete-backend/src/lib/detectionEngine.js`. The website consumes results — it doesn't own any detection logic. If a detection bug is reported while browsing the website:
+1. Don't try to "fix it" by changing website code — nothing here controls detection
+2. The bug is in the backend; verify with `npm test` in `_keipr-complete-backend`
+3. Fix goes in `detectionEngine.js`
+
+## Debug Endpoint (for diagnosing web bugs)
+Backend exposes `GET /api/debug/user-state` — tier-aware JSON dump of everything needed to diagnose a user's issue (bills, income, payments, connections, transactions, match log, exclusions). Use this FIRST before speculating about state. Hit directly with browser dev tools + the user's Firebase token.
+
+## AI Features — REMOVED
+All AI-related pages and features were removed: `/app/settings/ai`, `/app/settings/ai-admin`, `AISuggestionCard`, `aiAPI` in `src/lib/api.ts`. Categorization and detection run entirely through the backend's rule-based engines. Do NOT re-introduce AI pages without explicit user request.
+
 ## Unified Expenses (IMPORTANT)
 All user-facing text uses "expenses" instead of "bills" or "spending budgets." The spending budgets DB table still exists but:
 - **Auto-creation disabled:** Backend no longer auto-creates spending budgets during sync/migration
