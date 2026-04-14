@@ -39,6 +39,34 @@ interface BankAccount {
   error_type?: string | null;
   balance_display?: 'both' | 'available' | 'present';
   is_primary_checking?: boolean;
+  // Credit-card liability fields (populated by Plaid liabilitiesGet)
+  statement_close_date?: string | null;
+  payment_due_date?: string | null;
+  last_statement_balance?: number | null;
+  minimum_payment?: number | null;
+  last_payment_date?: string | null;
+  last_payment_amount?: number | null;
+  apr_percentage?: number | null;
+  is_overdue?: boolean | null;
+}
+
+function formatShortDate(iso?: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getDueUrgency(dueDate?: string | null, isOverdue?: boolean | null): 'overdue' | 'soon' | 'ok' | null {
+  if (!dueDate) return null;
+  if (isOverdue) return 'overdue';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate + 'T00:00:00');
+  const daysUntil = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (daysUntil < 0) return 'overdue';
+  if (daysUntil <= 7) return 'soon';
+  return 'ok';
 }
 
 interface AccountBalance {
@@ -652,6 +680,34 @@ export default function BankingPage() {
                               </div>
                             </div>
                           )}
+
+                          {/* Credit card: statement / due date from Plaid Liabilities */}
+                          {isCreditCard && (account.payment_due_date || account.statement_close_date) && (() => {
+                            const urgency = getDueUrgency(account.payment_due_date, account.is_overdue);
+                            const dueColor = urgency === 'overdue' ? '#E74C3C' : urgency === 'soon' ? '#854F0B' : colors.textMuted;
+                            return (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
+                                {account.payment_due_date && (
+                                  <span style={{ fontSize: '0.75rem', color: dueColor, fontWeight: urgency === 'overdue' ? 700 : 400 }}>
+                                    {urgency === 'overdue' ? 'Overdue ' : 'Due '}
+                                    {formatShortDate(account.payment_due_date)}
+                                    {account.minimum_payment != null && ` · Min ${fmt(account.minimum_payment)}`}
+                                  </span>
+                                )}
+                                {account.last_statement_balance != null && (
+                                  <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                                    Statement {fmt(account.last_statement_balance)}
+                                    {account.statement_close_date ? ` · Closed ${formatShortDate(account.statement_close_date)}` : ''}
+                                  </span>
+                                )}
+                                {account.apr_percentage != null && (
+                                  <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                                    APR {account.apr_percentage.toFixed(2)}%
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Sync status */}
                           <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.75rem 0 0 0' }}>
