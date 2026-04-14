@@ -188,7 +188,7 @@ export default function BankingPage() {
 
       const accountsWithBalance: AccountWithBalance[] = accts.map((acc) => ({
         ...acc,
-        balance: balMap[acc.id],
+        balance: balMap[acc.id] || { id: acc.id, current: 0, available: 0 },
       }));
 
       setAccounts(accountsWithBalance);
