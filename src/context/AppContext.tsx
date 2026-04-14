@@ -212,8 +212,6 @@ interface AppContextType {
   bankAccountsLoading: boolean;
   bankTransactions: any[];
   bankTransactionsLoading: boolean;
-  bankAccountsLastFetched: number | null;
-  bankTransactionsLastFetched: number | null;
   fetchBankAccounts: (force?: boolean) => Promise<void>;
   fetchBankTransactions: (params?: { accountId?: string; days?: number; limit?: number }, force?: boolean) => Promise<void>;
   invalidateBankingCache: () => void;
@@ -308,8 +306,6 @@ const AppContext = createContext<AppContextType>({
   bankAccountsLoading: false,
   bankTransactions: [],
   bankTransactionsLoading: false,
-  bankAccountsLastFetched: null,
-  bankTransactionsLastFetched: null,
   fetchBankAccounts: async () => {},
   fetchBankTransactions: async () => {},
   invalidateBankingCache: () => {},
@@ -488,8 +484,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [bankAccountsLoading, setBankAccountsLoading] = useState(false);
   const [bankTransactions, setBankTransactions] = useState<any[]>([]);
   const [bankTransactionsLoading, setBankTransactionsLoading] = useState(false);
-  const [bankAccountsLastFetched, setBankAccountsLastFetched] = useState<number | null>(null);
-  const [bankTransactionsLastFetched, setBankTransactionsLastFetched] = useState<number | null>(null);
+  // SWR state lives in refs so fetch callbacks have stable identity. If we used
+  // useState here, the callbacks would get new identities on every fetch, which
+  // would refire any effect that has them in its deps → infinite loop spamming
+  // /api/banking/accounts and /api/banking-data/all-transactions.
+  const bankAccountsLastFetchedRef = useRef<number | null>(null);
+  const bankTransactionsLastFetchedRef = useRef<number | null>(null);
+  const bankAccountsLengthRef = useRef<number>(0);
+  const bankTransactionsLengthRef = useRef<number>(0);
   const bankTxnParamsRef = useRef<string>('');
 
   const BANKING_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -788,32 +790,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   // ── Banking cache fetchers (stale-while-revalidate) ──────
+  // SWR state in refs keeps callback identity stable. See ref declarations above.
   const fetchBankAccounts = useCallback(async (force?: boolean) => {
     if (!user || !isUltra) return;
     const now = Date.now();
-    const isFresh = bankAccountsLastFetched && (now - bankAccountsLastFetched) < BANKING_CACHE_TTL;
-    if (isFresh && !force && bankAccounts.length > 0) return;
-    if (bankAccounts.length === 0) setBankAccountsLoading(true);
+    const lastFetched = bankAccountsLastFetchedRef.current;
+    const isFresh = lastFetched && (now - lastFetched) < BANKING_CACHE_TTL;
+    if (isFresh && !force && bankAccountsLengthRef.current > 0) return;
+    if (bankAccountsLengthRef.current === 0) setBankAccountsLoading(true);
     try {
       const res = await bankingAPI.getAccounts();
       const accts = res.data?.accounts || [];
       setBankAccounts(accts);
-      setBankAccountsLastFetched(Date.now());
+      bankAccountsLengthRef.current = accts.length;
+      bankAccountsLastFetchedRef.current = Date.now();
     } catch (err) {
       console.log('fetchBankAccounts failed:', (err as any)?.message);
     } finally {
       setBankAccountsLoading(false);
     }
-  }, [user, isUltra, bankAccountsLastFetched, bankAccounts.length]);
+  }, [user, isUltra]);
 
   const fetchBankTransactions = useCallback(async (params?: { accountId?: string; days?: number; limit?: number }, force?: boolean) => {
     if (!user || !isUltra) return;
     const now = Date.now();
     const paramsKey = JSON.stringify(params || {});
-    const isFresh = bankTransactionsLastFetched && (now - bankTransactionsLastFetched) < BANKING_CACHE_TTL;
+    const lastFetched = bankTransactionsLastFetchedRef.current;
+    const isFresh = lastFetched && (now - lastFetched) < BANKING_CACHE_TTL;
     const sameParams = bankTxnParamsRef.current === paramsKey;
-    if (isFresh && sameParams && !force && bankTransactions.length > 0) return;
-    if (bankTransactions.length === 0 || !sameParams) setBankTransactionsLoading(true);
+    if (isFresh && sameParams && !force && bankTransactionsLengthRef.current > 0) return;
+    if (bankTransactionsLengthRef.current === 0 || !sameParams) setBankTransactionsLoading(true);
     bankTxnParamsRef.current = paramsKey;
     try {
       const res = await bankingAPI.getAllTransactions({
@@ -825,17 +831,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
       const txns = res.data?.transactions || [];
       setBankTransactions(txns);
-      setBankTransactionsLastFetched(Date.now());
+      bankTransactionsLengthRef.current = txns.length;
+      bankTransactionsLastFetchedRef.current = Date.now();
     } catch (err) {
       console.log('fetchBankTransactions failed:', (err as any)?.message);
     } finally {
       setBankTransactionsLoading(false);
     }
-  }, [user, isUltra, bankTransactionsLastFetched, bankTransactions.length]);
+  }, [user, isUltra]);
 
   const invalidateBankingCache = useCallback(() => {
-    setBankAccountsLastFetched(null);
-    setBankTransactionsLastFetched(null);
+    bankAccountsLastFetchedRef.current = null;
+    bankTransactionsLastFetchedRef.current = null;
   }, []);
 
   // ── Log quick expense ────────────────────────────────────
@@ -1290,7 +1297,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchCreditCards,
 
         bankAccounts, bankAccountsLoading, bankTransactions, bankTransactionsLoading,
-        bankAccountsLastFetched, bankTransactionsLastFetched,
         fetchBankAccounts, fetchBankTransactions, invalidateBankingCache,
 
         logQuickExpense,
