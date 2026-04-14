@@ -31,11 +31,14 @@ interface BankAccount {
   id: string;
   institution_name: string;
   account_name: string;
+  custom_name?: string | null;
   account_mask: string;
   account_type?: string;
   is_synced: boolean;
   last_sync: string;
   error_type?: string | null;
+  balance_display?: 'both' | 'available' | 'present';
+  is_primary_checking?: boolean;
 }
 
 interface AccountBalance {
@@ -46,6 +49,11 @@ interface AccountBalance {
 
 interface AccountWithBalance extends BankAccount {
   balance?: AccountBalance;
+}
+
+// Display name helper — prefer user's custom_name if set.
+function getDisplayName(a: Partial<BankAccount>): string {
+  return (a.custom_name && a.custom_name.trim()) || a.account_name || a.institution_name || '';
 }
 
 interface BankingStatus {
@@ -289,7 +297,7 @@ export default function BankingPage() {
     accounts.forEach(acc => {
       const bal = acc.balance?.current || 0;
       const group = getAccountGroup(acc.account_type);
-      const entry = { id: acc.id, name: acc.account_name || acc.institution_name, mask: acc.account_mask || '', amount: bal };
+      const entry = { id: acc.id, name: getDisplayName(acc), mask: acc.account_mask || '', amount: bal };
       if (group === 'cash') { totalCash += bal; cashAccounts.push(entry); }
       else if (group === 'credit') { totalCredit += bal; creditAccounts.push(entry); }
       else if (group === 'loan') { totalLoans += bal; loanAccounts.push(entry); }
@@ -546,7 +554,7 @@ export default function BankingPage() {
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
-                          onClick={() => window.location.href = `/app/banking/transactions?accountId=${account.id}&accountName=${encodeURIComponent(account.account_name || account.institution_name)}&accountType=${account.account_type || ''}`}
+                          onClick={() => window.location.href = `/app/banking/transactions?accountId=${account.id}&accountName=${encodeURIComponent(getDisplayName(account))}&accountType=${account.account_type || ''}`}
                           onMouseEnter={(e) => {
                             (e.currentTarget as HTMLElement).style.borderColor = colors.electric;
                             (e.currentTarget as HTMLElement).style.backgroundColor = isDark ? 'rgba(56,189,248,0.03)' : 'rgba(56,189,248,0.02)';
@@ -567,9 +575,20 @@ export default function BankingPage() {
 
                             {/* Account name + type */}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontSize: '0.9125rem', fontWeight: 600, color: colors.text, margin: '0 0 0.2rem 0' }}>
-                                {account.account_name || account.institution_name}
-                              </p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                                <p style={{ fontSize: '0.9125rem', fontWeight: 600, color: colors.text, margin: 0 }}>
+                                  {getDisplayName(account)}
+                                </p>
+                                {account.is_primary_checking && (
+                                  <span style={{
+                                    fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.05em',
+                                    color: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.15)',
+                                    padding: '0.1rem 0.4rem', borderRadius: 4,
+                                  }}>
+                                    PRIMARY
+                                  </span>
+                                )}
+                              </div>
                               <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>
                                 {account.account_type ? formatAccountType(account.account_type) : ''}{account.account_type && account.account_mask ? ' · ' : ''}
                                 {account.account_mask ? `···${account.account_mask}` : ''}
@@ -578,14 +597,41 @@ export default function BankingPage() {
 
                             {/* Balance + chevron */}
                             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                              <p style={{
-                                margin: 0, fontWeight: 700, fontSize: '1rem',
-                                color: (isCreditCard || isLoan) && balCurrent > 0 ? (isDark ? '#7C8DB5' : '#506385') : colors.text,
-                              }}>
-                                {account.balance
-                                  ? (isCreditCard || isLoan) ? `-${fmt(balCurrent)}` : fmt(balCurrent)
-                                  : '-'}
-                              </p>
+                              {(() => {
+                                const mode = account.balance_display || 'both';
+                                // Cash: Available prominent with Present secondary (matches mobile)
+                                if (!isCreditCard && !isLoan && account.balance) {
+                                  const primaryVal = mode === 'present' ? balCurrent : balAvailable;
+                                  const primaryLabel = mode === 'present' ? 'Present' : 'Available';
+                                  const showSecondary = mode === 'both' && balCurrent !== balAvailable;
+                                  return (
+                                    <>
+                                      <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: colors.text }}>
+                                        {fmt(primaryVal)}
+                                      </p>
+                                      <p style={{ margin: 0, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: colors.textMuted }}>
+                                        {primaryLabel}
+                                      </p>
+                                      {showSecondary && (
+                                        <p style={{ margin: 0, fontSize: '0.7rem', color: colors.textMuted }}>
+                                          Present {fmt(balCurrent)}
+                                        </p>
+                                      )}
+                                    </>
+                                  );
+                                }
+                                // Credit / loan — existing display
+                                return (
+                                  <p style={{
+                                    margin: 0, fontWeight: 700, fontSize: '1rem',
+                                    color: (isCreditCard || isLoan) && balCurrent > 0 ? (isDark ? '#7C8DB5' : '#506385') : colors.text,
+                                  }}>
+                                    {account.balance
+                                      ? (isCreditCard || isLoan) ? `-${fmt(balCurrent)}` : fmt(balCurrent)
+                                      : '-'}
+                                  </p>
+                                );
+                              })()}
                               <ChevronRight size={16} style={{ color: colors.textMuted, marginTop: 2 }} />
                             </div>
                           </div>
