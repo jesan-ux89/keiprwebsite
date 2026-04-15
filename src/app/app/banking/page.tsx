@@ -148,19 +148,10 @@ export default function BankingPage() {
   const [status, setStatus] = useState<BankingStatus | null>(null);
   const [txnCounts, setTxnCounts] = useState<{ matched: number; unmatched: number } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [syncCooldown, setSyncCooldown] = useState(0);
   const [refreshingBalances, setRefreshingBalances] = useState(false);
   const [syncSettingsOpen, setSyncSettingsOpen] = useState(false);
-
-  useEffect(() => {
-    if (syncCooldown <= 0) return;
-    const timer = setTimeout(() => setSyncCooldown(syncCooldown - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [syncCooldown]);
 
   useEffect(() => {
     if (!isUltra) return;
@@ -260,27 +251,6 @@ export default function BankingPage() {
     } catch (err) {
       console.error('Failed to toggle sync:', err);
       setError('Failed to toggle sync');
-    }
-  };
-
-  const handleManualSync = async () => {
-    setSyncing(true);
-    setError(null);
-    setSyncResult(null);
-    try {
-      const res = await bankingAPI.directSync();
-      const r = res.data?.results || {};
-      const msg = r.added > 0
-        ? `${r.added} transactions synced · ${r.matched} matched to bills`
-        : 'Already up to date — no new transactions';
-      setSyncResult(msg);
-      setSyncCooldown(30);
-      await loadAll();
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { details?: string; error?: string } } };
-      setError(axiosErr?.response?.data?.details || axiosErr?.response?.data?.error || 'Sync failed. Please try again.');
-    } finally {
-      setSyncing(false);
     }
   };
 
@@ -529,13 +499,6 @@ export default function BankingPage() {
           <button onClick={() => setSuccess(null)} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '1rem' }}>✕</button>
         </Card>
       )}
-      {syncResult && (
-        <Card style={{ backgroundColor: 'rgba(56,189,248,0.08)', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-          <p style={{ color: '#38BDF8', margin: 0, fontSize: '0.95rem' }}>{syncResult}</p>
-          <button onClick={() => setSyncResult(null)} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-        </Card>
-      )}
-
           {/* Grouped Accounts with Monarch design */}
           {loading ? (
             <Card>
@@ -771,31 +734,10 @@ export default function BankingPage() {
                   marginTop: '0.75rem', borderRadius: '12px', border: `1px solid ${colors.cardBorder}`,
                   backgroundColor: colors.card, overflow: 'hidden',
                 }}>
-                  {/* Sync Transactions */}
-                  <button
-                    onClick={handleManualSync}
-                    disabled={syncing || syncCooldown > 0}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      width: '100%', padding: '0.875rem 1rem', background: 'none', border: 'none',
-                      borderBottom: `1px solid ${colors.cardBorder}`, cursor: syncing || syncCooldown > 0 ? 'default' : 'pointer',
-                      opacity: syncing || syncCooldown > 0 ? 0.5 : 1, textAlign: 'left',
-                    }}
-                  >
-                    <div>
-                      <div style={{ color: colors.text, fontSize: '0.875rem', fontWeight: 500 }}>Sync Transactions</div>
-                      <div style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '2px' }}>Pull latest purchases & deposits</div>
-                    </div>
-                    {syncing ? (
-                      <RefreshCw size={16} style={{ color: '#38BDF8', animation: 'spin 1s linear infinite' }} />
-                    ) : (
-                      <span style={{ color: syncCooldown > 0 ? colors.textMuted : '#38BDF8', fontSize: '0.8125rem', fontWeight: 500 }}>
-                        {syncCooldown > 0 ? `${syncCooldown}s` : 'Sync'}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Refresh Balances */}
+                  {/* Refresh Balances — only thing left in here. Sync Transactions removed
+                      (sandbox-only endpoint, blocked in production). Tucked behind the
+                      collapsed "Sync Settings" header for cost control: each balance refresh
+                      costs ~$0.30 on Plaid, and balances auto-refresh daily. */}
                   <button
                     onClick={async () => {
                       try {
@@ -829,7 +771,9 @@ export default function BankingPage() {
                   >
                     <div>
                       <div style={{ color: colors.text, fontSize: '0.875rem', fontWeight: 500 }}>Refresh Balances</div>
-                      <div style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '2px' }}>Get live account balances</div>
+                      <div style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '2px' }}>
+                        Pull latest balances from your bank. Balances also auto-refresh daily, so this is rarely needed.
+                      </div>
                     </div>
                     {refreshingBalances ? (
                       <RefreshCw size={16} style={{ color: '#38BDF8', animation: 'spin 1s linear infinite' }} />

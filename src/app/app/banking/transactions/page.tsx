@@ -8,7 +8,7 @@ import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import AppLayout from '@/components/layout/AppLayout';
-import { ChevronLeft, AlertCircle, Eye, Search, Filter } from 'lucide-react';
+import { ChevronLeft, AlertCircle, Eye } from 'lucide-react';
 import Link from 'next/link';
 import MerchantLogo from '@/components/MerchantLogo';
 
@@ -423,34 +423,13 @@ function AllTransactionsPage() {
 
   // ── Main render ──
 
-  // Build topBarActions with search and filter buttons
-  const topBarActions = (
-    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-      <button style={{
-        padding: '0.5rem 1rem', borderRadius: '0.625rem',
-        border: `1px solid ${colors.divider}`, backgroundColor: colors.card,
-        color: colors.textMuted, fontSize: '0.875rem', fontWeight: 500,
-        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-      }}>
-        <Search size={16} />
-        Search
-      </button>
-      <button style={{
-        padding: '0.5rem 1rem', borderRadius: '0.625rem',
-        border: `1px solid ${colors.divider}`, backgroundColor: colors.card,
-        color: colors.textMuted, fontSize: '0.875rem', fontWeight: 500,
-        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-      }}>
-        <Filter size={16} />
-        Filter
-      </button>
-    </div>
-  );
+  // Search + Filter buttons were removed — they had no onClick handlers and did nothing.
+  // Transactions already filter via the tab bar (All / Expenses / Income); real search
+  // can be added later when we wire up a query state + input.
 
   return (
     <AppLayout
       pageTitle={searchParams?.get('accountName') || 'Transactions'}
-      topBarActions={topBarActions}
     >
       <div style={{ maxWidth: '900px' }}>
         {/* Tab Bar with underline style */}
