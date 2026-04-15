@@ -29,6 +29,10 @@ export default function BillsPage() {
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedBills, setExpandedBills] = useState<ExpandedBills>({});
+  // Collapsible Fixed/Flexible top-level sections — both collapsed by default
+  // so users see both options up front and expand the one they care about.
+  // Mirrors mobile app's BillsScreen.tsx `expandedTypes` state.
+  const [expandedTypes, setExpandedTypes] = useState<{ fixed: boolean; flexible: boolean }>({ fixed: false, flexible: false });
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [matchedBillIds, setMatchedBillIds] = useState<Set<string>>(new Set());
 
@@ -627,27 +631,43 @@ export default function BillsPage() {
                   const totalB = group.bills.filter(x => x.category === b).reduce((s, x) => s + x.total, 0);
                   return totalB - totalA;
                 });
+                const typeKey: 'fixed' | 'flexible' = group.prefix === 'fixed' ? 'fixed' : 'flexible';
+                const isSectionOpen = expandedTypes[typeKey];
                 return (
                   <div key={group.prefix}>
-                    {/* Section header */}
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '1rem 1.25rem',
-                      borderTop: gi > 0 ? `2px solid ${colors.divider}` : 'none',
-                      backgroundColor: colors.background,
-                    }}>
-                      <p style={{
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        color: colors.textMuted,
-                        margin: 0,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                      }}>
-                        {group.label}
-                      </p>
+                    {/* Section header — click to expand/collapse */}
+                    <div
+                      onClick={() => setExpandedTypes(p => ({ ...p, [typeKey]: !p[typeKey] }))}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '1rem 1.25rem',
+                        borderTop: gi > 0 ? `2px solid ${colors.divider}` : 'none',
+                        backgroundColor: colors.background,
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{
+                          display: 'inline-block',
+                          fontSize: '0.9rem',
+                          color: colors.textMuted,
+                          transform: isSectionOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.15s ease',
+                        }}>›</span>
+                        <p style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          color: colors.textMuted,
+                          margin: 0,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}>
+                          {group.label} · {group.bills.length}
+                        </p>
+                      </div>
                       <p style={{
                         fontSize: '0.875rem',
                         fontWeight: 600,
@@ -657,7 +677,7 @@ export default function BillsPage() {
                         {fmt(group.bills.reduce((s, b) => s + b.total, 0))}
                       </p>
                     </div>
-                    {groupCategories.map((catName, idx) => {
+                    {isSectionOpen && groupCategories.map((catName, idx) => {
                 const categoryBills = group.bills.filter(b => b.category === catName);
                 const hasBills = categoryBills.length > 0;
                 const isExpanded = expandedBills[`${group.prefix}_${catName}`];
