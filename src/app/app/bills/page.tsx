@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight, Lock, Waves } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
 import CategoryIcon from '@/components/CategoryIcon';
 
@@ -633,6 +633,11 @@ export default function BillsPage() {
                 });
                 const typeKey: 'fixed' | 'flexible' = group.prefix === 'fixed' ? 'fixed' : 'flexible';
                 const isSectionOpen = expandedTypes[typeKey];
+                const isFixed = typeKey === 'fixed';
+                const iconBg = isFixed ? 'rgba(56,189,248,0.12)' : 'rgba(217,119,6,0.12)';
+                const iconColor = isFixed ? '#38BDF8' : '#D97706';
+                const Icon = isFixed ? Lock : Waves;
+                const subtitle = isFixed ? 'Same every cycle' : 'Varies month to month';
                 return (
                   <div key={group.prefix}>
                     {/* Section header — click to expand/collapse */}
@@ -649,7 +654,7 @@ export default function BillsPage() {
                         userSelect: 'none',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span style={{
                           display: 'inline-block',
                           fontSize: '0.9rem',
@@ -657,16 +662,35 @@ export default function BillsPage() {
                           transform: isSectionOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                           transition: 'transform 0.15s ease',
                         }}>›</span>
-                        <p style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          color: colors.textMuted,
-                          margin: 0,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          backgroundColor: iconBg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
                         }}>
-                          {group.label} · {group.bills.length}
-                        </p>
+                          <Icon size={16} color={iconColor} />
+                        </div>
+                        <div>
+                          <p style={{
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            color: colors.text,
+                            margin: 0,
+                          }}>
+                            {group.label}
+                          </p>
+                          <p style={{
+                            fontSize: '0.7rem',
+                            color: colors.textMuted,
+                            margin: '0.15rem 0 0 0',
+                          }}>
+                            {subtitle} · {group.bills.length} expense{group.bills.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
                       <p style={{
                         fontSize: '0.875rem',
