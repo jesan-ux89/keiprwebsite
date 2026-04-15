@@ -430,7 +430,7 @@ export default function DashboardPage() {
           </a>
           <a href="/app/bills" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-            <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Bills</span>
+            <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Expenses</span>
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalBillsThisCheck)}</span>
           </a>
           <a href="/app/banking/transactions" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
@@ -649,37 +649,40 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* Spending Pace Card (Ultra only) */}
-            {isUltra && (
-              <Card style={{ padding: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>Spending Pace</span>
-                  <span style={{ fontSize: '0.8rem', color: colors.electric, fontWeight: 500 }}>This paycheck</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.875rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text }}>{fmt(totalSpendingThisPeriod)}</span>
-                    <span style={{ fontSize: '0.9rem', color: colors.textMuted }}> of {fmt(availableBreakdown?.paycheckIncome || totalPaycheck)}</span>
+            {/* Spending Pace Card (Ultra only) — simplified to match mobile */}
+            {isUltra && (() => {
+              const paceTarget = (availableBreakdown?.paycheckIncome || totalPaycheck) * 0.6;
+              const overTarget = totalSpendingThisPeriod > paceTarget && paceTarget > 0;
+              const pct = paceTarget > 0 ? Math.round((totalSpendingThisPeriod / paceTarget - 1) * 100) : 0;
+              const statusText = paceTarget === 0 ? '' : overTarget ? `↑ ${pct}% over target` : pct < 0 ? `↓ ${Math.abs(pct)}% under target` : 'On target';
+              const statusColor = overTarget ? colors.amber : '#0A7B6C';
+              const fillPct = paceTarget > 0 ? Math.min(100, (totalSpendingThisPeriod / paceTarget) * 100) : 0;
+              return (
+                <Card style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: colors.textMuted }}>Spending pace</span>
+                    {!!statusText && (
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.electric }}>{fmt(spendingPerDay)}/day</span>
-                    <span style={{ fontSize: '0.8rem', color: colors.textMuted }}> · {Math.max(0, totalPeriodDays - daysIntoPeriod)} days left</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.875rem' }}>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.text }}>{fmt(spendingPerDay)}</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textMuted }}>/day</span>
                   </div>
-                </div>
-                <div style={{ height: '6px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden', marginBottom: '0.625rem' }}>
-                  <div style={{
-                    height: '100%', borderRadius: '3px',
-                    width: `${Math.min(100, (daysIntoPeriod / totalPeriodDays) * 100)}%`,
-                    background: `linear-gradient(90deg, ${colors.electric}, #0A7B6C)`,
-                  }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: colors.textMuted }}>
-                  <span>{currentPeriod?.start?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                  <span>Projected: {fmt(projectedSpending)}</span>
-                  <span>{currentPeriod?.end?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                </div>
-              </Card>
-            )}
+                  <div style={{ height: '6px', backgroundColor: colors.progressTrack || colors.cardBorder, borderRadius: '3px', overflow: 'hidden', marginBottom: '0.625rem' }}>
+                    <div style={{
+                      height: '100%', borderRadius: '3px',
+                      width: `${fillPct}%`,
+                      backgroundColor: overTarget ? colors.amber : colors.electric,
+                    }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: colors.textMuted }}>
+                    <span>{fmt(totalSpendingThisPeriod)} spent</span>
+                    <span>Target {fmt(paceTarget)}</span>
+                  </div>
+                </Card>
+              );
+            })()}
 
             {/* Upcoming Expenses Card */}
             {upcomingBills.length > 0 && (
