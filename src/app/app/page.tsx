@@ -649,13 +649,18 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* Spending Pace Card (Ultra only) — simplified to match mobile */}
+            {/* Spending Pace Card (Ultra only) — simplified to match mobile.
+                Uses fixed vibrant palette so light-mode doesn't render the bar as muddy brown. */}
             {isUltra && (() => {
               const paceTarget = (availableBreakdown?.paycheckIncome || totalPaycheck) * 0.6;
               const overTarget = totalSpendingThisPeriod > paceTarget && paceTarget > 0;
               const pct = paceTarget > 0 ? Math.round((totalSpendingThisPeriod / paceTarget - 1) * 100) : 0;
               const statusText = paceTarget === 0 ? '' : overTarget ? `↑ ${pct}% over target` : pct < 0 ? `↓ ${Math.abs(pct)}% under target` : 'On target';
-              const statusColor = overTarget ? colors.amber : '#0A7B6C';
+              // Fixed vibrant colors (don't rely on colors.amber which is dark brown in light mode)
+              const overColor = '#F97316';    // coral orange — warm over-target indicator
+              const underColor = '#0A7B6C';   // success green
+              const barFillColor = '#38BDF8'; // electric cyan for on-track fill
+              const statusColor = overTarget ? overColor : underColor;
               const fillPct = paceTarget > 0 ? Math.min(100, (totalSpendingThisPeriod / paceTarget) * 100) : 0;
               return (
                 <Card style={{ padding: '1.25rem' }}>
@@ -673,7 +678,7 @@ export default function DashboardPage() {
                     <div style={{
                       height: '100%', borderRadius: '3px',
                       width: `${fillPct}%`,
-                      backgroundColor: overTarget ? colors.amber : colors.electric,
+                      backgroundColor: overTarget ? overColor : barFillColor,
                     }} />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: colors.textMuted }}>
