@@ -2,6 +2,16 @@
 
 @AGENTS.md
 
+## ⚠ RULE #1 (MOST IMPORTANT): Hit `/api/debug/user-state` BEFORE speculating about state
+
+When Jesse reports ANY bug with ambiguous state ("wrong category on web", "bill missing", "balance not matching mobile", etc.), the FIRST action is to hit `GET /api/debug/user-state` with his Firebase token. Do NOT guess at DB state. Do NOT start reading website code to form hypotheses — the bug is almost always visible in backend state (and is probably also present on mobile, since the data layer is the same).
+
+The endpoint returns bills (active + inactive), income sources, payments, categories, and for Ultra users — bank connections, transactions with `display_category`, match_log, learned matches, exclusion rules.
+
+**This has been a game changer.** Issues that used to recur session after session get diagnosed in minutes because we see actual state instead of guessing. Keep using it.
+
+Quickest access: hit `https://keipr-backend-production.up.railway.app/api/debug/user-state` from the browser dev tools fetch with Jesse's Firebase token in the Authorization header.
+
 ## Project Overview
 Next.js web app for Keipr, a paycheck-forward budgeting app. The website is a **mirror of the React Native mobile app** — same backend, same user accounts, same data.
 
@@ -184,10 +194,18 @@ npm run build        # Production build
 - **Cleanup:** Jesse periodically deletes the trash folder contents (weekly/monthly). Do NOT permanently delete files from project folders — always move to trash first.
 
 ## Pro-to-Ultra Migration Engine (Website Mirror)
-- Settings → Smart Detection → "Re-sync & match bills" calls `POST /api/banking-data/migrate-to-ultra`
+- Settings → Smart Detection → "Re-sync & match bills" calls `POST /api/banking-data/migrate-to-ultra` (manual user action only — NEVER auto-trigger)
 - Dashboard quick stats (INCOME / BILLS / SPENT) are clickable: Income → `/app/income`, Bills → `/app/bills`, Spent → `/app/banking/transactions`
 - `/app/income` page shows income sources + recent bank deposits (fetches `income`, `income_matched`, and `transfer` categories filtered for deposits)
 - `bankingAPI.migrateToUltra()` available in `src/lib/api.ts`
+
+### ⚠ Do NOT add auto-migrateToUltra after Plaid Link
+The website's `/app/onboarding/bank-import/page.tsx` calls `bankingAPI.exchangeToken` + `bankingAPI.onboardingImport` only. It does NOT call `migrateToUltra`, and must never be changed to. Auto-migrate-on-bank-add caused 31 spurious "bill matches need your review" entries on mobile — website Plaid Link flow (when it ships) must stay clean.
+
+## Accounts / Transactions Mirror (today's cleanup)
+- **Sync Transactions button REMOVED** from `/app/banking/page.tsx` — was sandbox-only endpoint, blocked in production
+- **Dead Search + Filter buttons REMOVED** from `/app/banking/transactions/page.tsx` topbar — had no onClick handlers. Transaction filtering happens via tab bar (All / Expenses / Income).
+- **Refresh Balances tucked behind collapsible "Sync Settings"** header for cost control (each Plaid balance call = $0.30). Description now mentions balances auto-refresh daily.
 
 ## Detection Engine — BACKEND-ONLY
 All rules for recurring-expense detection (when a transaction becomes a bill, how splits are calculated, how names are cleaned, variable-amount handling for CC/ATM) live in `_keipr-complete-backend/src/lib/detectionEngine.js`. The website consumes results — it doesn't own any detection logic. If a detection bug is reported while browsing the website:
