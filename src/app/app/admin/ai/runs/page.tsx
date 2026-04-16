@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { aiAPI } from '@/lib/api';
@@ -11,6 +11,14 @@ import { Button } from '@/components/ui/Button';
 import CorrectionDetailModal from '@/components/ai/CorrectionDetailModal';
 
 export default function AdminAIRunDetailPage() {
+  return (
+    <Suspense fallback={<AppLayout pageTitle="Audit Run"><div style={{ padding: '2rem' }}>Loading…</div></AppLayout>}>
+      <AdminAIRunDetailPageInner />
+    </Suspense>
+  );
+}
+
+function AdminAIRunDetailPageInner() {
   const { colors } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
