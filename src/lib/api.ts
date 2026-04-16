@@ -5,8 +5,15 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://keipr-backend-produ
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
-// Attach Firebase token to every request
+// Attach Firebase token to every request.
+// Awaits Firebase's async persistence rehydration so requests fired before
+// onAuthStateChanged completes still get a valid token. Without this, the very
+// first API call after a hard refresh races and goes out without an
+// Authorization header, producing 401 "Missing or invalid authorization header".
 api.interceptors.request.use(async (config) => {
+  if (typeof auth.authStateReady === 'function') {
+    try { await auth.authStateReady(); } catch { /* ignore */ }
+  }
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
