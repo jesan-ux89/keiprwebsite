@@ -125,7 +125,7 @@ export default function AdminAIDashboardPage() {
     await updateSetting(field, value);
   };
 
-  const updateSetting = async (field: string, value: any) => {
+  const updateSetting = async (field: string, value: any, confirmWord?: string) => {
     const fieldMap: any = {
       ai_enabled: 'ai_enabled',
       primary_model: 'primary_model',
@@ -136,6 +136,16 @@ export default function AdminAIDashboardPage() {
     };
     const payload: any = {};
     payload[fieldMap[field]] = value;
+
+    // Backend requires confirm="KILL" for disabling AI globally and confirm="confirm"
+    // for model changes. Auto-attach the right token based on field + value.
+    if (confirmWord) {
+      payload.confirm = confirmWord;
+    } else if (field === 'ai_enabled' && value === false) {
+      payload.confirm = 'KILL';
+    } else if (field === 'primary_model' || field === 'fallback_model') {
+      payload.confirm = 'confirm';
+    }
 
     try {
       setUpdating(true);
