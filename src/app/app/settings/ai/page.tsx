@@ -110,8 +110,8 @@ export default function AISettingsPage() {
               display: 'flex',
               gap: '1rem',
               padding: '1rem',
-              backgroundColor: `${colors.warning || colors.amber}15`,
-              border: `1px solid ${colors.warning || colors.amber}`,
+              backgroundColor: `${colors.amber}15`,
+              border: `1px solid ${colors.amber}`,
               borderRadius: '0.5rem',
               color: colors.text,
             }}
