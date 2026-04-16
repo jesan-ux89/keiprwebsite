@@ -514,7 +514,7 @@ export default function AdminAIDashboardPage() {
                   <div>
                     <div style={{ color: colors.textFaint }}>Confidence</div>
                     <div style={{ color: colors.text, fontWeight: 600 }}>
-                      {(data.avg_confidence * 100).toFixed(0)}%
+                      {((data.avg_confidence ?? 0) * 100).toFixed(0)}%
                     </div>
                   </div>
                   <div>

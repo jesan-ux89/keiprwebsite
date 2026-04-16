@@ -165,7 +165,7 @@ export default function StagingChainPanel({ billId, billName }: StagingChainPane
                     Confidence
                   </p>
                   <p style={{ margin: '0.25rem 0 0 0', color: colors.text, fontWeight: 600 }}>
-                    {(chain.confidence * 100).toFixed(0)}%
+                    {((chain.confidence ?? 0) * 100).toFixed(0)}%
                   </p>
                 </div>
               </div>

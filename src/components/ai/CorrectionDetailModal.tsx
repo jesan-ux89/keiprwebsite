@@ -191,7 +191,7 @@ export default function CorrectionDetailModal({
               </div>
 
               {/* Confidence */}
-              {correction.confidence !== null && (
+              {correction.confidence != null && (
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: colors.textFaint, marginBottom: '0.5rem' }}>
                     Confidence
@@ -207,13 +207,13 @@ export default function CorrectionDetailModal({
                     <div
                       style={{
                         height: '100%',
-                        width: `${Math.min(correction.confidence * 100, 100)}%`,
+                        width: `${Math.min((correction.confidence ?? 0) * 100, 100)}%`,
                         backgroundColor: colors.electric,
                       }}
                     />
                   </div>
                   <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: colors.textFaint }}>
-                    {(correction.confidence * 100).toFixed(0)}%
+                    {((correction.confidence ?? 0) * 100).toFixed(0)}%
                   </p>
                 </div>
               )}

@@ -405,13 +405,13 @@ export default function AIHistoryPage() {
                               </p>
                             )}
                           </div>
-                          {correction.confidence !== null && (
+                          {correction.confidence != null && (
                             <div style={{ textAlign: 'right', fontSize: '0.8rem' }}>
                               <div style={{ color: colors.textFaint, marginBottom: '0.25rem' }}>
                                 Confidence
                               </div>
                               <div style={{ color: colors.electric, fontWeight: 600 }}>
-                                {(correction.confidence * 100).toFixed(0)}%
+                                {((correction.confidence ?? 0) * 100).toFixed(0)}%
                               </div>
                             </div>
                           )}

@@ -302,11 +302,11 @@ export default function AdminAIRunDetailPage() {
                     </p>
                   )}
                 </div>
-                {correction.confidence !== null && (
+                {correction.confidence != null && (
                   <div style={{ textAlign: 'right', minWidth: '60px' }}>
                     <p style={{ margin: 0, color: colors.textFaint, fontSize: '0.8rem' }}>Confidence</p>
                     <p style={{ margin: '0.25rem 0 0 0', color: colors.electric, fontWeight: 600 }}>
-                      {(correction.confidence * 100).toFixed(0)}%
+                      {((correction.confidence ?? 0) * 100).toFixed(0)}%
                     </p>
                   </div>
                 )}
