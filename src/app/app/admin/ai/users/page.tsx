@@ -56,7 +56,6 @@ export default function AdminAIUsersPage() {
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [disableReason, setDisableReason] = useState('');
   const [disablingUserId, setDisablingUserId] = useState<string | null>(null);
-  const [actionInProgress, setActionInProgress] = useState(false);
 
   const handleShowFlagsModal = (user: any) => {
     setSelectedUser(user);

@@ -292,7 +292,7 @@ export default function AIHistoryPage() {
                           {run.status}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '2rem', fontSize: '0.85rem', color: colors.textFaint' }}>
+                      <div style={{ display: 'flex', gap: '2rem', fontSize: '0.85rem', color: colors.textFaint }}>
                         <span>Applied: {run.corrections_applied}</span>
                         {run.corrections_flagged > 0 && <span>Flagged: {run.corrections_flagged}</span>}
                         {run.corrections_blocked > 0 && <span>Blocked: {run.corrections_blocked}</span>}
