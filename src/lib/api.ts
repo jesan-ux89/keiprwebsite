@@ -186,4 +186,21 @@ export const spendingAPI = {
   getSuggested:    () => api.get('/spending/budgets/suggested'),
 };
 
+// AI Accountant
+export const aiAPI = {
+  // User-facing
+  getSettings:   () => api.get('/me/ai-settings'),
+  setEnabled:    (enabled: boolean, reason?: string) => api.patch('/me/ai-settings', { enabled, reason }),
+  acceptConsent: (version: number) => api.post('/me/ai-consent', { version }),
+  exportData:    () => api.get('/me/ai-data-export'),
+
+  // Admin
+  adminGetSettings:     () => api.get('/admin/ai-settings'),
+  adminUpdateSettings:  (data: Record<string, unknown>) => api.post('/admin/ai-settings', data),
+  adminGetDashboard:    () => api.get('/admin/ai-dashboard'),
+  adminGetUsers:        (search: string, offset: number) => api.get('/admin/ai-users', { params: { search, offset } }),
+  adminUpdateUserFlags: (userId: string, flags: Record<string, boolean>) => api.patch(`/admin/ai-users/${userId}/flags`, flags),
+  adminDisableUserAi:   (userId: string, reason: string) => api.post(`/admin/ai-users/${userId}/disable`, { reason }),
+};
+
 export default api;

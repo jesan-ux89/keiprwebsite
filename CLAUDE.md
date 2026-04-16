@@ -225,5 +225,49 @@ All user-facing text uses "expenses" instead of "bills" or "spending budgets." T
 - **UI unified:** Spending budgets render as bill-style rows — no TARGET/OVER badges, no separate progress bars
 - **Text standardized:** "expenses" everywhere — detection alerts, sync dialogs, settings
 
+## AI Accountant (Phase 0 scaffolding)
+
+**Status:** Scaffolding complete. All features default OFF. No backend integration yet.
+
+**Design doc:** `/sessions/affectionate-keen-planck/mnt/_keipr-complete-backend/docs/design/ai-accountant.md` (§9 admin dashboard, §11.4 user UI, §11.5 compliance)
+
+**Feature flag:** Backend controls via environment variable. Website hides UI gracefully if `/api/me/ai-settings` returns 503.
+
+**Routes (all Phase 0 shells):**
+- User-facing: `/app/settings/ai` (master toggle + 3 card links) → `/app/settings/ai/details` (privacy) → `/app/settings/ai/history` (empty) → `/app/settings/ai/overrides` (empty)
+- Admin-only: `/app/admin/ai` (dashboard shell) → `/app/admin/ai/users` (user search/triage)
+
+**Sidebar integration:**
+- Settings section: "AI Assistant" link appears only if `aiAPI.getSettings()` succeeds (runtime check, no errors logged to user)
+- New Admin section (below Settings): "AI Dashboard" + "AI Users" links, only shown if user passes `aiAPI.adminGetSettings()` check (403 → hidden, 503 → "feature disabled" message)
+
+**API endpoints (`src/lib/api.ts` → `aiAPI` object):**
+- User: `getSettings()` / `setEnabled(enabled, reason)` / `acceptConsent(version)` / `exportData()`
+- Admin: `adminGetSettings()` / `adminUpdateSettings(data)` / `adminGetDashboard()` / `adminGetUsers(search, offset)` / `adminUpdateUserFlags(userId, flags)` / `adminDisableUserAi(userId, reason)`
+- All 503 responses hide UI cleanly (no error to user). 403 redirects to /app.
+
+**Components:**
+- `AIConsentModal.tsx` — first-time consent, shown inline (title "Try the AI Assistant?", bullet list, buttons "Not now" + "Turn on AI")
+- Pages use `useTheme()`, match Monarch design (glassmorphism, 240px sidebar context)
+
+**How to disable:**
+1. Backend: unset the AI feature flag environment variable
+2. Website: UI automatically hides when API returns 503
+3. Users: toggle off in Settings → AI Assistant (optional reason textarea)
+
+**How to remove (if needed):**
+- Delete: `/src/app/app/settings/ai/`, `/src/app/app/admin/ai/`, `/src/components/AIConsentModal.tsx`
+- Remove: `aiAPI` object from `/src/lib/api.ts`
+- Update: `AppLayout.tsx` to remove AI Settings + Admin sidebar sections (search for `aiSettingsAvailable` and `isAdmin` state)
+- Update: This CLAUDE.md section
+
+**Testing checklist for future phases:**
+- [ ] User toggle on/off works and calls API
+- [ ] Consent modal appears on first enable
+- [ ] Admin dashboard settings persists across refresh
+- [ ] User search works in admin users page
+- [ ] Sidebar entries hide gracefully when feature flag off or API unreachable
+- [ ] Redirect to /app if user tries to access admin pages without permission
+
 ## What's Left to Build
 1. **Onboarding split** — Manual vs Automated path recommendation

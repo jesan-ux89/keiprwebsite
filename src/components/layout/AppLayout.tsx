@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { aiAPI } from '@/lib/api';
 import {
   LayoutDashboard,
   Receipt,
@@ -22,6 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
+  Sparkles,
+  Shield,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -71,6 +74,8 @@ export default function AppLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [aiSettingsAvailable, setAiSettingsAvailable] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -93,6 +98,17 @@ export default function AppLayout({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
+
+  // Check if AI Settings and Admin features are available
+  useEffect(() => {
+    if (!loading && user) {
+      // Check AI settings availability
+      aiAPI.getSettings().then(() => setAiSettingsAvailable(true)).catch(() => setAiSettingsAvailable(false));
+
+      // Check admin access
+      aiAPI.adminGetSettings().then(() => setIsAdmin(true)).catch(() => setIsAdmin(false));
+    }
+  }, [user, loading]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -312,12 +328,16 @@ export default function AppLayout({
           </div>
         </div>
 
-        {/* Settings link at bottom */}
+        {/* Settings and AI section at bottom */}
         <div style={{
           paddingTop: '1rem',
           borderTop: `1px solid ${colors.divider}`,
           marginBottom: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.25rem',
         }}>
+          {/* Settings */}
           <Link
             href="/app/settings"
             onClick={() => setSidebarOpen(false)}
@@ -338,7 +358,96 @@ export default function AppLayout({
             <Settings size={18} />
             Settings
           </Link>
+
+          {/* AI Assistant (if available) */}
+          {aiSettingsAvailable && (
+            <Link
+              href="/app/settings/ai"
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                padding: '0.55rem 0.75rem',
+                borderRadius: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                textDecoration: 'none',
+                color: pathname.startsWith('/app/settings/ai') ? colors.navActive : colors.navIcon,
+                backgroundColor: pathname.startsWith('/app/settings/ai') ? `${colors.electric}15` : 'transparent',
+                transition: 'all 0.2s ease',
+                fontSize: '0.85rem',
+                fontWeight: pathname.startsWith('/app/settings/ai') ? 600 : 500,
+              }}
+            >
+              <Sparkles size={18} />
+              AI Assistant
+            </Link>
+          )}
         </div>
+
+        {/* Admin section (if admin) */}
+        {isAdmin && (
+          <div style={{
+            paddingTop: '1rem',
+            borderTop: `1px solid ${colors.divider}`,
+            marginBottom: '1rem',
+          }}>
+            <div
+              style={{
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: colors.textFaint,
+                marginBottom: '0.75rem',
+                paddingLeft: '0.5rem',
+              }}
+            >
+              Admin
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <Link
+                href="/app/admin/ai"
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  textDecoration: 'none',
+                  color: pathname.startsWith('/app/admin/ai') ? colors.navActive : colors.navIcon,
+                  backgroundColor: pathname.startsWith('/app/admin/ai') ? `${colors.electric}15` : 'transparent',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem',
+                  fontWeight: pathname.startsWith('/app/admin/ai') ? 600 : 500,
+                }}
+              >
+                <Shield size={18} />
+                AI Dashboard
+              </Link>
+              <Link
+                href="/app/admin/ai/users"
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  textDecoration: 'none',
+                  color: pathname.startsWith('/app/admin/ai/users') ? colors.navActive : colors.navIcon,
+                  backgroundColor: pathname.startsWith('/app/admin/ai/users') ? `${colors.electric}15` : 'transparent',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem',
+                  fontWeight: pathname.startsWith('/app/admin/ai/users') ? 600 : 500,
+                }}
+              >
+                <Settings size={18} />
+                AI Users
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* User section at bottom */}
         {user && (
