@@ -73,9 +73,13 @@ export default function AdminAIDashboardPage() {
       } else if (err.response?.status === 503) {
         setError('AI Accountant feature flag is disabled in backend env.');
       } else {
-        setError('Failed to load admin settings');
+        const backendMsg = err?.response?.data?.error || err?.response?.data?.detail || err?.message;
+        const status = err?.response?.status;
+        setError(
+          `Failed to load admin settings${status ? ` (HTTP ${status})` : ''}${backendMsg ? `: ${backendMsg}` : ''}`,
+        );
       }
-      console.error(err);
+      console.error('[admin/ai] loadData error:', err?.response?.status, err?.response?.data, err);
     } finally {
       setLoading(false);
     }
