@@ -41,8 +41,10 @@ function AdminAIRunDetailPageInner() {
       setLoading(true);
       const res = await aiAPI.adminGetRun(runId!);
       if (res?.data) {
-        setRun(res.data.run);
-        setCorrections(res.data.corrections || []);
+        // Backend spreads run fields at top level with corrections as sibling
+        const { corrections: corr, ...runData } = res.data;
+        setRun(runData);
+        setCorrections(corr || []);
       }
     } catch (err: any) {
       setError('Failed to load run details');
