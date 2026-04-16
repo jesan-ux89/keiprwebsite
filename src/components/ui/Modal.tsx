@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { X } from 'lucide-react';
 
 interface ModalProps {
-  title: string;
+  title?: string;
   children: React.ReactNode;
   onClose: () => void;
   isOpen: boolean;
@@ -56,27 +56,45 @@ export function Modal({ title, children, onClose, isOpen }: ModalProps) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.5rem',
-          }}
-        >
-          <h2
+        {title ? (
+          <div
             style={{
-              fontSize: '1.5rem',
-              fontWeight: 600,
-              color: colors.text,
-              margin: 0,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.5rem',
             }}
           >
-            {title}
-          </h2>
+            <h2
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                color: colors.text,
+                margin: 0,
+              }}
+            >
+              {title}
+            </h2>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '0.5rem',
+                color: colors.textMuted,
+              }}
+            >
+              <X size={24} />
+            </button>
+          </div>
+        ) : (
           <button
             onClick={onClose}
             style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -86,7 +104,7 @@ export function Modal({ title, children, onClose, isOpen }: ModalProps) {
           >
             <X size={24} />
           </button>
-        </div>
+        )}
         {children}
       </div>
     </div>
