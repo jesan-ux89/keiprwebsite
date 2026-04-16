@@ -188,19 +188,41 @@ export const spendingAPI = {
 
 // AI Accountant
 export const aiAPI = {
-  // User-facing
+  // User-facing — settings & consent
   getSettings:   () => api.get('/me/ai-settings'),
   setEnabled:    (enabled: boolean, reason?: string) => api.patch('/me/ai-settings', { enabled, reason }),
   acceptConsent: (version: number) => api.post('/me/ai-consent', { version }),
   exportData:    () => api.get('/me/ai-data-export'),
 
+  // User-facing — history & corrections
+  getHistory:    (limit = 50, offset = 0) => api.get('/me/ai-history', { params: { limit, offset } }),
+  getCorrection: (correctionId: string) => api.get(`/me/ai-corrections/${correctionId}`),
+
+  // User-facing — overrides & staging chains
+  getOverrides:      () => api.get('/me/ai-overrides'),
+  createOverride:    (data: Record<string, unknown>) => api.post('/me/ai-overrides', data),
+  removeOverride:    (id: string) => api.delete(`/me/ai-overrides/${id}`),
+  overrideBillPaycheck: (billId: string, paycheckNum: number, scope: 'current_cycle' | 'permanent') =>
+    api.post(`/bills/${billId}/override-paycheck`, { paycheck: paycheckNum, scope }),
+
+  getStagingChains:    () => api.get('/staging-chains'),
+  anchorStagingChain:  (chainId: string, data: Record<string, unknown>) => api.post(`/staging-chains/${chainId}/anchor`, data),
+  dissolveStagingChain: (chainId: string) => api.post(`/staging-chains/${chainId}/dissolve`),
+
+  // User-facing — get corrections for a bill
+  getCorrectionsForBill: (billId: string) => api.get(`/me/ai-corrections-by-bill`, { params: { bill_id: billId } }),
+
   // Admin
-  adminGetSettings:     () => api.get('/admin/ai-settings'),
-  adminUpdateSettings:  (data: Record<string, unknown>) => api.post('/admin/ai-settings', data),
-  adminGetDashboard:    () => api.get('/admin/ai-dashboard'),
-  adminGetUsers:        (search: string, offset: number) => api.get('/admin/ai-users', { params: { search, offset } }),
-  adminUpdateUserFlags: (userId: string, flags: Record<string, boolean>) => api.patch(`/admin/ai-users/${userId}/flags`, flags),
-  adminDisableUserAi:   (userId: string, reason: string) => api.post(`/admin/ai-users/${userId}/disable`, { reason }),
+  adminGetSettings:       () => api.get('/admin/ai-settings'),
+  adminUpdateSettings:    (data: Record<string, unknown>) => api.post('/admin/ai-settings', data),
+  adminGetDashboard:      () => api.get('/admin/ai-dashboard'),
+  adminGetRun:            (runId: string) => api.get(`/admin/ai-runs/${runId}`),
+  adminUndoCorrection:    (correctionId: string) => api.post(`/admin/ai-corrections/${correctionId}/undo`),
+  adminReaudit:           (userId: string, reason: string) => api.post(`/admin/ai-reaudit/${userId}`, { reason }),
+  adminPurge:             () => api.post('/admin/ai-purge'),
+  adminGetUsers:          (search: string, offset: number) => api.get('/admin/ai-users', { params: { search, offset } }),
+  adminUpdateUserFlags:   (userId: string, flags: Record<string, boolean>) => api.patch(`/admin/ai-users/${userId}/flags`, flags),
+  adminDisableUserAi:     (userId: string, reason: string) => api.post(`/admin/ai-users/${userId}/disable`, { reason }),
 };
 
 export default api;

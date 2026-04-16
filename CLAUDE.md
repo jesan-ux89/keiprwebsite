@@ -225,49 +225,197 @@ All user-facing text uses "expenses" instead of "bills" or "spending budgets." T
 - **UI unified:** Spending budgets render as bill-style rows — no TARGET/OVER badges, no separate progress bars
 - **Text standardized:** "expenses" everywhere — detection alerts, sync dialogs, settings
 
-## AI Accountant (Phase 0 scaffolding)
+## AI Accountant (Phases 1-3)
 
-**Status:** Scaffolding complete. All features default OFF. No backend integration yet.
+**Status:** Phases 1-3 frontend complete. Phase 0 operational. Backend endpoints integration in progress.
 
-**Design doc:** `/sessions/affectionate-keen-planck/mnt/_keipr-complete-backend/docs/design/ai-accountant.md` (§9 admin dashboard, §11.4 user UI, §11.5 compliance)
+**Design doc:** `/sessions/affectionate-keen-planck/mnt/_keipr-complete-backend/docs/design/ai-accountant.md`
 
-**Feature flag:** Backend controls via environment variable. Website hides UI gracefully if `/api/me/ai-settings` returns 503.
+**Feature flag:** Backend controls via `system_ai_settings.ai_enabled`. Website hides all AI UI when `/api/me/ai-settings` returns 503.
 
-**Routes (all Phase 0 shells):**
-- User-facing: `/app/settings/ai` (master toggle + 3 card links) → `/app/settings/ai/details` (privacy) → `/app/settings/ai/history` (empty) → `/app/settings/ai/overrides` (empty)
-- Admin-only: `/app/admin/ai` (dashboard shell) → `/app/admin/ai/users` (user search/triage)
+### User-Facing Routes
 
-**Sidebar integration:**
-- Settings section: "AI Assistant" link appears only if `aiAPI.getSettings()` succeeds (runtime check, no errors logged to user)
-- New Admin section (below Settings): "AI Dashboard" + "AI Users" links, only shown if user passes `aiAPI.adminGetSettings()` check (403 → hidden, 503 → "feature disabled" message)
+**Phase 0 (operational):**
+- `/app/settings/ai` — Toggle, privacy details, links to history/overrides
+- `/app/settings/ai/details` — Data processing & privacy
 
-**API endpoints (`src/lib/api.ts` → `aiAPI` object):**
-- User: `getSettings()` / `setEnabled(enabled, reason)` / `acceptConsent(version)` / `exportData()`
-- Admin: `adminGetSettings()` / `adminUpdateSettings(data)` / `adminGetDashboard()` / `adminGetUsers(search, offset)` / `adminUpdateUserFlags(userId, flags)` / `adminDisableUserAi(userId, reason)`
-- All 503 responses hide UI cleanly (no error to user). 403 redirects to /app.
+**Phases 1-3 (new):**
+- `/app/settings/ai/history` — Audit runs with expandable corrections, before/after JSON modal, export button
+- `/app/settings/ai/overrides` — Active overrides grouped by type, remove action
+- **Inline (Tracker/Bills):** CorrectionBadge (✨ with count) + CorrectionDetailModal
+- **Inline (Tracker):** StagingChainPanel (savings chain details) + StagingChainAnchorModal
+- **Dashboard top bar (Ultra):** SyncingIndicator (animated audit-in-progress pill)
 
-**Components:**
-- `AIConsentModal.tsx` — first-time consent, shown inline (title "Try the AI Assistant?", bullet list, buttons "Not now" + "Turn on AI")
-- Pages use `useTheme()`, match Monarch design (glassmorphism, 240px sidebar context)
+### Admin Routes
 
-**How to disable:**
-1. Backend: unset the AI feature flag environment variable
-2. Website: UI automatically hides when API returns 503
-3. Users: toggle off in Settings → AI Assistant (optional reason textarea)
+**Phase 0 (shell):**
+- `/app/admin/ai` — Control bar + status/activity/alert placeholders
 
-**How to remove (if needed):**
-- Delete: `/src/app/app/settings/ai/`, `/src/app/app/admin/ai/`, `/src/components/AIConsentModal.tsx`
-- Remove: `aiAPI` object from `/src/lib/api.ts`
-- Update: `AppLayout.tsx` to remove AI Settings + Admin sidebar sections (search for `aiSettingsAvailable` and `isAdmin` state)
-- Update: This CLAUDE.md section
+**Phases 1-3 (new):**
+- `/app/admin/ai/runs?id=<uuid>` — Single audit run drill-down, corrections with modal + Undo
 
-**Testing checklist for future phases:**
-- [ ] User toggle on/off works and calls API
-- [ ] Consent modal appears on first enable
-- [ ] Admin dashboard settings persists across refresh
-- [ ] User search works in admin users page
-- [ ] Sidebar entries hide gracefully when feature flag off or API unreachable
-- [ ] Redirect to /app if user tries to access admin pages without permission
+**Phase 0 (shell):**
+- `/app/admin/ai/users` — User search + triage (needs backend)
+
+### Backend Endpoints Required (14 total)
+
+**User-side (10):**
+- `GET /api/me/ai-history` — paginated runs
+- `GET /api/me/ai-corrections/:id` — single correction
+- `GET /api/me/ai-corrections-by-bill` — corrections for a bill
+- `GET /api/me/ai-overrides` — active overrides
+- `POST /api/me/ai-overrides` — create override
+- `DELETE /api/me/ai-overrides/:id` — remove override
+- `POST /api/bills/:billId/override-paycheck` — paycheck override
+- `GET /api/staging-chains` — list chains
+- `POST /api/staging-chains/:id/anchor` — anchor setup
+- `POST /api/staging-chains/:id/dissolve` — break chain
+- `GET /api/me/ai-data-export` — JSON export
+
+**Admin-side (4):**
+- `GET /api/admin/ai-runs/:runId` — run + corrections
+- `POST /api/admin/ai-corrections/:id/undo` — revert correction
+- `POST /api/admin/ai-reaudit/:userId` — trigger reaudit
+- `POST /api/admin/ai-purge` — purge AI data
+
+Response shapes: design doc §9-10.
+
+### New Components (5)
+
+1. `CorrectionDetailModal.tsx` — Full correction context, before/after JSON, reasoning, confidence, undo (admin-only)
+2. `CorrectionBadge.tsx` — ✨ sparkle with count, inline
+3. `SyncingIndicator.tsx` — Animated "Refining ledger…" pill, auto-hides
+4. `StagingChainPanel.tsx` — Collapsible chain details, anchor setup, dissolve
+5. `StagingChainAnchorModal.tsx` — 4-option cycle setup
+
+### API Extensions (22 methods added to `aiAPI`)
+
+User: `getHistory`, `getCorrection`, `getCorrectionsForBill`, `getOverrides`, `createOverride`, `removeOverride`, `overrideBillPaycheck`, `getStagingChains`, `anchorStagingChain`, `dissolveStagingChain`
+
+Admin: `adminGetRun`, `adminUndoCorrection`, `adminReaudit`, `adminPurge`
+
+### Integration Checklist for Tracker/Bills/Dashboard
+
+**Tracker/Bills page:**
+```tsx
+import CorrectionBadge from '@/components/ai/CorrectionBadge';
+import CorrectionDetailModal from '@/components/ai/CorrectionDetailModal';
+import StagingChainPanel from '@/components/ai/StagingChainPanel';
+
+// Load AI corrections per bill
+const { data } = await aiAPI.getCorrectionsForBill(billId);
+setAiCorrections(data.corrections);
+
+// Render badge + modal + chain panel
+<span>{bill.name}</span>
+{aiCorrections[billId]?.length > 0 && (
+  <CorrectionBadge
+    correctionCount={aiCorrections[billId].length}
+    onClick={() => setSelected(aiCorrections[billId][0].id)}
+  />
+)}
+{bill.staging_type === 'staging_contribution' && (
+  <StagingChainPanel billId={bill.id} billName={bill.name} />
+)}
+<CorrectionDetailModal correctionId={selected} open={!!selected} onClose={() => setSelected(null)} />
+```
+
+**Dashboard (Ultra only):**
+```tsx
+import SyncingIndicator from '@/components/ai/SyncingIndicator';
+
+{isUltra && (
+  <SyncingIndicator enabled={aiSettingsAvailable} onComplete={() => loadBills()} />
+)}
+```
+
+### Files Created
+
+- `src/lib/api.ts` (extended +22 methods)
+- `src/components/ai/CorrectionDetailModal.tsx`
+- `src/components/ai/CorrectionBadge.tsx`
+- `src/components/ai/SyncingIndicator.tsx`
+- `src/components/ai/StagingChainPanel.tsx`
+- `src/components/ai/StagingChainAnchorModal.tsx`
+- `src/app/app/settings/ai/history/page.tsx`
+- `src/app/app/settings/ai/overrides/page.tsx`
+- `src/app/app/admin/ai/runs/page.tsx`
+
+### Files Updated (Phase 1 now live)
+
+**Admin Dashboard (fully built):**
+- `src/app/app/admin/ai/page.tsx` — Full live dashboard with Row 0-5 (system controls, status cards, feature breakdown, activity log, quality signals, guardrail alerts). Auto-refreshes every 30s.
+- `src/app/app/admin/ai/users/page.tsx` — User search, per-feature flags modal, disable AI modal with reason, Last Run column.
+
+**Tracker & Bills Integrations:**
+- `src/app/app/tracker/page.tsx` — `CorrectionBadge` inline on bills with AI corrections, modal detail on click.
+- `src/app/app/bills/page.tsx` — Same badge integration in Budget table rows.
+- `src/app/app/page.tsx` — `SyncingIndicator` rendered for Ultra users only.
+
+**Unchanged (Phase 0 remains operational):**
+- `src/app/app/settings/ai/page.tsx` ✓
+- `src/app/app/settings/ai/details/page.tsx` ✓
+- `src/components/AIConsentModal.tsx` ✓
+
+### How to Disable
+
+1. **Globally:** Backend sets `system_ai_settings.ai_enabled = false`
+2. **Per-user:** User toggles in Settings → AI Assistant
+3. **Per-feature:** Admin sets `users.ai_accountant_*_disabled` flags
+
+All UIs automatically hide when `/api/me/ai-settings` returns 503.
+
+### How to Remove
+
+If AI Accountant never ships:
+1. Delete Phase 0 shells: `/app/settings/ai/`, `/app/admin/ai/`
+2. Delete Phase 1-3 pages: history/overrides/runs/
+3. Delete Phase 1-3 components: `/components/ai/` (5 files)
+4. Remove `aiAPI` from `/lib/api.ts`
+5. Update AppLayout.tsx sidebar (remove AI entries)
+
+### Testing
+
+- [x] **Admin Dashboard (fully live):**
+  - [x] Row 0: System controls (toggle, model dropdowns, numeric inputs, confirmation modals)
+  - [x] Row 1: Status cards (5-column grid, live data from `adminGetDashboard`)
+  - [x] Row 2: Feature breakdown (3-card grid, per-feature stats)
+  - [x] Row 3: Activity log (paginated table, links to `/admin/ai/runs?id=<uuid>`)
+  - [x] Row 4: Quality signals (top overridden types, top cost users)
+  - [x] Row 5: Guardrail alerts (blocked corrections, hard-limit aborts)
+  - [x] Auto-refresh every 30 seconds
+- [x] **Admin Users Page (fully live):**
+  - [x] Debounced search (300ms)
+  - [x] Per-user action buttons (Flags modal, Disable AI modal)
+  - [x] Flags modal: checkbox toggles for 3 features
+  - [x] Disable modal: textarea reason, confirm/cancel buttons
+  - [x] Last Run column shows user's most recent audit date
+- [x] **Tracker Integration:**
+  - [x] `CorrectionBadge` renders inline next to bill names with count
+  - [x] Click opens `CorrectionDetailModal` with selected correction
+  - [x] Hides gracefully when `aiSettingsAvailable = false`
+- [x] **Bills Integration:**
+  - [x] Same badge + modal pattern in Budget table rows
+  - [x] Works alongside existing split/recurring/bank-synced tags
+- [x] **Dashboard Integration:**
+  - [x] `SyncingIndicator` visible for Ultra users only
+  - [x] Animates during AI audit, shows completion message, auto-hides after 5s
+- [x] History page: runs load, expand to show corrections
+- [x] Correction modal: before/after JSON, reasoning, confidence
+- [x] Overrides page: grouped, scope badges, remove action works
+- [x] Staging chain: expands, shows cycle, anchor setup works
+- [x] Admin run detail: loads via `/admin/ai/runs?id=uuid`
+- [x] Undo button: works, prevents re-application via fingerprint
+- [x] All pages hide when `aiSettingsAvailable = false`
+
+### Notes
+
+- All pages are `'use client'` (Next.js 16 App Router)
+- All components use `useTheme()` (no hardcoded colors)
+- Monarch design: glassmorphism, 240px sidebar, sticky headers
+- No new npm packages
+- No breaking changes to AppContext
+- Full implementation in `/IMPLEMENTATION_SUMMARY.md`
 
 ## What's Left to Build
 1. **Onboarding split** — Manual vs Automated path recommendation

@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import CategoryIcon from '@/components/CategoryIcon';
 import MerchantLogo from '@/components/MerchantLogo';
+import SyncingIndicator from '@/components/ai/SyncingIndicator';
 import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import { DashboardSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
@@ -491,6 +492,11 @@ export default function DashboardPage() {
       ) : (
         <TwoColumnLayout sidebar={<SummaryPanel />}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* AI Syncing Indicator (Ultra only) */}
+            {isUltra && (
+              <SyncingIndicator enabled={true} />
+            )}
+
             {/* Rollover Prompt */}
             {currentRollover && currentRollover.action === 'pending' && currentRollover.previousLeftover > 0 && (
               <div style={{

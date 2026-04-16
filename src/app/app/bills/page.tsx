@@ -4,12 +4,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { bankingAPI } from '@/lib/api';
+import { bankingAPI, aiAPI } from '@/lib/api';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import AddBillModal from './AddBillModal';
+import CorrectionBadge from '@/components/ai/CorrectionBadge';
+import CorrectionDetailModal from '@/components/ai/CorrectionDetailModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
 import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight, Lock, Waves } from 'lucide-react';
@@ -43,6 +45,30 @@ export default function BillsPage() {
         .catch(() => {});
     }
   }, [isUltra, bills]);
+
+  // AI Corrections state
+  const [aiSettingsAvailable, setAiSettingsAvailable] = useState(false);
+  const [aiCorrectionsByBill, setAiCorrectionsByBill] = useState<Record<string, any[]>>({});
+  const [activeCorrectionId, setActiveCorrectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    aiAPI.getSettings().then(s => {
+      setAiSettingsAvailable(!!s);
+      if (s) {
+        aiAPI.getHistory(20).then(res => {
+          const map: Record<string, any[]> = {};
+          (res?.data?.runs || []).forEach((run: any) => {
+            (run.corrections || []).forEach((c: any) => {
+              if (c.target_table === 'bills' && c.status === 'applied') {
+                (map[c.target_id] ||= []).push(c);
+              }
+            });
+          });
+          setAiCorrectionsByBill(map);
+        }).catch(() => {});
+      }
+    }).catch(() => setAiSettingsAvailable(false));
+  }, []);
 
   const handleDeleteAll = () => {
     if (window.confirm('Delete all bills and spending budgets? This action cannot be undone.')) {
@@ -796,9 +822,20 @@ export default function BillsPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                               <MerchantLogo billName={bill.name} category={bill.category} size={24} isDark={isDark} />
                               <div>
-                                <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>
-                                  {bill.name}
-                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.text, margin: 0 }}>
+                                    {bill.name}
+                                  </p>
+                                  {aiSettingsAvailable && aiCorrectionsByBill[bill.id]?.length > 0 && (
+                                    <CorrectionBadge
+                                      correctionCount={aiCorrectionsByBill[bill.id].length}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveCorrectionId(aiCorrectionsByBill[bill.id][0].id);
+                                      }}
+                                    />
+                                  )}
+                                </div>
                                 <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                                   {bill.isSplit && (
                                     <span style={{
@@ -897,6 +934,15 @@ export default function BillsPage() {
 
       {/* Add Expense Modal */}
       <AddBillModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
+
+      {/* Correction detail modal */}
+      {activeCorrectionId && (
+        <CorrectionDetailModal
+          correctionId={activeCorrectionId}
+          open={!!activeCorrectionId}
+          onClose={() => setActiveCorrectionId(null)}
+        />
+      )}
     </AppLayout>
   );
 }

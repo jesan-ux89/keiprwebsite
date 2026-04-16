@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { aiAPI } from '@/lib/api';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import Link from 'next/link';
 
 export default function AdminAIDashboardPage() {
   const { colors } = useTheme();
@@ -21,6 +22,7 @@ export default function AdminAIDashboardPage() {
   const [updating, setUpdating] = useState(false);
   const [requiresConfirm, setRequiresConfirm] = useState<string | null>(null);
   const [confirmInput, setConfirmInput] = useState('');
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Local state for control bar
   const [localSettings, setLocalSettings] = useState({
@@ -36,20 +38,33 @@ export default function AdminAIDashboardPage() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (!autoRefresh || loading) return;
+    const interval = setInterval(() => {
+      loadDashboard();
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [autoRefresh, loading]);
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const adminSettings = await aiAPI.adminGetSettings();
-      if (!adminSettings?.data) throw new Error('Admin access required');
+      const [settingsRes, dashRes] = await Promise.all([
+        aiAPI.adminGetSettings(),
+        aiAPI.adminGetDashboard().catch(() => null),
+      ]);
 
-      setSettings(adminSettings.data);
+      if (!settingsRes?.data) throw new Error('Admin access required');
+
+      setSettings(settingsRes.data);
+      setDashboardData(dashRes?.data || null);
       setLocalSettings({
-        ai_enabled: adminSettings.data.ai_enabled ?? true,
-        primary_model: adminSettings.data.primary_model || 'claude-opus-4-6',
-        fallback_model: adminSettings.data.fallback_model,
-        max_cost_per_user_monthly: adminSettings.data.max_cost_per_user_monthly || 5,
-        max_cost_system_monthly: adminSettings.data.max_cost_system_monthly || 500,
-        data_retention_days: adminSettings.data.data_retention_days || 90,
+        ai_enabled: settingsRes.data.ai_enabled ?? true,
+        primary_model: settingsRes.data.primary_model || 'claude-opus-4-6',
+        fallback_model: settingsRes.data.fallback_model,
+        max_cost_per_user_monthly: settingsRes.data.max_cost_per_user_monthly || 5,
+        max_cost_system_monthly: settingsRes.data.max_cost_system_monthly || 500,
+        data_retention_days: settingsRes.data.data_retention_days || 90,
       });
     } catch (err: any) {
       if (err.response?.status === 403) {
@@ -65,6 +80,15 @@ export default function AdminAIDashboardPage() {
       setLoading(false);
     }
   };
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      const res = await aiAPI.adminGetDashboard();
+      setDashboardData(res?.data || null);
+    } catch (err) {
+      console.debug('Failed to refresh dashboard', err);
+    }
+  }, []);
 
   const handleSettingChange = async (field: string, value: any) => {
     if (field === 'ai_enabled' && !value) {
@@ -190,6 +214,17 @@ export default function AdminAIDashboardPage() {
     { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (balanced)' },
     { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (cheapest)' },
   ];
+
+  const stats = dashboardData?.stats || {};
+  const costs_7d = dashboardData?.costs_7d || { total: 0, by_model: {} };
+  const corrections_7d = dashboardData?.corrections_7d || 0;
+  const override_rate_7d = dashboardData?.override_rate_7d || 0;
+  const users_opted_in = dashboardData?.users_opted_in || { enabled: 0, total: 0 };
+  const feature_breakdown = dashboardData?.feature_breakdown || [];
+  const activity_log = dashboardData?.activity_log || [];
+  const top_overridden = dashboardData?.top_overridden || [];
+  const top_cost_users = dashboardData?.top_cost_users || [];
+  const guardrail_alerts = dashboardData?.guardrail_alerts || { blocked_7d: [], hard_limit_aborts_30d: [] };
 
   return (
     <AppLayout pageTitle="AI Dashboard">
@@ -375,32 +410,59 @@ export default function AdminAIDashboardPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(5, 1fr)',
             gap: '1rem',
             marginBottom: '2rem',
           }}
         >
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>Active Model</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>
-              {localSettings.primary_model.split('-')[1]}
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>
+              {localSettings.primary_model.split('-')[1].charAt(0).toUpperCase() + localSettings.primary_model.split('-')[1].slice(1)}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: colors.textFaint }}>
+              (Last 30 days)
             </div>
           </Card>
+
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>7-day cost</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>$0.00</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>
+              ${costs_7d.total?.toFixed(2) || '0.00'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: colors.textFaint, marginTop: '0.5rem' }}>
+              {costs_7d.run_count || 0} runs
+            </div>
           </Card>
+
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>7-day corrections</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>0</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>
+              {corrections_7d}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: colors.textFaint, marginTop: '0.5rem' }}>
+              applied
+            </div>
           </Card>
+
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>Override rate (7d)</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>—</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>
+              {(override_rate_7d * 100).toFixed(0)}%
+            </div>
+            <div style={{ fontSize: '0.75rem', color: colors.textFaint, marginTop: '0.5rem' }}>
+              of applied
+            </div>
           </Card>
+
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>Users opted-in</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>0 / —</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text }}>
+              {users_opted_in.enabled} / {users_opted_in.total}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: colors.textFaint, marginTop: '0.5rem' }}>
+              Ultra users
+            </div>
           </Card>
         </div>
 
@@ -408,21 +470,61 @@ export default function AdminAIDashboardPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '1rem',
             marginBottom: '2rem',
           }}
         >
-          {['Paycheck forecast', 'Classification audit', 'Savings chain detection'].map((feature) => (
-            <Card key={feature} style={{ padding: '1rem' }}>
-              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', fontWeight: 500, color: colors.text }}>
-                {feature}
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: colors.textFaint }}>
-                Not yet enabled (Phase 0)
-              </p>
-            </Card>
-          ))}
+          {[
+            { name: 'Paycheck Forecast', key: 'Paycheck Forecast' },
+            { name: 'Classification Audit', key: 'Classification' },
+            { name: 'Savings Chain', key: 'Savings Chain' },
+          ].map((feat) => {
+            const data = feature_breakdown.find((f: any) => f.feature === feat.key) || {
+              feature: feat.key,
+              total: 0,
+              applied: 0,
+              flagged: 0,
+              blocked: 0,
+              avg_confidence: 0,
+              cost: 0,
+            };
+            return (
+              <Card key={feat.key} style={{ padding: '1rem' }}>
+                <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>
+                  {feat.name}
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.8rem' }}>
+                  <div>
+                    <div style={{ color: colors.textFaint }}>Calls</div>
+                    <div style={{ color: colors.text, fontWeight: 600 }}>{data.total}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: colors.textFaint }}>Applied</div>
+                    <div style={{ color: '#059669', fontWeight: 600 }}>{data.applied}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: colors.textFaint }}>Flagged</div>
+                    <div style={{ color: '#D97706', fontWeight: 600 }}>{data.flagged}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: colors.textFaint }}>Blocked</div>
+                    <div style={{ color: '#DC2626', fontWeight: 600 }}>{data.blocked}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: colors.textFaint }}>Confidence</div>
+                    <div style={{ color: colors.text, fontWeight: 600 }}>
+                      {(data.avg_confidence * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: colors.textFaint }}>Cost</div>
+                    <div style={{ color: colors.text, fontWeight: 600 }}>${data.cost?.toFixed(2) || '0.00'}</div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Row 3: Activity log */}
@@ -430,33 +532,240 @@ export default function AdminAIDashboardPage() {
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>
             Activity Log
           </h3>
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '2rem 1rem',
-              color: colors.textFaint,
-              fontSize: '0.9rem',
-            }}
-          >
-            No audit runs yet.
-          </div>
+          {activity_log.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '2rem 1rem',
+                color: colors.textFaint,
+                fontSize: '0.9rem',
+              }}
+            >
+              No audit runs yet.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: `1px solid ${colors.divider}` }}>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Email</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Trigger</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Started</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Duration</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Cost</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Status</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Applied</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activity_log.slice(0, 50).map((run: any, idx: number) => (
+                    <tr key={run.id} style={{ borderBottom: `1px solid ${colors.divider}` }}>
+                      <td style={{ padding: '0.75rem', color: colors.text }}>
+                        <Link
+                          href={`/app/admin/ai/runs?id=${run.id}`}
+                          style={{ color: colors.electric, textDecoration: 'none', cursor: 'pointer' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                        >
+                          {run.email || 'Unknown'}
+                        </Link>
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.textFaint, textTransform: 'capitalize' }}>
+                        {run.trigger_type || 'auto'}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.textFaint, fontSize: '0.75rem' }}>
+                        {new Date(run.started_at).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.text }}>
+                        {run.duration_ms ? `${(run.duration_ms / 1000).toFixed(1)}s` : '—'}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.text, fontWeight: 600 }}>
+                        ${run.cost_usd?.toFixed(4) || '0.00'}
+                      </td>
+                      <td style={{ padding: '0.75rem' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            backgroundColor:
+                              run.status === 'completed' ? '#D1FAE5' :
+                              run.status === 'failed' ? '#FEE2E2' :
+                              run.status === 'running' ? '#E0E7FF' : '#E5E7EB',
+                            color:
+                              run.status === 'completed' ? '#065F46' :
+                              run.status === 'failed' ? '#991B1B' :
+                              run.status === 'running' ? '#312E81' : '#374151',
+                          }}
+                        >
+                          {run.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.75rem', color: '#059669', fontWeight: 600 }}>
+                        {run.corrections_applied || 0}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
+
+        {/* Row 4: Quality signals */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1rem',
+            marginBottom: '2rem',
+          }}
+        >
+          <Card style={{ padding: '1rem' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>
+              Top overridden corrections (30d)
+            </h3>
+            {top_overridden.length === 0 ? (
+              <div style={{ color: colors.textFaint, fontSize: '0.85rem' }}>No overrides yet</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {top_overridden.slice(0, 10).map((item: any) => (
+                  <div key={item.correction_type} style={{ fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <div style={{ color: colors.text, fontWeight: 500 }}>{item.correction_type}</div>
+                      <div style={{ color: '#DC2626', fontWeight: 600 }}>
+                        {(item.revert_rate * 100).toFixed(0)}% override
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        height: '4px',
+                        backgroundColor: colors.cardBorder,
+                        borderRadius: '2px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          backgroundColor: '#DC2626',
+                          width: `${Math.min(item.revert_rate * 100, 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <div style={{ color: colors.textFaint, fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                      {item.revert_count} reverted of {item.total_applied_ever} applied
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card style={{ padding: '1rem' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>
+              Top cost users (30d)
+            </h3>
+            {top_cost_users.length === 0 ? (
+              <div style={{ color: colors.textFaint, fontSize: '0.85rem' }}>No audit runs yet</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {top_cost_users.slice(0, 10).map((item: any) => (
+                  <div key={item.email} style={{ fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <div style={{ color: colors.text, fontWeight: 500 }}>{item.email}</div>
+                      <div style={{ color: colors.electric, fontWeight: 600 }}>
+                        ${item.cost_30d?.toFixed(2) || '0.00'}
+                      </div>
+                    </div>
+                    <div style={{ color: colors.textFaint, fontSize: '0.75rem' }}>
+                      {item.runs_30d} runs
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* Row 5: Guardrail alerts */}
         <Card style={{ padding: '1rem' }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>
             Guardrail Alerts
           </h3>
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '2rem 1rem',
-              color: colors.textFaint,
-              fontSize: '0.9rem',
-            }}
-          >
-            No alerts.
-          </div>
+          {guardrail_alerts.blocked_7d.length === 0 && guardrail_alerts.hard_limit_aborts_30d.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '2rem 1rem',
+                color: colors.textFaint,
+                fontSize: '0.9rem',
+              }}
+            >
+              No guardrail violations.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {guardrail_alerts.blocked_7d.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', fontWeight: 600, color: colors.text }}>
+                    Blocked corrections (7d)
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {guardrail_alerts.blocked_7d.map((alert: any) => (
+                      <div
+                        key={alert.id}
+                        style={{
+                          padding: '0.75rem',
+                          backgroundColor: colors.cardBg,
+                          borderLeft: `3px solid #DC2626`,
+                          borderRadius: '0.25rem',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        <div style={{ color: colors.text, fontWeight: 500, marginBottom: '0.25rem' }}>
+                          {alert.target_description || 'Unknown target'}
+                        </div>
+                        <div style={{ color: colors.textFaint, fontSize: '0.8rem', marginBottom: '0.5rem' }}>
+                          Reason: {alert.block_reason}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {guardrail_alerts.hard_limit_aborts_30d.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', fontWeight: 600, color: colors.text }}>
+                    Hard-limit aborts (30d)
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {guardrail_alerts.hard_limit_aborts_30d.map((alert: any) => (
+                      <div
+                        key={alert.id}
+                        style={{
+                          padding: '0.75rem',
+                          backgroundColor: colors.cardBg,
+                          borderLeft: `3px solid #D97706`,
+                          borderRadius: '0.25rem',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        <div style={{ color: colors.text, fontWeight: 500, marginBottom: '0.25rem' }}>
+                          {alert.email || 'Unknown user'}
+                        </div>
+                        <div style={{ color: colors.textFaint, fontSize: '0.8rem' }}>
+                          Reason: {alert.abort_reason}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </div>
 

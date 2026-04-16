@@ -1,18 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
+import { aiAPI } from '@/lib/api';
 import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
 import type { Bill } from '@/context/AppContext';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 import CategoryIcon from '@/components/CategoryIcon';
+import CorrectionBadge from '@/components/ai/CorrectionBadge';
+import CorrectionDetailModal from '@/components/ai/CorrectionDetailModal';
 import { TrackerSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
 
 /**
  * Payment Tracker — REDESIGNED with modern UI
  * Preserves all mobile logic: pay period filtering, split tracking, bank match badges
+ * NEW: AI Correction badges for bills modified by AI audits
  */
 
 export default function TrackerPage() {
@@ -22,6 +26,30 @@ export default function TrackerPage() {
     isBillPaid, isSplitPaid, toggleSplitPaid, isUltra,
   } = useApp();
   const [showNext, setShowNext] = useState(false);
+
+  // AI Corrections state
+  const [aiSettingsAvailable, setAiSettingsAvailable] = useState(false);
+  const [aiCorrectionsByBill, setAiCorrectionsByBill] = useState<Record<string, any[]>>({});
+  const [activeCorrectionId, setActiveCorrectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    aiAPI.getSettings().then(s => {
+      setAiSettingsAvailable(!!s);
+      if (s) {
+        aiAPI.getHistory(20).then(res => {
+          const map: Record<string, any[]> = {};
+          (res?.data?.runs || []).forEach((run: any) => {
+            (run.corrections || []).forEach((c: any) => {
+              if (c.target_table === 'bills' && c.status === 'applied') {
+                (map[c.target_id] ||= []).push(c);
+              }
+            });
+          });
+          setAiCorrectionsByBill(map);
+        }).catch(() => {});
+      }
+    }).catch(() => setAiSettingsAvailable(false));
+  }, []);
 
   // Derive pay period from income source
   const primaryIncome = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
@@ -334,9 +362,20 @@ export default function TrackerPage() {
                       color: isPaid ? colors.textMuted : colors.text,
                       textDecoration: isPaid ? 'line-through' : 'none',
                       marginBottom: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
                     }}>
-                      {bill.name}
-                      {bill.isSplit && ` · P${paycheckNumber}`}
+                      <span>
+                        {bill.name}
+                        {bill.isSplit && ` · P${paycheckNumber}`}
+                      </span>
+                      {aiSettingsAvailable && aiCorrectionsByBill[bill.id]?.length > 0 && (
+                        <CorrectionBadge
+                          correctionCount={aiCorrectionsByBill[bill.id].length}
+                          onClick={() => setActiveCorrectionId(aiCorrectionsByBill[bill.id][0].id)}
+                        />
+                      )}
                     </div>
                     <div style={{ fontSize: '11px', color: colors.textMuted, display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {isBankMatched ? (
@@ -367,6 +406,15 @@ export default function TrackerPage() {
           <EmptyState icon="tracker" title="No bills this period" description={`No bills are due during ${period.label}`} />
         )}
       </TwoColumnLayout>
+
+      {/* Correction detail modal */}
+      {activeCorrectionId && (
+        <CorrectionDetailModal
+          correctionId={activeCorrectionId}
+          open={!!activeCorrectionId}
+          onClose={() => setActiveCorrectionId(null)}
+        />
+      )}
     </AppLayout>
   );
 }
