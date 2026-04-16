@@ -51,7 +51,7 @@ export default function AISettingsPage() {
       setShowDisableConfirm(true);
     } else {
       // Turning on - check if consent needed
-      if (!settings?.ai_consent_accepted_at || settings?.consent_version !== settings?.consent_current_version) {
+      if (!settings?.consent_accepted_at || settings?.consent_version !== settings?.consent_current_version) {
         setShowConsent(true);
       } else {
         await enableAI();
@@ -162,12 +162,12 @@ export default function AISettingsPage() {
               Use AI Assistant
             </h2>
             <div
-              onClick={() => handleToggle(!settings.ai_enabled)}
+              onClick={() => handleToggle(!settings.enabled)}
               style={{
                 width: '50px',
                 height: '28px',
                 borderRadius: '14px',
-                backgroundColor: settings.ai_enabled ? colors.electric : colors.cardBorder,
+                backgroundColor: settings.enabled ? colors.electric : colors.cardBorder,
                 cursor: toggling ? 'default' : 'pointer',
                 opacity: toggling ? 0.6 : 1,
                 transition: 'all 0.3s ease',
@@ -178,7 +178,7 @@ export default function AISettingsPage() {
                 style={{
                   position: 'absolute',
                   top: '2px',
-                  left: settings.ai_enabled ? '26px' : '2px',
+                  left: settings.enabled ? '26px' : '2px',
                   width: '24px',
                   height: '24px',
                   borderRadius: '12px',
