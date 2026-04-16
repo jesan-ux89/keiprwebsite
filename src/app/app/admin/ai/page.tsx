@@ -126,20 +126,19 @@ export default function AdminAIDashboardPage() {
   };
 
   const updateSetting = async (field: string, value: any) => {
+    const fieldMap: any = {
+      ai_enabled: 'ai_enabled',
+      primary_model: 'primary_model',
+      fallback_model: 'fallback_model',
+      max_cost_per_user_monthly: 'max_cost_per_user_monthly',
+      max_cost_system_monthly: 'max_cost_system_monthly',
+      data_retention_days: 'data_retention_days',
+    };
+    const payload: any = {};
+    payload[fieldMap[field]] = value;
+
     try {
       setUpdating(true);
-      const fieldMap: any = {
-        ai_enabled: 'ai_enabled',
-        primary_model: 'primary_model',
-        fallback_model: 'fallback_model',
-        max_cost_per_user_monthly: 'max_cost_per_user_monthly',
-        max_cost_system_monthly: 'max_cost_system_monthly',
-        data_retention_days: 'data_retention_days',
-      };
-
-      const payload: any = {};
-      payload[fieldMap[field]] = value;
-
       await aiAPI.adminUpdateSettings(payload);
       setLocalSettings({ ...localSettings, [field]: value });
       setError(null);
