@@ -80,9 +80,6 @@ export default function SyncingIndicator({ enabled = true, onComplete }: Syncing
         color: '#9C5EFA',
         fontWeight: 500,
         animation: status === 'running' ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none',
-        style: {
-          animation: status === 'running' ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none',
-        } as React.CSSProperties,
       }}
     >
       <style>{`
