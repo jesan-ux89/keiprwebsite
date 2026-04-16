@@ -22,7 +22,7 @@ export default function AdminAIDashboardPage() {
   const [updating, setUpdating] = useState(false);
   const [requiresConfirm, setRequiresConfirm] = useState<string | null>(null);
   const [confirmInput, setConfirmInput] = useState('');
-  const [pendingChange, setPendingChange] = useState<{ field: string; value: any } | null>(null);
+  const [pendingChange, setPendingChange] = useState<{ field: string; value: any; previousValue: any } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Local state for control bar
@@ -97,14 +97,16 @@ export default function AdminAIDashboardPage() {
 
   const handleSettingChange = async (field: string, value: any) => {
     if (field === 'ai_enabled' && !value) {
-      // Turning off requires confirmation
-      setPendingChange({ field, value });
+      setPendingChange({ field, value, previousValue: localSettings.ai_enabled });
       setRequiresConfirm('KILL');
       setConfirmInput('');
       return;
     }
     if (['primary_model', 'fallback_model'].includes(field)) {
-      setPendingChange({ field, value });
+      const prev = localSettings[field as keyof typeof localSettings];
+      // Show new value in dropdown immediately (revert on cancel)
+      setLocalSettings({ ...localSettings, [field]: value });
+      setPendingChange({ field, value, previousValue: prev });
       setRequiresConfirm('confirm');
       setConfirmInput('');
       return;
@@ -813,7 +815,14 @@ export default function AdminAIDashboardPage() {
             placeholder={requiresConfirm || ''}
           />
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <Button variant="secondary" onClick={() => { setRequiresConfirm(null); setPendingChange(null); }}>
+            <Button variant="secondary" onClick={() => {
+              // Revert dropdown to previous value if cancelled
+              if (pendingChange && pendingChange.previousValue !== undefined) {
+                setLocalSettings(prev => ({ ...prev, [pendingChange.field]: pendingChange.previousValue }));
+              }
+              setRequiresConfirm(null);
+              setPendingChange(null);
+            }}>
               Cancel
             </Button>
             <Button
