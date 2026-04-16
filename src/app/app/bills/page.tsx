@@ -50,7 +50,6 @@ export default function BillsPage() {
   const [aiSettingsAvailable, setAiSettingsAvailable] = useState(false);
   const [aiCorrectionsByBill, setAiCorrectionsByBill] = useState<Record<string, any[]>>({});
   const [activeCorrectionId, setActiveCorrectionId] = useState<string | null>(null);
-  const [aiReviews, setAiReviews] = useState<any[]>([]);
 
   useEffect(() => {
     aiAPI.getSettings().then(s => {
@@ -66,11 +65,6 @@ export default function BillsPage() {
             });
           });
           setAiCorrectionsByBill(map);
-        }).catch(() => {});
-
-        // Fetch flagged reviews for action cards
-        aiAPI.getReviews().then(res => {
-          setAiReviews(res?.data?.reviews || []);
         }).catch(() => {});
       }
     }).catch(() => setAiSettingsAvailable(false));
@@ -541,76 +535,8 @@ export default function BillsPage() {
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* AI Review Action Cards */}
-          {isUltra && aiSettingsAvailable && aiReviews.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: '0.75rem',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1rem' }}>✨</span>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#9C5EFA', margin: 0 }}>
-                    Suggestions for you
-                  </h3>
-                </div>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#9C5EFA' }}>
-                  {aiReviews.length}
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {aiReviews.map((review: any) => (
-                  <Card key={review.id} style={{ padding: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 8,
-                        backgroundColor: 'rgba(156,94,250,0.12)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                      }}>
-                        <span style={{ fontSize: '0.875rem' }}>✨</span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: colors.text }}>
-                          {review.bill_name || 'Unknown expense'}
-                        </div>
-                        <div style={{
-                          fontSize: '0.8125rem', color: colors.textSub, marginTop: '0.25rem',
-                          lineHeight: 1.4,
-                        }}>
-                          {(review.reasoning || 'Our assistant flagged this for your review.').slice(0, 150)}
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await aiAPI.dismissReview(review.id);
-                                setAiReviews(prev => prev.filter(r => r.id !== review.id));
-                              } catch (err) {
-                                console.error('Failed to dismiss review:', err);
-                              }
-                            }}
-                            style={{
-                              padding: '0.375rem 0.75rem',
-                              backgroundColor: colors.cardHover || colors.card,
-                              color: colors.textSub,
-                              border: `1px solid ${colors.divider}`,
-                              borderRadius: '0.375rem',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Dismiss
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* AI flagged corrections handled silently — no user-facing review cards.
+              Sparkle badges on individual bills are the only AI indicator. */}
 
           {/* Credit Cards Section */}
           {creditCards.length > 0 && (
