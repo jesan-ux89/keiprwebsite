@@ -22,6 +22,7 @@ export default function AdminAIDashboardPage() {
   const [updating, setUpdating] = useState(false);
   const [requiresConfirm, setRequiresConfirm] = useState<string | null>(null);
   const [confirmInput, setConfirmInput] = useState('');
+  const [pendingChange, setPendingChange] = useState<{ field: string; value: any } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Local state for control bar
@@ -97,11 +98,13 @@ export default function AdminAIDashboardPage() {
   const handleSettingChange = async (field: string, value: any) => {
     if (field === 'ai_enabled' && !value) {
       // Turning off requires confirmation
+      setPendingChange({ field, value });
       setRequiresConfirm('KILL');
       setConfirmInput('');
       return;
     }
     if (['primary_model', 'fallback_model'].includes(field)) {
+      setPendingChange({ field, value });
       setRequiresConfirm('confirm');
       setConfirmInput('');
       return;
@@ -122,6 +125,7 @@ export default function AdminAIDashboardPage() {
 
     setRequiresConfirm(null);
     setConfirmInput('');
+    setPendingChange(null);
     await updateSetting(field, value);
   };
 
@@ -809,16 +813,13 @@ export default function AdminAIDashboardPage() {
             placeholder={requiresConfirm || ''}
           />
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <Button variant="secondary" onClick={() => setRequiresConfirm(null)}>
+            <Button variant="secondary" onClick={() => { setRequiresConfirm(null); setPendingChange(null); }}>
               Cancel
             </Button>
             <Button
               onClick={() => {
-                if (requiresConfirm === 'KILL') {
-                  confirmUpdate('ai_enabled', false);
-                } else {
-                  // For model changes, just use the current value
-                  confirmUpdate('primary_model', localSettings.primary_model);
+                if (pendingChange) {
+                  confirmUpdate(pendingChange.field, pendingChange.value);
                 }
               }}
               disabled={!confirmInput}
