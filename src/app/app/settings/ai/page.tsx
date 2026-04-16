@@ -240,63 +240,9 @@ export default function AISettingsPage() {
             <ChevronRight size={18} style={{ color: colors.textFaint }} />
           </Link>
 
-          <Link
-            href="/app/settings/ai/history"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              padding: '1rem',
-              backgroundColor: colors.card,
-              border: `1px solid ${colors.divider}`,
-              borderRadius: '0.5rem',
-              textDecoration: 'none',
-              color: colors.text,
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover || colors.card;
-              (e.currentTarget as HTMLElement).style.borderColor = colors.electric;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = colors.card;
-              (e.currentTarget as HTMLElement).style.borderColor = colors.divider;
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>My AI history</div>
-            </div>
-            <ChevronRight size={18} style={{ color: colors.textFaint }} />
-          </Link>
-
-          <Link
-            href="/app/settings/ai/overrides"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              padding: '1rem',
-              backgroundColor: colors.card,
-              border: `1px solid ${colors.divider}`,
-              borderRadius: '0.5rem',
-              textDecoration: 'none',
-              color: colors.text,
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover || colors.card;
-              (e.currentTarget as HTMLElement).style.borderColor = colors.electric;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = colors.card;
-              (e.currentTarget as HTMLElement).style.borderColor = colors.divider;
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>My AI overrides</div>
-            </div>
-            <ChevronRight size={18} style={{ color: colors.textFaint }} />
-          </Link>
+          {/* AI History and Overrides removed from user-facing UI.
+              Corrections happen silently; flagged items surface as action
+              cards in the Budget screen. */}
         </div>
 
         {/* Footer text */}

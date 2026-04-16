@@ -205,6 +205,11 @@ export const aiAPI = {
   getHistory:    (limit = 50, offset = 0) => api.get('/me/ai-history', { params: { limit, offset } }),
   getCorrection: (correctionId: string) => api.get(`/me/ai-corrections/${correctionId}`),
 
+  // User-facing — flagged reviews (action cards)
+  getReviews:        () => api.get('/me/ai-reviews'),
+  dismissReview:     (correctionId: string) => api.post(`/me/ai-corrections/${correctionId}/dismiss`),
+  undoCorrection:    (correctionId: string) => api.post(`/me/ai-corrections/${correctionId}/undo`),
+
   // User-facing — overrides & staging chains
   getOverrides:      () => api.get('/me/ai-overrides'),
   createOverride:    (data: Record<string, unknown>) => api.post('/me/ai-overrides', data),
