@@ -197,7 +197,7 @@ export const spendingAPI = {
 export const aiAPI = {
   // User-facing — settings & consent
   getSettings:   () => api.get('/me/ai-settings'),
-  setEnabled:    (enabled: boolean, reason?: string) => api.patch('/me/ai-settings', { enabled, reason }),
+  setEnabled:    (enabled: boolean, reason?: string) => api.post('/me/ai-settings', { enabled, reason }),
   acceptConsent: (version: string) => api.post('/me/ai-consent', { version }),
   exportData:    () => api.get('/me/ai-data-export'),
 
@@ -228,8 +228,8 @@ export const aiAPI = {
   adminReaudit:           (userId: string, reason: string) => api.post(`/admin/ai-reaudit/${userId}`, { reason }),
   adminPurge:             () => api.post('/admin/ai-purge'),
   adminGetUsers:          (search: string, offset: number) => api.get('/admin/ai-users', { params: { search, offset } }),
-  adminUpdateUserFlags:   (userId: string, flags: Record<string, boolean>) => api.patch(`/admin/ai-users/${userId}/flags`, flags),
-  adminDisableUserAi:     (userId: string, reason: string) => api.post(`/admin/ai-users/${userId}/disable`, { reason }),
+  adminUpdateUserFlags:   (userId: string, flags: Record<string, boolean>) => api.post(`/admin/ai-users/${userId}/flags`, flags),
+  adminDisableUserAi:     (userId: string, reason: string) => api.post(`/admin/ai-users/${userId}/disable-ai`, { reason }),
 };
 
 export default api;
