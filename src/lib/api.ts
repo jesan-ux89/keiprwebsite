@@ -198,7 +198,7 @@ export const aiAPI = {
   // User-facing — settings & consent
   getSettings:   () => api.get('/me/ai-settings'),
   setEnabled:    (enabled: boolean, reason?: string) => api.patch('/me/ai-settings', { enabled, reason }),
-  acceptConsent: (version: number) => api.post('/me/ai-consent', { version }),
+  acceptConsent: (version: string) => api.post('/me/ai-consent', { version }),
   exportData:    () => api.get('/me/ai-data-export'),
 
   // User-facing — history & corrections

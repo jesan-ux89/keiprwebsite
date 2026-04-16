@@ -10,9 +10,10 @@ import { aiAPI } from '@/lib/api';
 interface AIConsentModalProps {
   onClose: () => void;
   onConsent: () => void;
+  version?: string; // current consent version from GET /api/me/ai-settings
 }
 
-export default function AIConsentModal({ onClose, onConsent }: AIConsentModalProps) {
+export default function AIConsentModal({ onClose, onConsent, version }: AIConsentModalProps) {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +21,21 @@ export default function AIConsentModal({ onClose, onConsent }: AIConsentModalPro
   const handleAccept = async () => {
     try {
       setLoading(true);
-      await aiAPI.acceptConsent(1); // Phase 0: version 1
+      // If parent didn't pass a version, fetch the current one from settings
+      let effectiveVersion = version;
+      if (!effectiveVersion) {
+        const res = await aiAPI.getSettings();
+        effectiveVersion = res?.data?.consent_current_version;
+      }
+      if (!effectiveVersion) {
+        throw new Error('Could not determine current consent version');
+      }
+      await aiAPI.acceptConsent(effectiveVersion);
       onConsent();
-    } catch (err) {
-      setError('Failed to accept consent');
-      console.error(err);
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.error || err?.message;
+      setError(`Failed to accept consent${backendMsg ? `: ${backendMsg}` : ''}`);
+      console.error('[AIConsentModal] accept error:', err?.response?.status, err?.response?.data, err);
     } finally {
       setLoading(false);
     }
