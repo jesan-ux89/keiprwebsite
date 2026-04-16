@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 
 interface CorrectionBadgeProps {
   correctionCount: number;
-  onClick: (e?: React.MouseEvent) => void;
+  onClick: (e: React.MouseEvent) => void;
 }
 
 export default function CorrectionBadge({ correctionCount, onClick }: CorrectionBadgeProps) {
