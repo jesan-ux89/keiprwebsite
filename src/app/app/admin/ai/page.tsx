@@ -422,7 +422,11 @@ export default function AdminAIDashboardPage() {
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>Active Model</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>
-              {localSettings.primary_model.split('-')[1].charAt(0).toUpperCase() + localSettings.primary_model.split('-')[1].slice(1)}
+              {(() => {
+                const parts = (localSettings.primary_model || 'claude-opus-4-6').split('-');
+                const tier = parts[1] || 'opus';
+                return tier.charAt(0).toUpperCase() + tier.slice(1);
+              })()}
             </div>
             <div style={{ fontSize: '0.75rem', color: colors.textFaint }}>
               (Last 30 days)
