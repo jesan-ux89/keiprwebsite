@@ -144,8 +144,12 @@ export default function AdminAIDashboardPage() {
       setLocalSettings({ ...localSettings, [field]: value });
       setError(null);
     } catch (err: any) {
-      setError(`Failed to update ${field}`);
-      console.error(err);
+      const backendMsg = err?.response?.data?.detail || err?.response?.data?.error || err?.message;
+      const status = err?.response?.status;
+      setError(
+        `Failed to update ${field}${status ? ` (HTTP ${status})` : ''}${backendMsg ? `: ${backendMsg}` : ''}`,
+      );
+      console.error('[admin/ai] updateSetting error:', field, 'payload:', payload, 'status:', status, 'body:', err?.response?.data, err);
     } finally {
       setUpdating(false);
     }
