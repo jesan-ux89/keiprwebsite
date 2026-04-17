@@ -273,10 +273,13 @@ const ICONS: Record<string, CategoryIconDef> = {
     ],
   },
   Other: {
-    lightStroke: '#525252', darkStroke: '#A8A8A8',
-    lightBg: 'rgba(82,82,82,0.12)', darkBg: 'rgba(160,160,160,0.20)',
+    lightStroke: '#6D5D4B', darkStroke: '#C4B5A0',
+    lightBg: 'rgba(109,93,75,0.12)', darkBg: 'rgba(196,181,160,0.18)',
     paths: [
-      'M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z',
+      'M3 3h7v7H3z',
+      'M14 3h7v7h-7z',
+      'M3 14h7v7H3z',
+      'M14 14h7v7h-7z',
     ],
   },
 };
