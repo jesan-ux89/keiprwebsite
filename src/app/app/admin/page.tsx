@@ -11,7 +11,6 @@ interface UserRow {
   email: string;
   plan: string;
   created_at: string;
-  last_login_at: string | null;
   ai_enabled: boolean;
   bill_count: number;
   bank_connections: number;
@@ -277,7 +276,7 @@ export default function AdminDashboardPage() {
                       <span>{user.bill_count} bills</span>
                       <span>{user.bank_connections} bank{user.bank_connections !== 1 ? 's' : ''}</span>
                       <span>Joined {formatDate(user.created_at)}</span>
-                      <span>Last login {formatDate(user.last_login_at)}</span>
+                      <span>{user.ai_enabled ? 'AI on' : ''}</span>
                     </div>
                   </div>
                   <button
