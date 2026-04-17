@@ -1138,21 +1138,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [isUltra]);
 
   const confirmDetectedBill = async (billId: string, overrides?: Record<string, unknown>) => {
+    setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed' } : b));
     try {
       await billsAPI.confirmDetected(billId, overrides || {});
-      await refreshBills();
+      refreshBills();
     } catch (err) {
       console.log('confirmDetectedBill failed:', (err as Error)?.message);
+      await refreshBills();
     }
   };
 
   const confirmAsOneTime = async (billId: string) => {
+    setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed', isRecurring: false } : b));
     try {
       await billsAPI.confirmDetected(billId, { oneTime: true });
-      await refreshBills();
-      await refreshPayments();
+      refreshBills();
+      refreshPayments();
     } catch (err) {
       console.log('confirmAsOneTime failed:', (err as Error)?.message);
+      await refreshBills();
     }
   };
 
