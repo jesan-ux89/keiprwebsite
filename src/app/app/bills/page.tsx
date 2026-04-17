@@ -514,6 +514,21 @@ export default function BillsPage() {
                       >
                         One-time
                       </button>
+                      <button
+                        onClick={() => dismissDetectedBill(bill.id)}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          backgroundColor: isDark ? 'rgba(214,209,199,0.10)' : 'rgba(12,74,110,0.08)',
+                          color: colors.amber || '#854F0B',
+                          border: 'none',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Not an expense
+                      </button>
                     </div>
                   </div>
                 </div>
