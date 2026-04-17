@@ -160,7 +160,7 @@ export const bankingAPI = {
   scanSuggestions:     () => api.post('/banking-data/suggest/scan'),
   backfillCategories:  () => api.post('/banking-data/backfill-categories'),
   reclassifySpending:  () => api.post('/banking-data/reclassify-spending'),
-  migrateToUltra:      () => api.post('/banking-data/migrate-to-ultra', {}, { timeout: 120000 }),
+  migrateToUltra:      () => api.post('/banking-data/migrate-to-ultra', {}, { timeout: 300000 }),
   bulkExcludeMerchant: (merchantName: string) => api.post('/banking-data/bulk/exclude-merchant', { merchant_name: merchantName }),
   bulkConfirmHighConfidence: (minConfidence = 0.90) => api.post('/banking-data/bulk/confirm-high-confidence', { min_confidence: minConfidence }),
   onboardingImport:  () => api.post('/banking-data/onboarding-import', {}, { timeout: 120000 }),
