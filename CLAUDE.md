@@ -4,13 +4,17 @@
 
 ## ⚠ RULE #1 (MOST IMPORTANT): Hit `/api/debug/user-state` BEFORE speculating about state
 
-When Jesse reports ANY bug with ambiguous state ("wrong category on web", "bill missing", "balance not matching mobile", etc.), the FIRST action is to hit `GET /api/debug/user-state` with his Firebase token. Do NOT guess at DB state. Do NOT start reading website code to form hypotheses — the bug is almost always visible in backend state (and is probably also present on mobile, since the data layer is the same).
+When Jesse reports ANY bug with ambiguous state ("wrong category on web", "bill missing", "balance not matching mobile", etc.), the FIRST action is to hit `GET /api/debug/user-state`. Do NOT guess at DB state. Do NOT start reading website code to form hypotheses — the bug is almost always visible in backend state (and is probably also present on mobile, since the data layer is the same).
 
 The endpoint returns bills (active + inactive), income sources, payments, categories, and for Ultra users — bank connections, transactions with `display_category`, match_log, learned matches, exclusion rules.
 
 **This has been a game changer.** Issues that used to recur session after session get diagnosed in minutes because we see actual state instead of guessing. Keep using it.
 
-Quickest access: hit `https://keipr-backend-production.up.railway.app/api/debug/user-state` from the browser dev tools fetch with Jesse's Firebase token in the Authorization header.
+Quickest access (admin key — no Firebase token needed):
+- `DEBUG_ADMIN_KEY` is set as an env var on Railway. Use it as a Bearer token with `?email=` query param.
+- Jesse's app email: `jessenetworkengineer@gmail.com` (NOT `jessesan82@gmail.com` — that's his Railway/personal email)
+- curl: `curl -H "Authorization: Bearer <DEBUG_ADMIN_KEY>" "https://keipr-backend-production.up.railway.app/api/debug/user-state?email=jessenetworkengineer@gmail.com"`
+- Also supports `?uid=<firebase_uid>` as an alternative lookup
 
 ## Project Overview
 Next.js web app for Keipr, a paycheck-forward budgeting app. The website is a **mirror of the React Native mobile app** — same backend, same user accounts, same data.
@@ -214,7 +218,12 @@ All rules for recurring-expense detection (when a transaction becomes a bill, ho
 3. Fix goes in `detectionEngine.js`
 
 ## Debug Endpoint (for diagnosing web bugs)
-Backend exposes `GET /api/debug/user-state` — tier-aware JSON dump of everything needed to diagnose a user's issue (bills, income, payments, connections, transactions, match log, exclusions). Use this FIRST before speculating about state. Hit directly with browser dev tools + the user's Firebase token.
+Backend exposes `GET /api/debug/user-state` — tier-aware JSON dump of everything needed to diagnose a user's issue (bills, income, payments, connections, transactions, match log, exclusions). Use this FIRST before speculating about state.
+
+**Preferred method — admin key (no Firebase token needed):**
+`curl -H "Authorization: Bearer <DEBUG_ADMIN_KEY>" "https://keipr-backend-production.up.railway.app/api/debug/user-state?email=jessenetworkengineer@gmail.com"`
+
+`DEBUG_ADMIN_KEY` is set on Railway. Supports `?email=` or `?uid=` to look up any user.
 
 ## AI Features — REMOVED
 All AI-related pages and features were removed: `/app/settings/ai`, `/app/settings/ai-admin`, `AISuggestionCard`, `aiAPI` in `src/lib/api.ts`. Categorization and detection run entirely through the backend's rule-based engines. Do NOT re-introduce AI pages without explicit user request.
