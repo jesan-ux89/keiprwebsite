@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Sparkles,
   Shield,
+  Users,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -406,6 +407,26 @@ export default function AppLayout({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               <Link
+                href="/app/admin"
+                onClick={() => setSidebarOpen(false)}
+                style={{
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  textDecoration: 'none',
+                  color: pathname === '/app/admin' ? colors.navActive : colors.navIcon,
+                  backgroundColor: pathname === '/app/admin' ? `${colors.electric}15` : 'transparent',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem',
+                  fontWeight: pathname === '/app/admin' ? 600 : 500,
+                }}
+              >
+                <Users size={18} />
+                User Management
+              </Link>
+              <Link
                 href="/app/admin/ai"
                 onClick={() => setSidebarOpen(false)}
                 style={{
@@ -415,14 +436,14 @@ export default function AppLayout({
                   alignItems: 'center',
                   gap: '0.65rem',
                   textDecoration: 'none',
-                  color: pathname.startsWith('/app/admin/ai') ? colors.navActive : colors.navIcon,
-                  backgroundColor: pathname.startsWith('/app/admin/ai') ? `${colors.electric}15` : 'transparent',
+                  color: pathname.startsWith('/app/admin/ai') && !pathname.startsWith('/app/admin/ai/users') ? colors.navActive : colors.navIcon,
+                  backgroundColor: pathname.startsWith('/app/admin/ai') && !pathname.startsWith('/app/admin/ai/users') ? `${colors.electric}15` : 'transparent',
                   transition: 'all 0.2s ease',
                   fontSize: '0.85rem',
-                  fontWeight: pathname.startsWith('/app/admin/ai') ? 600 : 500,
+                  fontWeight: pathname.startsWith('/app/admin/ai') && !pathname.startsWith('/app/admin/ai/users') ? 600 : 500,
                 }}
               >
-                <Shield size={18} />
+                <Sparkles size={18} />
                 AI Dashboard
               </Link>
               <Link
@@ -442,7 +463,7 @@ export default function AppLayout({
                   fontWeight: pathname.startsWith('/app/admin/ai/users') ? 600 : 500,
                 }}
               >
-                <Settings size={18} />
+                <Shield size={18} />
                 AI Users
               </Link>
             </div>

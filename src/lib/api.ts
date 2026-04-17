@@ -237,4 +237,16 @@ export const aiAPI = {
   adminDisableUserAi:     (userId: string, reason: string) => api.post(`/admin/ai-users/${userId}/disable-ai`, { reason }),
 };
 
+// ── Admin Management API (user management + admin users) ──
+export const adminAPI = {
+  // User management
+  listUsers:        (search: string, offset = 0, limit = 50) => api.get('/admin/manage/users', { params: { search, offset, limit } }),
+  getUser:          (userId: string) => api.get(`/admin/manage/users/${userId}`),
+  deleteUser:       (userId: string, confirmEmail: string) => api.delete(`/admin/manage/users/${userId}`, { data: { confirmEmail } }),
+  // Admin users
+  listAdmins:       () => api.get('/admin/manage/admin-users'),
+  addAdmin:         (email: string) => api.post('/admin/manage/admin-users', { email }),
+  removeAdmin:      (adminId: string) => api.delete(`/admin/manage/admin-users/${adminId}`),
+};
+
 export default api;
