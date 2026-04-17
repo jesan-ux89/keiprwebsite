@@ -527,7 +527,7 @@ export default function BillsPage() {
                           cursor: 'pointer',
                         }}
                       >
-                        Not an expense
+                        Don't track
                       </button>
                     </div>
                   </div>
