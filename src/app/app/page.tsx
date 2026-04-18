@@ -650,14 +650,28 @@ export default function DashboardPage() {
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Available</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: (isUltra && availableNumber !== null ? availableNumber : remaining) >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(isUltra && availableNumber !== null ? availableNumber : remaining)}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>
-                    {isUltra && availableBreakdown?.checkingBalance != null
-                      ? `${fmt(availableBreakdown.checkingBalance)} available in checking`
-                      : `${fmt(isUltra && availableNumber !== null ? availableNumber : remaining)} available to spend`}
-                  </p>
-                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{fmt(remaining > 0 ? remaining : 0)} available this check</p>
-                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{fmt(nextRemaining > 0 ? nextRemaining : 0)} available next check</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38BDF8', boxShadow: '0 0 6px rgba(56,189,248,0.4)', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38BDF8', width: 80, fontVariantNumeric: 'tabular-nums' }}>
+                      {isUltra && availableBreakdown?.checkingBalance != null
+                        ? fmt(availableBreakdown.checkingBalance)
+                        : fmt(isUltra && availableNumber !== null ? availableNumber : remaining)}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                      {isUltra && availableBreakdown?.checkingBalance != null ? 'available in checking' : 'available to spend'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0A7B6C', boxShadow: '0 0 6px rgba(10,123,108,0.4)', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0A7B6C', width: 80, fontVariantNumeric: 'tabular-nums' }}>{fmt(remaining > 0 ? remaining : 0)}</span>
+                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>available this check</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9a9589', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#9a9589', width: 80, fontVariantNumeric: 'tabular-nums' }}>{fmt(nextRemaining > 0 ? nextRemaining : 0)}</span>
+                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>available next check</span>
+                  </div>
                 </div>
               </Card>
               <Card style={{ padding: '1.25rem' }}>
