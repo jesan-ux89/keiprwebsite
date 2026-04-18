@@ -870,6 +870,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) {
       setInitialDataLoaded(false);
+      setTier('free');
       return;
     }
 
