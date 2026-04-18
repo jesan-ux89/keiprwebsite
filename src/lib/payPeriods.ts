@@ -377,6 +377,39 @@ export function isBillInPeriod(billDueDay: number, period: PayPeriod): boolean {
   return billDueDay >= startDay || billDueDay <= endDay;
 }
 
+// ── Paycheck boundary buffer ────────────────────────────────
+
+/**
+ * Shift a due day back by 2 days to create a buffer zone.
+ * This prevents bills near paycheck boundaries from bouncing
+ * between paychecks when due dates shift by 1-2 days.
+ */
+export function getEffectiveDueDay(dueDay: number): number {
+  const effective = dueDay - 2;
+  return effective <= 0 ? effective + 30 : effective;
+}
+
+/**
+ * Determine which paycheck a bill belongs to, using a priority chain:
+ * 1. Split bills → always appear in every period (return true)
+ * 2. Pinned paycheck → user override, ignores due day entirely
+ * 3. 2-day buffer → shifts effective due day back 2 days for stability
+ */
+export function billBelongsToPaycheck(
+  bill: { dueDay: number; pinnedPaycheck?: number | null; isSplit?: boolean },
+  period: PayPeriod
+): boolean {
+  // Split bills always appear in every period
+  if (bill.isSplit) return true;
+  // Pinned paycheck override
+  if (bill.pinnedPaycheck != null && bill.pinnedPaycheck > 0) {
+    return bill.pinnedPaycheck === period.paycheckNumber;
+  }
+  // 2-day buffer for stability
+  const effectiveDueDay = getEffectiveDueDay(bill.dueDay);
+  return isBillInPeriod(effectiveDueDay, period);
+}
+
 // ── Month pay periods for Forward Planner ────────────────────
 
 /**

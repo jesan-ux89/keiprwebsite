@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { aiAPI } from '@/lib/api';
-import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
+import { getPayPeriods, isBillInPeriod, billBelongsToPaycheck } from '@/lib/payPeriods';
 import type { Bill } from '@/context/AppContext';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 import CategoryIcon from '@/components/CategoryIcon';
@@ -102,7 +102,7 @@ export default function TrackerPage() {
 
   // Filter bills for this period
   const billsInPeriod = isTwiceMonthly
-    ? bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, period))
+    ? bills.filter(b => billBelongsToPaycheck(b, period))
     : bills;
 
   // billAmountForPaycheck

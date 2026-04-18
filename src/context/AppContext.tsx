@@ -51,6 +51,7 @@ export interface Bill {
   isQuickExpense?: boolean; // True for quick spends logged from Dashboard
   isInternalTransfer?: boolean; // True for savings transfers, internal account moves
   expenseType?: string; // 'fixed' (default) or 'flexible'
+  pinnedPaycheck?: number | null; // Manual paycheck assignment override (1 or 2, null = auto)
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -383,6 +384,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     isQuickExpense: raw.is_quick_expense === true,
     isInternalTransfer: raw.is_internal_transfer === true,
     expenseType: (raw.expense_type as string) || 'fixed',
+    pinnedPaycheck: raw.pinned_paycheck != null ? Number(raw.pinned_paycheck) : null,
   };
 }
 

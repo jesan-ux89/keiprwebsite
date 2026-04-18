@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { getPayPeriods, isBillInPeriod } from '@/lib/payPeriods';
+import { getPayPeriods, isBillInPeriod, billBelongsToPaycheck } from '@/lib/payPeriods';
 import { usersAPI, bankingAPI } from '@/lib/api';
 import type { Bill } from '@/context/AppContext';
 import { Card } from '@/components/ui/Card';
@@ -143,11 +143,11 @@ export default function DashboardPage() {
   }
 
   const thisPaycheckBills = isTwiceMonthly
-    ? sortByOccurrence(bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, currentPeriod)), currentPeriod)
+    ? sortByOccurrence(bills.filter(b => billBelongsToPaycheck(b, currentPeriod)), currentPeriod)
     : sortByOccurrence(bills, currentPeriod);
 
   const nextPaycheckBills = isTwiceMonthly
-    ? sortByOccurrence(bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, nextPeriod)), nextPeriod)
+    ? sortByOccurrence(bills.filter(b => billBelongsToPaycheck(b, nextPeriod)), nextPeriod)
     : [];
 
   // ── Monthly totals (excluding CC-paid to avoid double-counting) ─────────────────────
