@@ -162,13 +162,14 @@ export default function DashboardPage() {
   const totalBillsThisCheck = directBillsThisCheck.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
   const totalCCBillsThisCheck = ccBillsThisCheck.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
   const totalSpendingBudgetsAmount = isUltra ? (spendingBudgets || []).reduce((s: number, b: any) => s + (b.budget_amount || 0), 0) : 0;
-  const remaining = (totalPaycheck || 0) - totalBillsThisCheck - totalSpendingBudgetsAmount;
+  const totalAllBillsThisCheck = totalBillsThisCheck + totalCCBillsThisCheck;
+  const remaining = (totalPaycheck || 0) - totalAllBillsThisCheck - totalSpendingBudgetsAmount;
   const spentPct = totalPaycheck > 0 ? Math.round((totalBillsThisCheck / totalPaycheck) * 100) : 0;
 
   const directNextBills = nextPaycheckBills.filter((b: any) => !b.paidWith);
   const nextBillsTotal = directNextBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
   const nextCCBillsTotal = nextPaycheckBills.filter((b: any) => !!b.paidWith).reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
-  const nextRemaining = (totalPaycheck || 0) - nextBillsTotal;
+  const nextRemaining = (totalPaycheck || 0) - nextBillsTotal - nextCCBillsTotal;
 
   // ── Rollover bonus (MATCHES MOBILE) ──────────────────────────
   const rolloverBonus = (currentRollover?.action === 'rolled_over' && currentRollover.rolloverAmount > 0) ? currentRollover.rolloverAmount : 0;
