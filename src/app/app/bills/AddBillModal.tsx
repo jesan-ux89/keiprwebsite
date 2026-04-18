@@ -46,7 +46,7 @@ interface AddBillModalProps {
 
 export default function AddBillModal({ isOpen, onClose, billToEdit, initialType }: AddBillModalProps) {
   const { colors, isDark } = useTheme();
-  const { addBill, updateBill, fmt, canSplit, isUltra, spendingBudgets, fetchSpendingBudgets, categories: dbCategories } = useApp();
+  const { addBill, updateBill, fmt, canSplit, isUltra, spendingBudgets, fetchSpendingBudgets, categories: dbCategories, creditCards, plaidCards, bills } = useApp();
 
   const categoryNames = Array.from(new Set([
     ...(dbCategories.length > 0 ? dbCategories.map(c => c.name) : []),
@@ -371,13 +371,58 @@ export default function AddBillModal({ isOpen, onClose, billToEdit, initialType 
             </div>
 
             {/* Paid With */}
-            <Input
-              label="Paid With (Optional)"
-              type="text"
-              placeholder="e.g., Chase Sapphire, Capital One"
-              value={paidWith}
-              onChange={(e) => setPaidWith(e.target.value)}
-            />
+            {(() => {
+              const plaidCardNames = (plaidCards || []).map((cc: any) => cc.cardName);
+              const manualCards = creditCards.length > 0
+                ? creditCards.map((cc: any) => cc.cardName).filter((n: string) => !plaidCardNames.includes(n))
+                : [...new Set((bills || []).filter((b: any) => b.paidWith).map((b: any) => b.paidWith))].filter(n => !plaidCardNames.includes(n));
+              const hasOptions = plaidCardNames.length > 0 || manualCards.length > 0;
+              return (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: colors.textSub, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                    PAID WITH (OPTIONAL)
+                  </label>
+                  <select
+                    value={paidWith}
+                    onChange={(e) => setPaidWith(e.target.value)}
+                    style={{
+                      width: '100%', padding: '0.625rem 0.75rem', fontSize: '0.875rem',
+                      backgroundColor: colors.inputBg || colors.cardBg, color: colors.text,
+                      border: `1px solid ${colors.inputBorder || colors.divider}`, borderRadius: '0.5rem',
+                      appearance: 'auto', cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">Bank account (direct)</option>
+                    {plaidCardNames.length > 0 && <optgroup label="Connected Cards">
+                      {plaidCardNames.map((card: string) => (
+                        <option key={card} value={card}>💳 {card}</option>
+                      ))}
+                    </optgroup>}
+                    {manualCards.length > 0 && <optgroup label="Custom Cards">
+                      {manualCards.map((card: string) => (
+                        <option key={card} value={card}>{card}</option>
+                      ))}
+                    </optgroup>}
+                    {paidWith && !plaidCardNames.includes(paidWith) && !manualCards.includes(paidWith) && (
+                      <option value={paidWith}>{paidWith}</option>
+                    )}
+                  </select>
+                  {!hasOptions && (
+                    <input
+                      type="text"
+                      placeholder="Or type a card name, e.g. Chase Sapphire"
+                      value={paidWith}
+                      onChange={(e) => setPaidWith(e.target.value)}
+                      style={{
+                        width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.8rem', marginTop: '0.5rem',
+                        backgroundColor: colors.inputBg || colors.cardBg, color: colors.text,
+                        border: `1px solid ${colors.inputBorder || colors.divider}`, borderRadius: '0.375rem',
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Split amounts */}
             {isSplit && (

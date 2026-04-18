@@ -202,6 +202,7 @@ interface AppContextType {
   availableNumber: number | null;
   availableBreakdown: any;
   creditCards: any[];
+  plaidCards: any[];
   fetchSpendingBudgets: () => Promise<void>;
   fetchSpendingSummary: () => Promise<void>;
   fetchAvailableNumber: () => Promise<void>;
@@ -296,6 +297,7 @@ const AppContext = createContext<AppContextType>({
   availableNumber: null,
   availableBreakdown: null,
   creditCards: [],
+  plaidCards: [],
   fetchSpendingBudgets: async () => {},
   fetchSpendingSummary: async () => {},
   fetchAvailableNumber: async () => {},
@@ -478,6 +480,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [availableNumber, setAvailableNumber] = useState<number | null>(null);
   const [availableBreakdown, setAvailableBreakdown] = useState<any>(null);
   const [creditCards, setCreditCards] = useState<any[]>([]);
+  const [plaidCards, setPlaidCards] = useState<any[]>([]);
 
   // Banking cache state (stale-while-revalidate)
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -779,11 +782,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const fetchCreditCards = useCallback(async () => {
     if (!user) {
       setCreditCards([]);
+      setPlaidCards([]);
       return;
     }
     try {
       const res = await billsAPI.getCreditCards();
       setCreditCards(res.data?.creditCards || []);
+      setPlaidCards(res.data?.plaidCards || []);
     } catch (err) {
       console.log('fetchCreditCards error:', (err as any)?.message);
     }
@@ -1295,6 +1300,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         availableNumber,
         availableBreakdown,
         creditCards,
+        plaidCards,
         fetchSpendingBudgets,
         fetchSpendingSummary,
         fetchAvailableNumber,

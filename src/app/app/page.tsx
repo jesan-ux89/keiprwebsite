@@ -434,6 +434,12 @@ export default function DashboardPage() {
             <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Expenses</span>
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalBillsThisCheck)}</span>
           </a>
+          {availableBreakdown?.ccBillsTotal > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', paddingLeft: '1rem' }}>
+              <span style={{ fontSize: '0.8rem', color: colors.textMuted, flex: 1 }}>└ 💳 On credit cards</span>
+              <span style={{ fontSize: '0.85rem', color: colors.textMuted }}>{fmt(availableBreakdown.ccBillsTotal)}</span>
+            </div>
+          )}
           <a href="/app/banking/transactions" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#EF4444' }} />
             <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Spent</span>
@@ -646,7 +652,12 @@ export default function DashboardPage() {
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsThisCheck)}</p>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{bills.length} expenses · {spentPct}% covered</p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>
+                  {bills.length} expenses · {spentPct}% covered
+                  {availableBreakdown?.ccBillsTotal > 0 && (
+                    <span> · 💳 {fmt(availableBreakdown.ccBillsTotal)} on cards</span>
+                  )}
+                </p>
               </Card>
             </div>
 
