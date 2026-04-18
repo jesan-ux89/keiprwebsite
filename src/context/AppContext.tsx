@@ -1141,7 +1141,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed' } : b));
     try {
       await billsAPI.confirmDetected(billId, overrides || {});
-      refreshBills();
+      refreshBills().catch(() => {});
     } catch (err) {
       console.log('confirmDetectedBill failed:', (err as Error)?.message);
       await refreshBills();
@@ -1152,8 +1152,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed', isRecurring: false } : b));
     try {
       await billsAPI.confirmDetected(billId, { oneTime: true });
-      refreshBills();
-      refreshPayments();
+      refreshBills().catch(() => {});
+      refreshPayments().catch(() => {});
     } catch (err) {
       console.log('confirmAsOneTime failed:', (err as Error)?.message);
       await refreshBills();
