@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { aiAPI } from '@/lib/api';
@@ -23,8 +24,9 @@ export default function TrackerPage() {
   const { colors, isDark } = useTheme();
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
-    isBillPaid, isSplitPaid, toggleSplitPaid, isUltra,
+    isBillPaid, isSplitPaid, toggleSplitPaid, isUltra, deleteBill,
   } = useApp();
+  const router = useRouter();
   const [showNext, setShowNext] = useState(false);
 
   // AI Corrections state
@@ -57,6 +59,20 @@ export default function TrackerPage() {
   const payPeriods = primaryIncome
     ? getPayPeriods(primaryIncome.nextPayDate, freq)
     : null;
+
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDeleteBill = (billId: string, billName: string) => {
+    if (deleteConfirmId === billId) {
+      // Second click = confirm
+      deleteBill(billId);
+      setDeleteConfirmId(null);
+    } else {
+      setDeleteConfirmId(billId);
+      // Auto-reset after 3 seconds
+      setTimeout(() => setDeleteConfirmId(prev => prev === billId ? null : prev), 3000);
+    }
+  };
 
   const loading = billsLoading || incomeLoading;
 
@@ -206,6 +222,10 @@ export default function TrackerPage() {
 
   return (
     <AppLayout pageTitle="Tracker" topBarActions={paycheckToggle}>
+      {/* Show delete button on row hover */}
+      <style>{`
+        div:hover > .tracker-delete-btn { opacity: 1 !important; }
+      `}</style>
       <TwoColumnLayout sidebar={<TrackerSummary />}>
         {/* Progress Ring Card */}
         <div
@@ -397,6 +417,30 @@ export default function TrackerPage() {
                     }}>
                       {fmt(amt)}
                     </div>
+                  </div>
+
+                  {/* Delete button — visible on hover */}
+                  <div
+                    className="tracker-delete-btn"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteBill(bill.id, bill.name); }}
+                    title={deleteConfirmId === bill.id ? 'Click again to confirm delete' : 'Delete expense'}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      opacity: deleteConfirmId === bill.id ? 1 : 0,
+                      transition: 'opacity 0.15s ease, background-color 0.15s ease',
+                      backgroundColor: deleteConfirmId === bill.id ? 'rgba(220,38,38,0.12)' : 'transparent',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: '14px', color: deleteConfirmId === bill.id ? '#DC2626' : colors.textMuted }}>
+                      {deleteConfirmId === bill.id ? '✕' : '🗑'}
+                    </span>
                   </div>
                 </div>
               );
