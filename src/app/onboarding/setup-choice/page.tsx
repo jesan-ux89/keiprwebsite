@@ -2,12 +2,14 @@
 
 import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme, darkColors } from '@/context/ThemeContext';
 
 function SetupChoiceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { colors, isDark } = useTheme();
+  // Force dark mode on this screen (matches sign-up / welcome flow)
+  const colors = darkColors;
+  const isDark = true;
 
   const schedule = searchParams.get('schedule') || '';
   const amount = searchParams.get('amount') || '';
