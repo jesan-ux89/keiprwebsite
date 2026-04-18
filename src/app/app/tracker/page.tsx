@@ -85,11 +85,11 @@ export default function TrackerPage() {
       <AppLayout pageTitle="Tracker">
         <div style={{ maxWidth: '800px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <p style={{ fontSize: '13px', color: colors.textMuted }}>Track which bills you've paid this paycheck period</p>
+            <p style={{ fontSize: '13px', color: colors.textMuted }}>Track which expenses you've paid this paycheck period</p>
           </div>
           <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted, backgroundColor: colors.card, borderRadius: '12px', border: `1px solid ${colors.cardBorder}` }}>
             <p style={{ fontSize: '16px', fontWeight: '600', color: colors.text, marginBottom: '8px' }}>No pay schedule found</p>
-            <p style={{ fontSize: '13px' }}>Add an income source in Settings to start tracking your bills by paycheck.</p>
+            <p style={{ fontSize: '13px' }}>Add an income source in Settings to start tracking your expenses by paycheck.</p>
           </div>
         </div>
       </AppLayout>
@@ -213,7 +213,7 @@ export default function TrackerPage() {
       <div style={{ borderTop: `1px solid ${colors.cardBorder}`, paddingTop: '12px' }}>
         {isUltra && (
           <div style={{ fontSize: '11px', color: colors.textMuted, lineHeight: '1.4' }}>
-            Bills matched to bank transactions are auto-verified. Look for the 🏦 badge.
+            Expenses matched to bank transactions are auto-verified. Look for the 🏦 badge.
           </div>
         )}
       </div>
@@ -447,7 +447,7 @@ export default function TrackerPage() {
             })}
           </div>
         ) : (
-          <EmptyState icon="tracker" title="No bills this period" description={`No bills are due during ${period.label}`} />
+          <EmptyState icon="tracker" title="No expenses this period" description={`No expenses are due during ${period.label}`} />
         )}
       </TwoColumnLayout>
 

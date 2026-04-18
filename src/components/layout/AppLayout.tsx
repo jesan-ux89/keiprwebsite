@@ -40,7 +40,7 @@ type NavItem = {
 // Free/Pro: Dashboard, Bills, Tracker, Plan, Settings
 const FREE_PRO_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/app', icon: LayoutDashboard, section: 'Overview' },
-  { label: 'Bills', href: '/app/bills', icon: Receipt, section: 'Planning' },
+  { label: 'Expenses', href: '/app/bills', icon: Receipt, section: 'Planning' },
   { label: 'Tracker', href: '/app/tracker', icon: CheckSquare, section: 'Planning' },
   { label: 'Plan', href: '/app/plan', icon: Calendar, section: 'Planning' },
 ];

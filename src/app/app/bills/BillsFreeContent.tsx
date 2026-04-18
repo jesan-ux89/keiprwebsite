@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
@@ -21,6 +22,7 @@ interface ExpandedBills {
 }
 
 export default function BillsFreeContent() {
+  const router = useRouter();
   const { colors, isDark } = useTheme();
   const { bills, billsLoading, fmt, spendingSummary, spendingBudgets, creditCards } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
@@ -247,7 +249,7 @@ export default function BillsFreeContent() {
 
   return (
     <AppLayout
-      pageTitle="Bills"
+      pageTitle="Expenses"
       showMonthNav={true}
       topBarActions={
         <Button
@@ -355,7 +357,7 @@ export default function BillsFreeContent() {
                 paddingBottom: '0.75rem',
                 borderBottom: `1px solid ${colors.divider}`,
               }}>
-                Bills paid by credit card
+                Expenses paid by credit card
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {creditCards.map((cc: any) => (
@@ -688,6 +690,27 @@ export default function BillsFreeContent() {
               })}
             </div>
           </Card>
+
+          {/* Plan Ahead Card — only when no search filter */}
+          {!searchTerm && (
+            <div
+              onClick={() => router.push('/app/plan')}
+              style={{
+                backgroundColor: colors.inputBg, borderRadius: 12,
+                border: `0.5px solid ${colors.cardBorder}`,
+                marginBottom: 16, cursor: 'pointer', overflow: 'hidden',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', gap: 12 }}>
+                <span style={{ fontSize: 24 }}>📅</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text, marginBottom: 2 }}>Plan ahead</div>
+                  <div style={{ fontSize: 12, color: colors.textSub }}>Draft next month's budget</div>
+                </div>
+                <span style={{ fontSize: 20, color: colors.textMuted }}>&rsaquo;</span>
+              </div>
+            </div>
+          )}
 
           </div>
         )}

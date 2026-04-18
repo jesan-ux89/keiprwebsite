@@ -25,6 +25,8 @@ import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 
 type ViewMode = 'monthly' | 'paycheck' | 'nextcheck' | 'cycles';
 
+const UNDO_WINDOW_SECONDS = 30;
+
 export default function DashboardFreeContent() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
@@ -50,11 +52,15 @@ export default function DashboardFreeContent() {
 
   // Undo snackbar state (quick expense)
   const [undoSnackbar, setUndoSnackbar] = useState<{ billId: string; name: string; amount: number } | null>(null);
+  const [undoCountdown, setUndoCountdown] = useState(UNDO_WINDOW_SECONDS);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const dismissUndo = useCallback(() => {
     setUndoSnackbar(null);
+    setUndoCountdown(UNDO_WINDOW_SECONDS);
     if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+    if (undoIntervalRef.current) { clearInterval(undoIntervalRef.current); undoIntervalRef.current = null; }
   }, []);
 
   const handleUndo = useCallback(async () => {
@@ -342,11 +348,18 @@ export default function DashboardFreeContent() {
       setExpenseCategory('');
       setExpenseModalOpen(false);
 
-      // Show undo snackbar for 30 seconds
+      // Show undo snackbar with countdown
       if (billId) {
         if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        if (undoIntervalRef.current) clearInterval(undoIntervalRef.current);
         setUndoSnackbar({ billId, name: savedName, amount: savedAmount });
-        undoTimerRef.current = setTimeout(() => setUndoSnackbar(null), 30000);
+        setUndoCountdown(UNDO_WINDOW_SECONDS);
+        undoIntervalRef.current = setInterval(() => setUndoCountdown(prev => prev > 0 ? prev - 1 : 0), 1000);
+        undoTimerRef.current = setTimeout(() => {
+          setUndoSnackbar(null);
+          setUndoCountdown(UNDO_WINDOW_SECONDS);
+          if (undoIntervalRef.current) { clearInterval(undoIntervalRef.current); undoIntervalRef.current = null; }
+        }, UNDO_WINDOW_SECONDS * 1000);
       }
     } catch (err) {
       console.error('Log expense failed:', err);
@@ -674,7 +687,7 @@ export default function DashboardFreeContent() {
 
                   {thisPaycheckBills.length === 0 ? (
                     <p style={{ color: colors.textMuted, fontSize: '0.95rem', margin: 0 }}>
-                      No bills due this paycheck
+                      No expenses due this paycheck
                     </p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -783,7 +796,7 @@ export default function DashboardFreeContent() {
                     </h2>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                       <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>
-                        {fmt(nextBillsTotal)} in bills{nextCCBillsTotal > 0 ? ` (${fmt(nextCCBillsTotal)} on cards)` : ''}
+                        {fmt(nextBillsTotal)} in expenses{nextCCBillsTotal > 0 ? ` (${fmt(nextCCBillsTotal)} on cards)` : ''}
                       </span>
                       <span style={{ color: nextRemaining >= 0 ? colors.green : colors.red, fontSize: '0.875rem', fontWeight: 600 }}>
                         {fmt(nextRemaining)} remaining
@@ -977,13 +990,13 @@ export default function DashboardFreeContent() {
                       <Card style={{ textAlign: 'center', padding: '2rem' }}>
                         <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>✨</p>
                         <p style={{ color: colors.textMuted, margin: 0 }}>
-                          No bills due before your next paycheck. Extra breathing room!
+                          No expenses due before your next paycheck. Extra breathing room!
                         </p>
                       </Card>
                     ) : (
                       <Card>
                         <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          Bills due next period
+                          Expenses due next period
                         </h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                           {nextPaycheckBills.map((bill) => {
@@ -1058,7 +1071,7 @@ export default function DashboardFreeContent() {
 
                     <Card>
                       <h2 style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textMuted, margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Next month's projected bills
+                        Next month's projected expenses
                       </h2>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {bills.filter(b => b.isRecurring).sort((a, b) => (a.dueDay || 1) - (b.dueDay || 1)).map((bill) => {
@@ -1207,7 +1220,7 @@ export default function DashboardFreeContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 {allocations.length === 0 && (
                   <Card style={{ textAlign: 'center', padding: '2rem' }}>
-                    <p style={{ color: colors.textMuted, margin: 0 }}>No categories with bills yet. Add bills to see cycle breakdowns.</p>
+                    <p style={{ color: colors.textMuted, margin: 0 }}>No categories with expenses yet. Add expenses to see cycle breakdowns.</p>
                   </Card>
                 )}
                 {allocations.map(({ name, color, amt, amtMonthly, spent }) => (
@@ -1270,13 +1283,27 @@ export default function DashboardFreeContent() {
                   <Card>
                     <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Remaining</p>
                     <p style={{ fontSize: '1.5rem', fontWeight: 700, color: monthlyRemaining >= 0 ? colors.green : colors.red, margin: '0 0 0.25rem 0' }}>{fmt(monthlyRemaining)}</p>
-                    <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>After bills</p>
+                    <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>After expenses</p>
                   </Card>
                   <Card>
                     <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Savings</p>
                     <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0A7B6C', margin: '0 0 0.25rem 0' }}>{fmt(savingsAmt)}</p>
                     <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>{savingsPct}% of income</p>
                   </Card>
+                </div>
+
+                {/* Quick Spend Button */}
+                <div
+                  onClick={() => setExpenseModalOpen(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: 6, padding: '10px 16px',
+                    backgroundColor: isDark ? 'rgba(56,189,248,0.1)' : 'rgba(12,74,110,0.08)',
+                    borderRadius: 10, cursor: 'pointer',
+                    width: 'fit-content', margin: '0 auto',
+                  }}
+                >
+                  <span style={{ fontSize: 14, color: isDark ? '#38BDF8' : '#0C4A6E', fontWeight: 600 }}>+ Quick spend</span>
                 </div>
 
                 {/* Category breakdown */}
@@ -1303,78 +1330,68 @@ export default function DashboardFreeContent() {
 
       {/* Quick Expense Modal */}
       {expenseModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000,
-        }} onClick={() => setExpenseModalOpen(false)}>
-          <div style={{
-            backgroundColor: colors.card, borderRadius: 16, padding: '2rem', width: '90%', maxWidth: 420,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: colors.text }}>Quick spend</h3>
-              <button onClick={() => { setExpenseModalOpen(false); setExpenseName(''); setExpenseAmount(''); setExpenseCategory(''); }}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: colors.textMuted, cursor: 'pointer' }}>✕</button>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setExpenseModalOpen(false)}>
+          <div style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40, width: '100%', maxWidth: 500 }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: colors.text }}>Quick spend</span>
+              <span onClick={() => { setExpenseModalOpen(false); setExpenseName(''); setExpenseAmount(''); setExpenseCategory(''); }} style={{ fontSize: 16, color: colors.textSub, cursor: 'pointer' }}>&#10005;</span>
             </div>
-
-            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px', marginBottom: '0.375rem', display: 'block' }}>WHAT DID YOU SPEND ON?</label>
+            {/* Name input */}
+            <div style={{ fontSize: 12, fontWeight: 600, color: colors.textSub, marginBottom: 6, letterSpacing: 0.5 }}>WHAT DID YOU SPEND ON?</div>
             <input
-              type="text"
+              style={{ backgroundColor: colors.inputBg, borderRadius: 10, padding: 14, fontSize: 16, color: colors.text, marginBottom: 16, border: `0.5px solid ${colors.cardBorder}`, width: '100%', outline: 'none', boxSizing: 'border-box' }}
               placeholder="e.g. Dinner, Gas, Coffee"
               value={expenseName}
               onChange={e => setExpenseName(e.target.value)}
               autoFocus
-              style={{
-                width: '100%', padding: '0.875rem', borderRadius: 10, border: `0.5px solid ${colors.cardBorder}`,
-                backgroundColor: colors.inputBg, color: colors.text, fontSize: '1rem', marginBottom: '1rem',
-                outline: 'none', boxSizing: 'border-box',
-              }}
             />
-
-            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px', marginBottom: '0.375rem', display: 'block' }}>HOW MUCH?</label>
+            {/* Amount input */}
+            <div style={{ fontSize: 12, fontWeight: 600, color: colors.textSub, marginBottom: 6, letterSpacing: 0.5 }}>HOW MUCH?</div>
             <input
               type="number"
-              inputMode="decimal"
+              style={{ backgroundColor: colors.inputBg, borderRadius: 10, padding: 14, fontSize: 16, color: colors.text, marginBottom: 16, border: `0.5px solid ${colors.cardBorder}`, width: '100%', outline: 'none', boxSizing: 'border-box' }}
               placeholder="0.00"
               value={expenseAmount}
               onChange={e => setExpenseAmount(e.target.value)}
-              style={{
-                width: '100%', padding: '0.875rem', borderRadius: 10, border: `0.5px solid ${colors.cardBorder}`,
-                backgroundColor: colors.inputBg, color: colors.text, fontSize: '1rem', marginBottom: '1rem',
-                outline: 'none', boxSizing: 'border-box',
-              }}
             />
-
-            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, letterSpacing: '0.5px', marginBottom: '0.375rem', display: 'block' }}>CATEGORY (OPTIONAL)</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              {['Dining', 'Groceries', 'Shopping', 'Transport', 'Entertainment', 'Healthcare', 'Other'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setExpenseCategory(expenseCategory === cat ? '' : cat)}
-                  style={{
-                    padding: '0.5rem 0.875rem', borderRadius: 20, fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
-                    backgroundColor: expenseCategory === cat ? '#38BDF8' : colors.inputBg,
-                    color: expenseCategory === cat ? '#fff' : colors.text,
-                    border: expenseCategory === cat ? 'none' : `0.5px solid ${colors.cardBorder}`,
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Category pills */}
+            <div style={{ fontSize: 12, fontWeight: 600, color: colors.textSub, marginBottom: 6, letterSpacing: 0.5 }}>CATEGORY (OPTIONAL)</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+              {['Dining', 'Groceries', 'Shopping', 'Transport', 'Entertainment', 'Healthcare', 'Other'].map(cat => {
+                const isSelected = expenseCategory === cat;
+                return (
+                  <div
+                    key={cat}
+                    onClick={() => setExpenseCategory(isSelected ? '' : cat)}
+                    style={{
+                      paddingInline: 14, paddingBlock: 8, borderRadius: 20, cursor: 'pointer',
+                      backgroundColor: isSelected ? '#38BDF8' : colors.inputBg,
+                      border: `1px solid ${isSelected ? '#38BDF8' : (isDark ? 'rgba(232,229,220,0.18)' : 'rgba(26,24,20,0.15)')}`,
+                      fontSize: 13, fontWeight: 600, color: isSelected ? '#1A1814' : colors.text,
+                    }}
+                  >
+                    {cat}
+                  </div>
+                );
+              })}
             </div>
-
-            <button
-              onClick={handleLogExpense}
-              disabled={expenseSaving || !expenseName.trim() || !expenseAmount.trim()}
+            {/* Submit button */}
+            <div
+              onClick={() => { if (!expenseSaving && expenseName.trim() && expenseAmount.trim()) handleLogExpense(); }}
               style={{
-                width: '100%', padding: '1rem', borderRadius: 12, border: 'none', cursor: 'pointer',
-                backgroundColor: (!expenseName.trim() || !expenseAmount.trim()) ? colors.cardBorder : '#38BDF8',
-                color: '#fff', fontSize: '1rem', fontWeight: 700,
+                backgroundColor: (!expenseName.trim() || !expenseAmount.trim() || expenseSaving)
+                  ? (isDark ? 'rgba(56,189,248,0.18)' : 'rgba(12,74,110,0.15)')
+                  : '#38BDF8',
+                borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer',
+                color: (!expenseName.trim() || !expenseAmount.trim() || expenseSaving)
+                  ? (isDark ? 'rgba(232,229,220,0.45)' : 'rgba(26,24,20,0.45)')
+                  : '#1A1814',
+                fontSize: 16, fontWeight: 700,
               }}
             >
-              {expenseSaving ? 'Saving...' : 'Quick spend'}
-            </button>
+              {expenseSaving ? 'Saving\u2026' : 'Quick spend'}
+            </div>
           </div>
         </div>
       )}
@@ -1383,36 +1400,26 @@ export default function DashboardFreeContent() {
       {undoSnackbar && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          backgroundColor: '#1A1814', borderRadius: 14, padding: '14px 20px',
-          display: 'flex', alignItems: 'center', gap: '1rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)', zIndex: 9999,
-          minWidth: 320, maxWidth: 480,
+          backgroundColor: '#1A1814', borderRadius: 14, padding: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: 1001, minWidth: 320, maxWidth: 500,
         }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
-              {undoSnackbar.name} — {fmt(undoSnackbar.amount)}
-            </p>
-            <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>Quick expense added</p>
+          <div style={{ flex: 1, marginRight: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{undoSnackbar.name} — {fmt(undoSnackbar.amount)}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Quick expense added</div>
           </div>
-          <button
+          <div
             onClick={handleUndo}
             style={{
-              backgroundColor: '#38BDF8', border: 'none', borderRadius: 8,
-              padding: '8px 16px', cursor: 'pointer',
-              fontSize: '0.8rem', fontWeight: 700, color: '#1A1814',
+              backgroundColor: '#38BDF8', borderRadius: 8,
+              paddingInline: 16, paddingBlock: 8,
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
             }}
           >
-            Undo
-          </button>
-          <button
-            onClick={dismissUndo}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '1rem', color: 'rgba(255,255,255,0.4)', padding: '4px',
-            }}
-          >
-            ✕
-          </button>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1814' }}>Undo</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(26,24,20,0.6)' }}>{undoCountdown}s</span>
+          </div>
+          <span onClick={dismissUndo} style={{ marginLeft: 8, padding: 4, cursor: 'pointer', fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>&#10005;</span>
         </div>
       )}
 
