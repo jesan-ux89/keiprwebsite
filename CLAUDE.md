@@ -16,6 +16,8 @@ These decisions were debated, tested, and finalized by Jesse. Do NOT change, "im
 
 5. **Mobile app is source of truth.** All data logic, calculations, and shared components must match mobile. Do not invent website-only logic without checking mobile first.
 
+6. **AI Accountant onboarding runs ONCE.** Backend enforces this — the first AI run uses `'onboarding'` trigger, all subsequent 48h-window runs downgrade to `'bank_sync'`. Website just displays results. Do not add AI trigger logic to the website.
+
 ---
 
 ## ⚠ RULE #1 (MOST IMPORTANT): Hit `/api/debug/user-state` BEFORE speculating about state
