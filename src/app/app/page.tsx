@@ -649,17 +649,15 @@ export default function DashboardPage() {
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Available</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: (isUltra && availableNumber !== null ? availableNumber : remaining) >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(isUltra && availableNumber !== null ? availableNumber : remaining)}</p>
-                {isUltra && availableBreakdown?.checkingBalance != null ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{fmt(availableBreakdown.checkingBalance)} in checking</p>
-                    <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: 0, opacity: 0.7 }}>{fmt(remaining > 0 ? remaining : 0)} this check · {fmt(nextRemaining > 0 ? nextRemaining : 0)} next check</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>After bills & spending</p>
-                    <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: 0, opacity: 0.7 }}>{fmt(remaining > 0 ? remaining : 0)} this check · {fmt(nextRemaining > 0 ? nextRemaining : 0)} next check</p>
-                  </div>
-                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>
+                    {isUltra && availableBreakdown?.checkingBalance != null
+                      ? `${fmt(availableBreakdown.checkingBalance)} available in checking`
+                      : `${fmt(isUltra && availableNumber !== null ? availableNumber : remaining)} available to spend`}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{fmt(remaining > 0 ? remaining : 0)} available this check</p>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{fmt(nextRemaining > 0 ? nextRemaining : 0)} available next check</p>
+                </div>
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
