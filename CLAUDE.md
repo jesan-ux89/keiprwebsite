@@ -68,8 +68,13 @@ src/
 │   ├── auth/                       ← login, signup, forgot-password
 │   └── app/
 │       ├── layout.tsx              ← Authenticated shell
-│       ├── page.tsx                ← Dashboard (hero stats + spending pace + upcoming + recent activity)
-│       ├── bills/page.tsx          ← Budget page (Monarch-style Budget/Actual/Remaining columns)
+│       ├── page.tsx                ← Dashboard ROUTER (reads isUltra, renders Free or Ultra)
+│       ├── DashboardFreeContent.tsx ← Free/Pro dashboard (Monthly, This Check, Next Check, Cycles)
+│       ├── DashboardUltraContent.tsx ← Ultra dashboard (Overview, This Check, Next Check)
+│       ├── bills/
+│       │   ├── page.tsx            ← Bills/Budget ROUTER (reads isUltra, renders Free or Ultra)
+│       │   ├── BillsFreeContent.tsx ← Free/Pro "Bills" page
+│       │   └── BillsUltraContent.tsx ← Ultra "Budget" page (detected banner, bank badges)
 │       ├── tracker/page.tsx        ← Tracker (SVG ring progress + bill checklist)
 │       ├── plan/page.tsx           ← Forward month planning (Free/Pro only in nav)
 │       ├── reports/page.tsx        ← Reports (NEW — spending charts + trends, Ultra only)
@@ -94,9 +99,22 @@ src/
     ├── api.ts                     ← Axios client + all API endpoints
     ├── firebase.ts                ← Firebase config
     ├── payPeriods.ts              ← ** MIRRORED ** pay period calculation engine
+    ├── dashboardHelpers.ts        ← ** MIRRORED ** billAmountForPaycheck, computeDashboardTotals
+    ├── billsHelpers.ts            ← ** MIRRORED ** groupBillsByCategory, filterBills, computeBillsTotals
     ├── categoryIcons.ts           ← ** MIRRORED ** category icon definitions
     └── merchantLogos.ts           ← ** MIRRORED ** merchant domain map
 ```
+
+## ⚠ Tier Separation (Screen-Level Isolation)
+
+Dashboard and Bills pages are **physically split into separate files** per tier, matching the mobile app's architecture. Editing the Free/Pro dashboard CANNOT break Ultra, and vice versa.
+
+**How it works:**
+- `page.tsx` files are thin routers (~10 lines) that read `isUltra` and render the correct component
+- `DashboardFreeContent.tsx` / `DashboardUltraContent.tsx` — separate dashboard implementations
+- `BillsFreeContent.tsx` / `BillsUltraContent.tsx` — separate bills/budget implementations
+- Shared helpers in `src/lib/dashboardHelpers.ts` and `src/lib/billsHelpers.ts`
+- Shared data layer (AppContext, payPeriods, api.ts) stays unified
 
 ## Website Design System (Monarch-Inspired Redesign)
 
@@ -135,9 +153,13 @@ The website has its own web-native design, inspired by Monarch. NOT a direct mir
 |---|---|---|
 | `src/context/AppContext.tsx` | `src/context/AppContext.tsx` | `mapApiBill()`, `mapIncomeSource()`, payment logic, `fmt()` |
 | `src/lib/payPeriods.ts` | `src/utils/payPeriods.ts` | `getPayPeriods()`, `isBillInPeriod()` |
-| `src/app/app/page.tsx` | `src/screens/dashboard/DashboardScreen.tsx` | Tier-based tabs, Ultra Overview, `billAmountForPaycheck()` |
+| `src/app/app/DashboardFreeContent.tsx` | `src/screens/dashboard/DashboardFreeScreen.tsx` | Free/Pro dashboard (Monthly, This Check, Next Check, Cycles) |
+| `src/app/app/DashboardUltraContent.tsx` | `src/screens/dashboard/DashboardUltraScreen.tsx` | Ultra dashboard (Overview, This Check, Next Check) |
+| `src/lib/dashboardHelpers.ts` | `src/screens/dashboard/dashboardHelpers.ts` | `billAmountForPaycheck()`, `computeDashboardTotals()` |
 | `src/app/app/tracker/page.tsx` | `src/screens/tracker/TrackerScreen.tsx` | Payment tracking, auto-verify hint |
-| `src/app/app/bills/page.tsx` | `src/screens/bills/BillsScreen.tsx` | Budget title for Ultra, unified expenses |
+| `src/app/app/bills/BillsFreeContent.tsx` | `src/screens/bills/BillsFreeScreen.tsx` | Free/Pro "Bills" page |
+| `src/app/app/bills/BillsUltraContent.tsx` | `src/screens/bills/BillsUltraScreen.tsx` | Ultra "Budget" page (detected banner, bank badges) |
+| `src/lib/billsHelpers.ts` | `src/screens/bills/billsHelpers.ts` | `groupBillsByCategory()`, `filterBills()` |
 | `src/lib/categoryIcons.ts` | `src/utils/categoryIcons.ts` | Category icons |
 | `src/components/CategoryIcon.tsx` | `src/components/CategoryIcon.tsx` | Category icon component |
 | `src/lib/merchantLogos.ts` | `src/utils/merchantLogos.ts` | Merchant domain map |
@@ -445,4 +467,4 @@ If AI Accountant never ships:
 - Full implementation in `/IMPLEMENTATION_SUMMARY.md`
 
 ## What's Left to Build
-1. **Onboarding split** — Manual vs Automated path recommendation
+1. ~~**Onboarding split**~~ — ✓ Complete on mobile (`SetupChoiceScreen.tsx`). Website onboarding mirror TBD.
