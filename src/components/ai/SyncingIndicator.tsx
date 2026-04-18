@@ -1,8 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { aiAPI } from '@/lib/api';
+
+// Module-level dismissed ID — survives component unmount/remount (navigation)
+let globalDismissedRunId: string | null = null;
+
+// Load from sessionStorage on module init (persists within tab session)
+if (typeof window !== 'undefined') {
+  globalDismissedRunId = sessionStorage.getItem('keipr_dismissed_ai_run');
+}
 
 interface SyncingIndicatorProps {
   enabled?: boolean;
@@ -16,7 +24,16 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
   const [updates, setUpdates] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const lastSeenRunIdRef = useRef<string | null>(null);
-  const dismissedRunIdRef = useRef<string | null>(null);
+
+  // Dismiss helper — persists so banner never comes back for this run
+  const dismissRun = useCallback(() => {
+    const runId = lastSeenRunIdRef.current;
+    globalDismissedRunId = runId;
+    if (runId && typeof window !== 'undefined') {
+      sessionStorage.setItem('keipr_dismissed_ai_run', runId);
+    }
+    setIsVisible(false);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -33,7 +50,7 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
         const run = runList[0];
 
         // Skip dismissed runs
-        if (run.id === dismissedRunIdRef.current) return;
+        if (run.id === globalDismissedRunId) return;
 
         if (run.status === 'running' || run.status === 'pending') {
           if (mounted) {
@@ -50,10 +67,10 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
             setIsVisible(true);
             if (onComplete) onComplete();
 
-            // Auto-hide after 2 minutes if user doesn't interact
+            // Auto-hide after 30 seconds and persist dismissal
             setTimeout(() => {
-              if (mounted) setIsVisible(false);
-            }, 120000);
+              if (mounted) dismissRun();
+            }, 30000);
           }
         } else if (run.status === 'completed' && run.id === lastSeenRunIdRef.current && status === 'running') {
           // Same run just finished
@@ -63,8 +80,8 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
             setUpdates(applied);
             if (onComplete) onComplete();
             setTimeout(() => {
-              if (mounted) setIsVisible(false);
-            }, 120000);
+              if (mounted) dismissRun();
+            }, 30000);
           }
         }
       } catch (err) {
@@ -86,11 +103,10 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [enabled, status]);
+  }, [enabled, status, dismissRun]);
 
   const handleClick = () => {
-    dismissedRunIdRef.current = lastSeenRunIdRef.current;
-    setIsVisible(false);
+    dismissRun();
     if (onViewBudget) onViewBudget();
   };
 
