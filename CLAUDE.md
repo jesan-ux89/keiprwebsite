@@ -2,6 +2,22 @@
 
 @AGENTS.md
 
+## 🔒 LOCKED DESIGN DECISIONS — DO NOT REVERSE
+
+These decisions were debated, tested, and finalized by Jesse. Do NOT change, "improve," or revert them without Jesse's explicit approval in the current session. If you think one is wrong, ASK Jesse — do not silently "fix" it.
+
+1. **Income auto-adjusts from real deposits.** Backend auto-updates `typical_amount` when Plaid deposits arrive. The website uses `typicalAmount` from AppContext for remaining calculations. Do NOT add logic to "preserve the user's original input."
+
+2. **CC-paid bills: excluded from Expenses display, included in Remaining.** `totalBillsThisCheck` = direct-pay bills only (for Expenses card). But `remaining` and `nextRemaining` subtract ALL bills (direct + CC). Do NOT change remaining to exclude CC bills.
+
+3. **No auto-migrateToUltra after Plaid Link.** The website's bank-import flow calls `exchangeToken` + `onboardingImport` only. Never `migrateToUltra`.
+
+4. **Detection bugs are backend bugs.** The website only displays results. Fixes go in `_keipr-complete-backend/src/lib/detectionEngine.js`.
+
+5. **Mobile app is source of truth.** All data logic, calculations, and shared components must match mobile. Do not invent website-only logic without checking mobile first.
+
+---
+
 ## ⚠ RULE #1 (MOST IMPORTANT): Hit `/api/debug/user-state` BEFORE speculating about state
 
 When Jesse reports ANY bug with ambiguous state ("wrong category on web", "bill missing", "balance not matching mobile", etc.), the FIRST action is to hit `GET /api/debug/user-state`. Do NOT guess at DB state. Do NOT start reading website code to form hypotheses — the bug is almost always visible in backend state (and is probably also present on mobile, since the data layer is the same).
