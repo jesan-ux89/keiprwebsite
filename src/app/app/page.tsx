@@ -150,17 +150,24 @@ export default function DashboardPage() {
     ? sortByOccurrence(bills.filter(b => b.isSplit || isBillInPeriod(b.dueDay || 1, nextPeriod)), nextPeriod)
     : [];
 
-  // ── Monthly totals (full bill amounts) ─────────────────────
-  const totalBillsMonthly = bills.reduce((s, b) => s + (b.total || 0), 0);
+  // ── Monthly totals (excluding CC-paid to avoid double-counting) ─────────────────────
+  const directBills = bills.filter((b: any) => !b.paidWith);
+  const totalBillsMonthly = directBills.reduce((s, b) => s + (b.total || 0), 0);
+  const totalCCBillsMonthly = bills.filter((b: any) => !!b.paidWith).reduce((s, b) => s + (b.total || 0), 0);
   const totalSpentMonthly = bills.reduce((s, b) => s + (b.funded || 0), 0);
 
   // ── This paycheck calculations (MATCHES MOBILE) ────────────
-  const totalBillsThisCheck = thisPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
+  const directBillsThisCheck = thisPaycheckBills.filter((b: any) => !b.paidWith);
+  const ccBillsThisCheck = thisPaycheckBills.filter((b: any) => !!b.paidWith);
+  const totalBillsThisCheck = directBillsThisCheck.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
+  const totalCCBillsThisCheck = ccBillsThisCheck.reduce((s, b) => s + billAmountForPaycheck(b, currentPaycheckNum), 0);
   const totalSpendingBudgetsAmount = isUltra ? (spendingBudgets || []).reduce((s: number, b: any) => s + (b.budget_amount || 0), 0) : 0;
   const remaining = (totalPaycheck || 0) - totalBillsThisCheck - totalSpendingBudgetsAmount;
   const spentPct = totalPaycheck > 0 ? Math.round((totalBillsThisCheck / totalPaycheck) * 100) : 0;
 
-  const nextBillsTotal = nextPaycheckBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
+  const directNextBills = nextPaycheckBills.filter((b: any) => !b.paidWith);
+  const nextBillsTotal = directNextBills.reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
+  const nextCCBillsTotal = nextPaycheckBills.filter((b: any) => !!b.paidWith).reduce((s, b) => s + billAmountForPaycheck(b, nextPaycheckNum), 0);
   const nextRemaining = (totalPaycheck || 0) - nextBillsTotal;
 
   // ── Rollover bonus (MATCHES MOBILE) ──────────────────────────
@@ -434,10 +441,10 @@ export default function DashboardPage() {
             <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Expenses</span>
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text }}>{fmt(totalBillsThisCheck)}</span>
           </a>
-          {availableBreakdown?.ccBillsTotal > 0 && (
+          {totalCCBillsThisCheck > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', paddingLeft: '1rem' }}>
               <span style={{ fontSize: '0.8rem', color: colors.textMuted, flex: 1 }}>└ 💳 On credit cards</span>
-              <span style={{ fontSize: '0.85rem', color: colors.textMuted }}>{fmt(availableBreakdown.ccBillsTotal)}</span>
+              <span style={{ fontSize: '0.85rem', color: colors.textMuted }}>{fmt(totalCCBillsThisCheck)}</span>
             </div>
           )}
           <a href="/app/banking/transactions" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
@@ -642,7 +649,17 @@ export default function DashboardPage() {
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Available</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: (isUltra && availableNumber !== null ? availableNumber : remaining) >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(isUltra && availableNumber !== null ? availableNumber : remaining)}</p>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>After bills & spending</p>
+                {isUltra && availableBreakdown?.checkingBalance != null ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{fmt(availableBreakdown.checkingBalance)} in checking</p>
+                    <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: 0, opacity: 0.7 }}>{fmt(remaining > 0 ? remaining : 0)} this check · {fmt(nextRemaining > 0 ? nextRemaining : 0)} next check</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>After bills & spending</p>
+                    <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: 0, opacity: 0.7 }}>{fmt(remaining > 0 ? remaining : 0)} this check · {fmt(nextRemaining > 0 ? nextRemaining : 0)} next check</p>
+                  </div>
+                )}
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
@@ -653,10 +670,9 @@ export default function DashboardPage() {
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsThisCheck)}</p>
                 <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>
-                  {bills.length} expenses · {spentPct}% covered
-                  {availableBreakdown?.ccBillsTotal > 0 && (
-                    <span> · 💳 {fmt(availableBreakdown.ccBillsTotal)} on cards</span>
-                  )}
+                  {totalCCBillsThisCheck > 0
+                    ? `+ ${fmt(totalCCBillsThisCheck)} on cards`
+                    : `${spentPct}% of paycheck`}
                 </p>
               </Card>
             </div>
@@ -748,6 +764,13 @@ export default function DashboardPage() {
                                 borderRadius: '4px', backgroundColor: badgeBg, color: badgeColor,
                               }}>{badgeText}</span>
                               <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>{b.category || 'Other'}</span>
+                              {!!(b as any).paidWith && (
+                                <span style={{
+                                  fontSize: '0.6rem', fontWeight: 600, padding: '0.1rem 0.35rem',
+                                  borderRadius: '4px', backgroundColor: 'rgba(156,94,250,0.12)',
+                                  border: '1px solid rgba(156,94,250,0.25)', color: '#9C5EFA',
+                                }}>💳 CC</span>
+                              )}
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
@@ -873,6 +896,9 @@ export default function DashboardPage() {
                 <Card>
                   <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, margin: '0 0 1rem 0' }}>
                     This Paycheck — {currentPeriod?.label ?? ''}
+                    {totalCCBillsThisCheck > 0 && (
+                      <span style={{ fontSize: '0.8rem', fontWeight: 500, color: colors.textMuted }}> ({fmt(totalCCBillsThisCheck)} on cards)</span>
+                    )}
                   </h2>
 
                   {thisPaycheckBills.length === 0 ? (
@@ -912,11 +938,20 @@ export default function DashboardPage() {
                                 <p style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.text, margin: 0 }}>
                                   {bill.name}
                                 </p>
-                                <p style={{ fontSize: '0.875rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
-                                  {bill.category}
-                                  {bill.isSplit && ` · This check's portion`}
-                                  {bill.isAutoPay && ' · AutoPay'}
-                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '0.875rem', color: colors.textMuted }}>
+                                    {bill.category}
+                                    {bill.isSplit && ` · This check's portion`}
+                                    {bill.isAutoPay && ' · AutoPay'}
+                                  </span>
+                                  {!!(bill as any).paidWith && (
+                                    <span style={{
+                                      fontSize: '0.65rem', fontWeight: 600, padding: '0.1rem 0.4rem',
+                                      borderRadius: '4px', backgroundColor: 'rgba(156,94,250,0.12)',
+                                      border: '1px solid rgba(156,94,250,0.25)', color: '#9C5EFA',
+                                    }}>💳 CC</span>
+                                  )}
+                                </div>
                               </div>
                               <div style={{ textAlign: 'right', marginRight: '1rem' }}>
                                 <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
@@ -977,7 +1012,7 @@ export default function DashboardPage() {
                     </h2>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                       <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>
-                        {fmt(nextBillsTotal)} in bills
+                        {fmt(nextBillsTotal)} in bills{nextCCBillsTotal > 0 ? ` (${fmt(nextCCBillsTotal)} on cards)` : ''}
                       </span>
                       <span style={{ color: nextRemaining >= 0 ? colors.green : colors.red, fontSize: '0.875rem', fontWeight: 600 }}>
                         {fmt(nextRemaining)} remaining
@@ -1001,9 +1036,18 @@ export default function DashboardPage() {
                               transition: 'opacity 0.15s',
                             }}
                           >
-                            <span style={{ color: colors.text, fontWeight: 500 }}>
-                              {bill.name}{bill.isSplit ? ` · P${nextPaycheckNum}` : ''}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span style={{ color: colors.text, fontWeight: 500 }}>
+                                {bill.name}{bill.isSplit ? ` · P${nextPaycheckNum}` : ''}
+                              </span>
+                              {!!(bill as any).paidWith && (
+                                <span style={{
+                                  fontSize: '0.6rem', fontWeight: 600, padding: '0.1rem 0.35rem',
+                                  borderRadius: '4px', backgroundColor: 'rgba(156,94,250,0.12)',
+                                  border: '1px solid rgba(156,94,250,0.25)', color: '#9C5EFA',
+                                }}>💳 CC</span>
+                              )}
+                            </div>
                             <span style={{ color: colors.text, fontWeight: 600 }}>{fmt(amt)}</span>
                           </a>
                         );
