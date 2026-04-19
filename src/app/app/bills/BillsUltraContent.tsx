@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { bankingAPI, aiAPI } from '@/lib/api';
+import { bankingAPI, aiAPI, usersAPI } from '@/lib/api';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -14,7 +14,7 @@ import CorrectionBadge from '@/components/ai/CorrectionBadge';
 import CorrectionDetailModal from '@/components/ai/CorrectionDetailModal';
 import { BillsSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight, Lock, Waves } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight, Lock, Waves, Wallet } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
 import CategoryIcon from '@/components/CategoryIcon';
 
@@ -26,7 +26,7 @@ interface ExpandedBills {
 
 export default function BillsUltraContent() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra, spendingSummary, spendingBudgets, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards } = useApp();
+  const { bills, billsLoading, fmt, isUltra, spendingSummary, spendingBudgets, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards, incomeSources, addIncomeSource } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -34,6 +34,47 @@ export default function BillsUltraContent() {
   const [expandedTypes, setExpandedTypes] = useState<{ fixed: boolean; flexible: boolean }>({ fixed: false, flexible: false });
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [matchedBillIds, setMatchedBillIds] = useState<Set<string>>(new Set());
+
+  // One-time funds
+  const oneTimeFunds = incomeSources.filter(s => s.isOneTime);
+  const [fundAllocations, setFundAllocations] = useState<Record<string, { total: number; items: any[] }>>({});
+  const [expandedFunds, setExpandedFunds] = useState(false);
+  const [showAddFund, setShowAddFund] = useState(false);
+  const [newFundName, setNewFundName] = useState('');
+  const [newFundAmount, setNewFundAmount] = useState('');
+
+  useEffect(() => {
+    async function loadFundAllocations() {
+      const allocs: Record<string, { total: number; items: any[] }> = {};
+      for (const fund of oneTimeFunds) {
+        try {
+          const res = await usersAPI.getFundAllocations(fund.id);
+          const items = res.data?.allocations || [];
+          const total = items.reduce((s: number, a: any) => s + a.amount, 0);
+          allocs[fund.id] = { total, items };
+        } catch {
+          allocs[fund.id] = { total: 0, items: [] };
+        }
+      }
+      setFundAllocations(allocs);
+    }
+    if (oneTimeFunds.length > 0) loadFundAllocations();
+  }, [incomeSources]);
+
+  async function handleAddFund() {
+    if (!newFundName || !newFundAmount) return;
+    const amount = parseFloat(newFundAmount);
+    if (isNaN(amount) || amount <= 0) return;
+    await addIncomeSource({
+      name: newFundName,
+      frequency: 'monthly',
+      typicalAmount: amount,
+      isOneTime: true,
+    });
+    setNewFundName('');
+    setNewFundAmount('');
+    setShowAddFund(false);
+  }
 
   useEffect(() => {
     bankingAPI.getMatchedBills()
@@ -909,6 +950,165 @@ export default function BillsUltraContent() {
                   );
               })}
             </div>
+          </Card>
+
+          {/* One-Time Funds Section */}
+          <Card style={{ marginTop: '2rem' }}>
+            <div
+              onClick={() => setExpandedFunds(!expandedFunds)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '1rem 1.25rem', cursor: 'pointer', userSelect: 'none',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 8,
+                  backgroundColor: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(12,74,110,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Wallet size={18} style={{ color: colors.electric }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text, margin: 0 }}>One-time funds</h3>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.125rem 0 0' }}>
+                    {oneTimeFunds.length} fund{oneTimeFunds.length !== 1 ? 's' : ''} · Track cash, bonuses & refunds
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowAddFund(true); setExpandedFunds(true); }}
+                  style={{
+                    background: 'none', border: 'none', color: colors.electric,
+                    fontSize: '1.375rem', fontWeight: 300, cursor: 'pointer', padding: '0 0.25rem',
+                  }}
+                >+</button>
+                {expandedFunds ? <ChevronUp size={18} style={{ color: colors.textMuted }} /> : <ChevronDown size={18} style={{ color: colors.textMuted }} />}
+              </div>
+            </div>
+
+            {expandedFunds && (
+              <div style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}>
+                {/* Add fund inline form */}
+                {showAddFund && (
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}>
+                    <input
+                      type="text"
+                      placeholder="Fund name (e.g. Tax Refund)"
+                      value={newFundName}
+                      onChange={(e) => setNewFundName(e.target.value)}
+                      style={{
+                        width: '100%', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                        borderRadius: 8, padding: '0.625rem 0.75rem', color: colors.text,
+                        fontSize: '0.9375rem', marginBottom: '0.5rem', outline: 'none',
+                      }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Amount"
+                      value={newFundAmount}
+                      onChange={(e) => setNewFundAmount(e.target.value)}
+                      style={{
+                        width: '100%', background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                        borderRadius: 8, padding: '0.625rem 0.75rem', color: colors.text,
+                        fontSize: '0.9375rem', marginBottom: '0.75rem', outline: 'none',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={handleAddFund}
+                        style={{
+                          flex: 1, background: colors.electric, border: 'none', borderRadius: 8,
+                          padding: '0.625rem', color: '#fff', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+                        }}
+                      >Add fund</button>
+                      <button
+                        onClick={() => { setShowAddFund(false); setNewFundName(''); setNewFundAmount(''); }}
+                        style={{
+                          flex: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                          border: 'none', borderRadius: 8, padding: '0.625rem',
+                          color: colors.textMuted, fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+                        }}
+                      >Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {oneTimeFunds.length === 0 && !showAddFund && (
+                  <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <p style={{ color: colors.textMuted, fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
+                      Track money that doesn't hit your bank — cash gifts, side hustle income, bonuses, refunds.
+                    </p>
+                    <button
+                      onClick={() => setShowAddFund(true)}
+                      style={{
+                        background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(12,74,110,0.08)',
+                        border: 'none', borderRadius: 8, padding: '0.5rem 1rem',
+                        color: colors.electric, fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer',
+                      }}
+                    >+ Add your first fund</button>
+                  </div>
+                )}
+
+                {oneTimeFunds.map((fund, i) => {
+                  const alloc = fundAllocations[fund.id] || { total: 0, items: [] };
+                  const remaining = Math.max(0, fund.typicalAmount - alloc.total);
+                  const pct = fund.typicalAmount > 0 ? Math.min(100, Math.round((alloc.total / fund.typicalAmount) * 100)) : 0;
+                  const isFullySpent = remaining < 0.01;
+
+                  return (
+                    <Link key={fund.id} href={`/app/income?fund=${fund.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                        padding: '0.875rem 1.25rem',
+                        borderBottom: i < oneTimeFunds.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
+                        cursor: 'pointer', transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                      >
+                        <div style={{
+                          width: 36, height: 36, borderRadius: 8,
+                          backgroundColor: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(12,74,110,0.08)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>
+                          <span style={{ fontSize: '1rem' }}>💰</span>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: colors.text }}>{fund.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '0.125rem' }}>
+                            <span style={{ fontSize: '0.6875rem', color: colors.textMuted }}>
+                              {isFullySpent ? 'Fully spent' : `${fmt(remaining)} remaining`}
+                            </span>
+                            <span style={{ fontSize: '0.6875rem', color: colors.textMuted }}>·</span>
+                            <span style={{ fontSize: '0.6875rem', color: colors.textMuted }}>{alloc.items.length} item{alloc.items.length !== 1 ? 's' : ''}</span>
+                          </div>
+                          {/* Progress bar */}
+                          <div style={{
+                            height: 3, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                            borderRadius: 2, marginTop: '0.375rem', overflow: 'hidden',
+                          }}>
+                            <div style={{
+                              height: '100%', width: `${pct}%`,
+                              backgroundColor: isFullySpent ? (colors.green || '#16A34A') : colors.electric,
+                              borderRadius: 2, transition: 'width 0.3s ease',
+                            }} />
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: '0.9375rem', fontWeight: 600,
+                          color: isFullySpent ? (colors.green || '#16A34A') : colors.text,
+                          flexShrink: 0,
+                        }}>{fmt(fund.typicalAmount)}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </Card>
 
           {/* Plan ahead card — Ultra only */}
