@@ -98,10 +98,20 @@ export default function PrivacyPage() {
               We collect basic usage data to maintain and improve the Service, including: device type, operating system, app version, and crash reports. We use Firebase Authentication for account management, which may collect authentication-related metadata (login timestamps, authentication method). We do not use third-party advertising trackers or sell data to advertisers.
             </p>
 
+            <h3 className="text-lg font-semibold mb-2 mt-4" style={{ color: '#0C4A6E' }}>Cookies and Local Storage</h3>
+            <p className="mb-6">
+              The Keipr web app uses essential cookies and browser local storage to maintain your authentication session and store your theme preference (dark/light mode). We do not use tracking cookies, third-party advertising cookies, or analytics cookies that identify you personally.
+            </p>
+
             <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>2. How We Use Your Information</h2>
             <p className="mb-4">We use your information to:</p>
             <p className="mb-6" style={{ paddingLeft: '20px' }}>
               Provide and operate the budgeting Service; sync and display your financial data across devices; detect recurring expenses and match transactions to bills (Ultra); send you notifications about detected expenses, payment reminders, and account activity; process subscription payments through Lemon Squeezy; respond to support requests; and improve the Service based on aggregate usage patterns.
+            </p>
+
+            <h3 className="text-lg font-semibold mb-2 mt-4" style={{ color: '#0C4A6E' }}>AI-Powered Features (Ultra)</h3>
+            <p className="mb-6">
+              Ultra subscribers may have access to AI-powered budget optimization. When this feature is enabled, we send <strong style={{ color: '#0C1E2C' }}>redacted</strong> financial data (transaction amounts, dates, merchant names, and categories — with no personal identifiers such as your name, email, or account numbers) to a third-party AI model (Anthropic&apos;s Claude) for analysis. The AI helps categorize transactions, detect recurring expenses, and optimize bill assignments. You can review, undo, or override any AI-generated change, and you can disable AI features entirely in Settings. AI processing data is retained according to our standard data retention policy and Anthropic&apos;s <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#0C4A6E', textDecoration: 'underline' }}>usage policy</a> (zero-retention for API calls).
             </p>
 
             <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>3. How We Store and Protect Your Data</h2>
@@ -167,17 +177,22 @@ export default function PrivacyPage() {
               If you are a California resident, you have additional rights under the California Consumer Privacy Act (CCPA), including the right to know what personal information we collect, the right to request deletion, and the right to opt out of the &quot;sale&quot; of personal information. We do not sell personal information. To exercise your rights, contact us at contact@keipr.app.
             </p>
 
-            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>10. International Users</h2>
+            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>10. European Users (GDPR)</h2>
+            <p className="mb-6">
+              If you are located in the European Economic Area (EEA) or the United Kingdom, you have additional rights under the General Data Protection Regulation (GDPR), including the right to access, rectify, erase, restrict processing, and port your data. Our legal basis for processing your data is: (a) performance of a contract (providing the budgeting Service), (b) your consent (for optional features like connected banking and AI optimization), and (c) our legitimate interest in maintaining and improving the Service. To exercise your GDPR rights, contact us at contact@keipr.app. You also have the right to lodge a complaint with your local data protection authority.
+            </p>
+
+            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>11. International Users</h2>
             <p className="mb-6">
               Keipr is operated from the United States. If you access the Service from outside the US, your data may be transferred to and processed in the United States, where data protection laws may differ from your jurisdiction. By using the Service, you consent to this transfer.
             </p>
 
-            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>11. Changes to This Policy</h2>
+            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>12. Changes to This Policy</h2>
             <p className="mb-6">
               We may update this Privacy Policy from time to time. If we make material changes, we will notify you by email or through the Service at least 30 days before the changes take effect. Your continued use of the Service after the effective date constitutes acceptance of the updated policy.
             </p>
 
-            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>12. Contact Us</h2>
+            <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>13. Contact Us</h2>
             <p>
               If you have questions about this Privacy Policy or your data, contact us at <a href="mailto:contact@keipr.app" style={{ color: '#0C4A6E', textDecoration: 'underline' }}>contact@keipr.app</a>.
             </p>

@@ -155,8 +155,8 @@ export default function Home() {
       <section id="features" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Powerful Features Built for Paycheck Planning</h2>
-            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.6)' }}>Everything you need to master your finances around your pay cycles</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Built Around How You Actually Get Paid</h2>
+            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.6)' }}>Budget by paycheck, by month, or months ahead — your money, your way</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -953,10 +953,10 @@ function HeroWithFloatingCards() {
       {/* ── Center content ── */}
       <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6 md:space-y-8">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight" style={{ color: '#F5F3EF' }}>
-          Budget Around Your Paychecks, <span style={{ color: '#38BDF8' }}>Not the Calendar</span>
+          The <span style={{ color: '#38BDF8' }}>Paycheck-First</span> Budgeting App
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(245,243,239,0.55)' }}>
-          Stop forcing your finances into calendar months. Keipr helps you plan around your pay cycles, split large bills across paychecks, and track every dollar with confidence.
+          See exactly what&apos;s left after every payday. Whether you manage your money by the pay cycle, by the calendar month, or months into the future — you finally have a budget that fits your life.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
           <Link

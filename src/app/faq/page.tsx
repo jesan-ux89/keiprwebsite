@@ -22,6 +22,10 @@ const FAQ_SECTIONS = [
         a: 'Keipr is available as an Android app and a full web app at keipr.app. Your budget syncs across all devices — sign in with the same account and everything stays up to date. iOS is coming soon.',
       },
       {
+        q: 'What pay frequencies are supported?',
+        a: 'Keipr supports biweekly (every 2 weeks), weekly, twice monthly (1st and 15th), and monthly pay schedules. You can also track multiple income sources with different frequencies if you have a side gig or freelance work (Pro and Ultra).',
+      },
+      {
         q: 'What if I get paid biweekly?',
         a: 'Keipr was built for exactly this. Set biweekly as your pay frequency and your bills automatically sort into the right paycheck period. You can even split large bills like rent or mortgage across two paychecks so no single payday takes the hit.',
       },
@@ -48,7 +52,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Can I try before I buy?',
-        a: 'Yes. The Free plan is fully functional with no time limit. When you\'re ready for more, upgrade to Pro or Ultra anytime from Settings. You can also start a free trial of Ultra when you connect your bank during onboarding.',
+        a: 'Yes. The Free plan is fully functional with no time limit. When you\'re ready for more, upgrade to Pro or Ultra anytime from Settings. You can also start a 7-day free trial of Ultra when you connect your bank during onboarding.',
       },
       {
         q: 'What happens if I cancel my subscription?',
@@ -74,6 +78,10 @@ const FAQ_SECTIONS = [
       {
         q: 'What currencies does Keipr support?',
         a: 'Keipr supports 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, and JPY. You can change your currency anytime in Settings.',
+      },
+      {
+        q: 'How does AI-powered budget optimization work?',
+        a: 'Ultra subscribers get an AI-powered assistant that analyzes your transaction patterns to auto-confirm obvious recurring expenses, fix miscategorized transactions, assign bills to the right paychecks, and detect savings patterns. It runs automatically after you connect your bank and after new transactions sync. All AI processing uses redacted data (no personal identifiers are sent to the AI model), and you can review, undo, or override any change the AI makes. You can disable AI features entirely in Settings.',
       },
     ],
   },

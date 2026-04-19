@@ -93,7 +93,7 @@ export default function TermsPage() {
 
             <h2 className="text-xl font-bold mb-3 mt-8" style={{ color: '#0C1E2C' }}>3. The Service</h2>
             <p className="mb-4">
-              Keipr is a personal budgeting tool that helps you organize expenses around your pay cycles. The Service is provided &quot;as is&quot; and is intended for personal, informational use only.
+              Keipr is a personal budgeting tool that helps you organize expenses around your pay cycles. Certain features (available to Ultra subscribers) use AI-powered analysis to categorize transactions and optimize bill assignments — see our <Link href="/privacy" style={{ color: '#0C4A6E', textDecoration: 'underline' }}>Privacy Policy</Link> for details on how this data is processed. The Service is provided &quot;as is&quot; and is intended for personal, informational use only.
             </p>
             <p className="mb-6">
               <strong style={{ color: '#0C1E2C' }}>Keipr is not a financial advisor, bank, or money transmitter.</strong> We do not provide financial, investment, tax, or legal advice. Any figures, projections, or summaries shown in the app are estimates based on data you provide and should not be relied upon as financial guidance. Always consult a qualified professional for financial decisions.
