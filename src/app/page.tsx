@@ -259,18 +259,30 @@ export default function Home() {
           >
             <X size={32} color="#fff" />
           </button>
-          <img
-            src={lightboxSrc}
-            alt="Full resolution screenshot"
+          <div
             onClick={(e) => e.stopPropagation()}
             style={{
               maxHeight: '90vh',
-              maxWidth: '90vw',
-              borderRadius: '16px',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
+              maxWidth: '400px',
+              width: '90vw',
+              borderRadius: '36px',
+              border: '4px solid rgba(255,255,255,0.15)',
+              overflow: 'hidden',
+              background: '#1A1814',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05)',
               cursor: 'default',
             }}
-          />
+          >
+            <img
+              src={lightboxSrc}
+              alt="Full resolution screenshot"
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
