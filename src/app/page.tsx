@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   ChevronRight,
-  Wallet
+  Wallet,
+  Brain
 } from 'lucide-react';
 
 export default function Home() {
@@ -161,25 +162,28 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screenshots/Paycheck-Forward-Budgeting.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screenshot-dashboard.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 2 */}
-            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screenshots/Split-Bills.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screenshot-split.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 3 */}
-            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screenshots/Bill-Tracker.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screenshot-tracker.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 4 */}
-            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screenshots/Forward-Planning.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screenshot-plan.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 5 */}
-            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screenshots/Connected-Banking.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screenshot-banking.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 6 */}
-            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshots/Currency.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshot-currency.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 7 */}
-            <FeatureCard icon={Wallet} title="One-Time Fund Tracking" description="Got a tax refund, bonus, or loan payout? Track it separately from your regular budget. Add spending items against it and watch the balance drain to zero — no impact on your paycheck calculations." screenshot="/screenshots/One-Time-Fund.jpg" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Wallet} title="One-Time Fund Tracking" description="Got a tax refund, bonus, or loan payout? Track it separately from your regular budget. Add spending items against it and watch the balance drain to zero — no impact on your paycheck calculations." screenshot="/screenshot-fund.png" onScreenshotClick={setLightboxSrc} />
+
+            {/* Feature 8 */}
+            <FeatureCard icon={Brain} title="AI Budget Intelligence" description="An AI Accountant that auto-classifies transactions, merges duplicates, assigns bills to the right paycheck, and detects savings patterns — so your budget stays accurate without the manual work." screenshot="/screenshot-ai.png" onScreenshotClick={setLightboxSrc} />
           </div>
         </div>
       </section>
