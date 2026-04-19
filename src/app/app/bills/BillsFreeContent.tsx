@@ -462,7 +462,7 @@ export default function BillsFreeContent() {
               {[
                 { label: 'Fixed Expenses', bills: fixedBills, prefix: 'fixed' },
                 { label: 'Flexible Expenses', bills: flexibleBills, prefix: 'flex' },
-              ].filter(group => group.bills.length > 0).map((group, gi) => {
+              ].map((group, gi) => {
                 const groupCategories = Array.from(new Set(group.bills.map(b => b.category || 'Other'))).sort((a, b) => {
                   const totalA = group.bills.filter(x => x.category === a).reduce((s, x) => s + x.total, 0);
                   const totalB = group.bills.filter(x => x.category === b).reduce((s, x) => s + x.total, 0);
@@ -538,7 +538,7 @@ export default function BillsFreeContent() {
                         {fmt(group.bills.reduce((s, b) => s + b.total, 0))}
                       </p>
                     </div>
-                    {isSectionOpen && groupCategories.map((catName, idx) => {
+                    {isSectionOpen && group.bills.length > 0 && groupCategories.map((catName, idx) => {
                 const categoryBills = group.bills.filter(b => b.category === catName);
                 const hasBills = categoryBills.length > 0;
                 const isExpanded = expandedBills[`${group.prefix}_${catName}`];
