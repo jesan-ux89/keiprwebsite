@@ -151,6 +151,11 @@ export default function Home() {
       {/* Hero Section with Floating Cards */}
       <HeroWithFloatingCards />
 
+      {/* Pain Point Section — 4-card story strip */}
+      <PainSection />
+
+      {/* How It Works */}
+      <HowItWorks />
 
       {/* Features Section */}
       <section id="features" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
@@ -162,28 +167,28 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screenshot-dashboard.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screen-dashboard.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 2 */}
-            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screenshot-split.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Zap} title="Split Bills Across Paychecks" description="Break large bills into smaller payments across multiple paychecks. Never feel the pain of a big expense again." screenshot="/screen-split.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 3 */}
-            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screenshot-tracker.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={BarChart3} title="Bill Tracker" description="Track what's paid each paycheck cycle at a glance. Get instant visibility into your bill payment status." screenshot="/screen-tracker.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 4 */}
-            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screenshot-plan.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={TrendingUp} title="Forward Planning" description="Plan months ahead with confidence. See how your income and bills align across future paychecks." screenshot="/screen-plan.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 5 */}
-            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screenshot-banking.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Landmark} title="Connected Banking" description="Auto-match transactions to your bills with Plaid. Ultra tier feature for seamless banking integration." screenshot="/screen-banking.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 6 */}
-            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screenshot-currency.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Globe} title="Multi-Currency Support" description="Work with 7 currencies: USD, EUR, GBP, CAD, AUD, MXN, JPY. Perfect for global users." screenshot="/screen-currency.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 7 */}
-            <FeatureCard icon={Wallet} title="One-Time Fund Tracking" description="Got a tax refund, bonus, or loan payout? Track it separately from your regular budget. Add spending items against it and watch the balance drain to zero — no impact on your paycheck calculations." screenshot="/screenshot-fund.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Wallet} title="One-Time Fund Tracking" description="Got a tax refund, bonus, or loan payout? Track it separately from your regular budget. Add spending items against it and watch the balance drain to zero — no impact on your paycheck calculations." screenshot="/screen-fund.png" onScreenshotClick={setLightboxSrc} />
 
             {/* Feature 8 */}
-            <FeatureCard icon={Brain} title="AI Budget Intelligence" description="An AI Accountant that auto-classifies transactions, merges duplicates, assigns bills to the right paycheck, and detects savings patterns — so your budget stays accurate without the manual work." screenshot="/screenshot-ai.png" onScreenshotClick={setLightboxSrc} />
+            <FeatureCard icon={Brain} title="AI Budget Intelligence" description="An AI Accountant that auto-classifies transactions, merges duplicates, assigns bills to the right paycheck, and detects savings patterns — so your budget stays accurate without the manual work." screenshot="/screen-ai.png" onScreenshotClick={setLightboxSrc} />
           </div>
         </div>
       </section>
@@ -379,6 +384,159 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
         Get Started
       </Link>
     </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   Pain Section — "Every budgeting app assumes the 1st"
+   Centered headline + 4-card horizontal story strip
+   ══════════════════════════════════════════════════════════ */
+function PainSection() {
+  const storyCardStyle: React.CSSProperties = {
+    background: 'rgba(15,20,30,0.94)',
+    border: '1px solid rgba(56,189,248,0.18)',
+    borderRadius: '18px',
+    padding: '22px 22px 26px',
+    boxShadow: '0 8px 28px rgba(0,0,0,0.25), 0 0 12px rgba(56,189,248,0.04)',
+  };
+  const stepStyle = (bg: string): React.CSSProperties => ({
+    width: '28px', height: '28px', borderRadius: '50%', background: bg,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '0.72rem', fontWeight: 800, color: '#fff', flexShrink: 0,
+  });
+  const rowStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' };
+  const checkDot: React.CSSProperties = { width: '18px', height: '18px', borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
+  const progressTrack: React.CSSProperties = { width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: '6px' };
+
+  return (
+    <section className="border-t px-4" style={{ backgroundColor: '#F5F3EF', borderColor: 'rgba(12,74,110,0.08)', padding: '80px 24px 72px' }}>
+      <div className="max-w-7xl mx-auto">
+        {/* Headline */}
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#0C1E2C', lineHeight: 1.3 }}>
+            Every budgeting app assumes you get paid on the 1st.<br />
+            <span style={{ color: '#38BDF8' }}>You probably don&apos;t.</span>
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(12,30,44,0.6)', lineHeight: 1.8 }}>
+            Most people get paid biweekly, weekly, or twice a month — but every budgeting tool forces you into a calendar-month view.
+            Bills don&apos;t line up. Money feels tight one week, fine the next. You&apos;re always guessing.
+            Keipr flips the model: <strong style={{ color: '#0C1E2C' }}>your budget starts when your paycheck lands.</strong>
+          </p>
+        </div>
+
+        {/* 4-card strip */}
+        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Connecting line (desktop only) */}
+          <div className="hidden lg:block absolute" style={{ top: '28px', left: '60px', right: '60px', height: '2px', background: 'linear-gradient(90deg, #4ADE80, #38BDF8, #FBBF24, #0C4A6E)', opacity: 0.3, zIndex: 0 }} />
+
+          {/* Card 1: Got Paid */}
+          <div style={{ ...storyCardStyle, position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <div style={stepStyle('#16A34A')}>1</div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#4ADE80' }}>You Got Paid</span>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Paycheck 1 · Apr 10</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#4ADE80', marginBottom: '6px' }}>+$2,847</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: '10px' }}>Direct deposit from Acme Corp</div>
+            <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(15,20,30,0.5)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={rowStyle}><span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.55)' }}>Before</span><span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#F5F3EF' }}>$1,243</span></div>
+              <div style={rowStyle}><span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.55)' }}>After</span><span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#4ADE80' }}>$4,090</span></div>
+            </div>
+          </div>
+
+          {/* Card 2: Bills Mapped */}
+          <div style={{ ...storyCardStyle, position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <div style={stepStyle('#38BDF8')}>2</div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#38BDF8' }}>Bills Mapped</span>
+            </div>
+            {[['Rent', '$850'], ['Car Payment', '$287'], ['Electric', '$145'], ['Internet', '$89']].map(([name, amt]) => (
+              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 0' }}>
+                <div style={checkDot}><span style={{ color: '#fff', fontSize: '10px', fontWeight: 700 }}>✓</span></div>
+                <span style={{ fontSize: '0.78rem', color: '#F5F3EF', flex: 1 }}>{name}</span>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>{amt}</span>
+              </div>
+            ))}
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '6px 0' }} />
+            <div style={rowStyle}><span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.55)' }}>Total due</span><span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#F5F3EF' }}>$1,371</span></div>
+          </div>
+
+          {/* Card 3: Split It */}
+          <div style={{ ...storyCardStyle, position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <div style={{ ...stepStyle('#FBBF24'), color: '#1A1814' }}>3</div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#FBBF24' }}>Split It</span>
+            </div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F5F3EF', marginBottom: '8px' }}>Mortgage · $2,000</div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+              <div style={{ flex: 1, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.18)', borderRadius: '10px', padding: '8px 12px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.4)' }}>Check 1 · Apr 10</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ADE80' }}>$1,200</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.18)', borderRadius: '10px', padding: '8px 12px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.4)' }}>Check 2 · Apr 24</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FBBF24' }}>$800</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#4ADE80', flexShrink: 0 }} />
+              <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, #4ADE80, #FBBF24)' }} />
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#FBBF24', flexShrink: 0 }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+              <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)' }}>Apr 10</span>
+              <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)' }}>Apr 24</span>
+            </div>
+          </div>
+
+          {/* Card 4: Plan Ahead */}
+          <div style={{ ...storyCardStyle, position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <div style={stepStyle('#0C4A6E')}>4</div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#38BDF8' }}>Plan Ahead</span>
+            </div>
+            <div style={{ marginBottom: '14px' }}>
+              <div style={rowStyle}><span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F5F3EF' }}>May 2026</span><span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#38BDF8' }}>75%</span></div>
+              <div style={progressTrack}><div style={{ width: '75%', height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg, #38BDF8, #0C4A6E)' }} /></div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>$1,875 of $2,495 funded</div>
+            </div>
+            <div>
+              <div style={rowStyle}><span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F5F3EF' }}>June 2026</span><span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(56,189,248,0.6)' }}>30%</span></div>
+              <div style={progressTrack}><div style={{ width: '30%', height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg, rgba(56,189,248,0.5), rgba(12,74,110,0.5))' }} /></div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>$749 of $2,495 funded</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   How It Works — 3 steps
+   ══════════════════════════════════════════════════════════ */
+function HowItWorks() {
+  const steps = [
+    { num: '1', title: 'Tell Us When You Get Paid', desc: 'Set your pay schedule — biweekly, weekly, twice monthly, or monthly. Keipr builds your budget around YOUR pay dates, not arbitrary calendar months.' },
+    { num: '2', title: 'Add Your Expenses', desc: 'Enter your bills manually or connect your bank to auto-detect recurring expenses. Keipr maps each bill to the right paycheck based on its due date.' },
+    { num: '3', title: 'See What\'s Left', desc: 'Your dashboard shows exactly how much you can spend after every payday. Track payments, plan months ahead, and split big bills across paychecks.' },
+  ];
+  return (
+    <section className="border-t px-4 py-20 md:py-28" style={{ backgroundColor: '#EDF6FC', borderColor: 'rgba(12,74,110,0.08)' }}>
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: '#0C1E2C' }}>How Keipr Works</h2>
+        <p className="text-lg text-center mb-14" style={{ color: 'rgba(12,30,44,0.5)' }}>Three steps to paycheck clarity</p>
+        <div className="grid md:grid-cols-3 gap-10">
+          {steps.map((s) => (
+            <div key={s.num} className="text-center">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-5" style={{ backgroundColor: '#0C4A6E' }}>{s.num}</div>
+              <h3 className="text-lg font-bold mb-3" style={{ color: '#0C1E2C' }}>{s.title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
