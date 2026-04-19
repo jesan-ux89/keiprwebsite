@@ -55,7 +55,7 @@ export default function Home() {
 
           {/* Center: Nav Links + Sign In (desktop) — absolute so store badges don't shift it */}
           <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-            <a href="#features" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
+            <a href="#how-it-works" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               How It Works
             </a>
             <a href="#features" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
@@ -579,7 +579,7 @@ function HowItWorks() {
     { num: '3', title: 'See What\'s Left', desc: 'Your dashboard shows exactly how much you can spend after every payday. Track payments, plan months ahead, and split big bills across paychecks.' },
   ];
   return (
-    <section className="border-t px-4 py-20 md:py-28" style={{ backgroundColor: '#EDF6FC', borderColor: 'rgba(12,74,110,0.08)' }}>
+    <section id="how-it-works" className="border-t px-4 py-20 md:py-28" style={{ backgroundColor: '#EDF6FC', borderColor: 'rgba(12,74,110,0.08)' }}>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: '#0C1E2C' }}>How Keipr Works</h2>
         <p className="text-lg text-center mb-14" style={{ color: 'rgba(12,30,44,0.5)' }}>Three steps to paycheck clarity</p>
