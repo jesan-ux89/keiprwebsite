@@ -196,18 +196,47 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Simple, Transparent Pricing</h2>
-            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.6)' }}>Choose the plan that fits your needs</p>
+            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.5)' }}>No hidden fees. Cancel anytime.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-7">
             {/* Free Tier */}
-            <PricingCard name="Free" price="$0" subtitle="Perfect to get started" features={['1 income source', '1 split bill', '1 month planning']} href="/auth/signup" />
+            <PricingCard
+              name="Free"
+              price="$0"
+              annualNote="Free forever"
+              subtitle="Get started with the basics"
+              features={['Paycheck-forward dashboard', '1 income source', '1 bill split', '1 month of forward planning', 'Bill tracker with progress ring', 'Dark mode & multi-currency']}
+              manualNote
+              href="/auth/signup"
+            />
 
             {/* Pro Tier */}
-            <PricingCard name="Pro" price="$7.99" subtitle="Most features, most users" features={['Unlimited splits', 'Unlimited income sources', 'Unlimited month planning', 'Data export', 'Trends & insights']} href="/auth/signup" highlighted />
+            <PricingCard
+              name="Pro"
+              price="$6.99"
+              annualNote="Billed annually ($83.88/yr) — save $12"
+              subtitle="Unlimited budgeting power"
+              features={['Unlimited income sources', 'Unlimited bill splits', 'Unlimited forward month planning', 'Paycheck cycle view', 'One-time fund tracking', 'Budget export (PDF & CSV)', 'Spending trends & insights', 'Priority support']}
+              separator="PLUS EVERYTHING IN FREE"
+              manualNote
+              href="/auth/signup"
+              buttonLabel="Start Free Trial"
+            />
 
-            {/* Ultra Tier */}
-            <PricingCard name="Ultra" price="$11.99" subtitle="Everything + connected banking" features={['Everything in Pro', 'Connected Banking via Plaid', 'Auto-match transactions', 'Smart suggestions']} href="/auth/signup" />
+            {/* Ultra Tier (RECOMMENDED) */}
+            <PricingCard
+              name="Ultra"
+              price="$10.99"
+              annualNote="Billed annually ($131.88/yr) — save $12"
+              subtitle="Full automation with your bank"
+              features={['Connected banking via Plaid', 'Auto-detected recurring expenses', 'Bank-verified bill payments', 'Live account balances', 'Full transaction history', 'Spending velocity per paycheck', 'Category spending breakdowns', 'AI-powered budget optimization']}
+              separator="PLUS EVERYTHING IN PRO"
+              href="/auth/signup"
+              buttonLabel="Start Free Trial"
+              highlighted
+              badge="Recommended"
+            />
           </div>
         </div>
       </section>
@@ -347,13 +376,18 @@ function FeatureCard({ icon: Icon, title, description, screenshot, onScreenshotC
 interface PricingCardProps {
   name: string;
   price: string;
+  annualNote?: string;
   subtitle: string;
   features: string[];
+  separator?: string;
+  manualNote?: boolean;
   href: string;
+  buttonLabel?: string;
   highlighted?: boolean;
+  badge?: string;
 }
 
-function PricingCard({ name, price, subtitle, features, href, highlighted = false }: PricingCardProps) {
+function PricingCard({ name, price, annualNote, subtitle, features, separator, manualNote, href, buttonLabel = 'Get Started', highlighted = false, badge }: PricingCardProps) {
   return (
     <div
       className="p-8 flex flex-col rounded-xl border"
@@ -363,18 +397,22 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
         borderWidth: highlighted ? '2px' : '1px',
       }}
     >
-      {highlighted && (
+      {badge && (
         <div className="inline-block text-sm font-semibold px-3 py-1 rounded-full mb-4 w-fit" style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}>
-          Popular
+          {badge}
         </div>
       )}
       <h3 className="text-2xl font-bold mb-2" style={{ color: '#0C1E2C' }}>{name}</h3>
       <p className="mb-6" style={{ color: 'rgba(12,30,44,0.6)' }}>{subtitle}</p>
-      <div className="mb-6">
+      <div className="mb-1">
         <span className="text-4xl font-bold" style={{ color: '#0C1E2C' }}>{price}</span>
-        <span style={{ color: 'rgba(12,30,44,0.45)' }}>/month</span>
+        {price !== '$0' && <span style={{ color: 'rgba(12,30,44,0.45)' }}>/month</span>}
       </div>
-      <ul className="space-y-3 mb-8 flex-1">
+      {annualNote && (
+        <p className="mb-6" style={{ color: 'rgba(12,30,44,0.35)', fontSize: '0.8rem' }}>{annualNote}</p>
+      )}
+      {!annualNote && <div className="mb-6" />}
+      <ul className="space-y-3 mb-4 flex-1">
         {features.map((feature) => (
           <li key={feature} className="flex items-start gap-3" style={{ color: 'rgba(12,30,44,0.6)' }}>
             <span style={{ color: '#0C4A6E' }} className="mt-1">•</span>
@@ -382,16 +420,25 @@ function PricingCard({ name, price, subtitle, features, href, highlighted = fals
           </li>
         ))}
       </ul>
+      {separator && (
+        <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(12,74,110,0.08)' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(12,30,44,0.3)' }}>{separator}</span>
+        </div>
+      )}
+      {manualNote && (
+        <p className="mb-6" style={{ color: 'rgba(12,30,44,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>Requires manual expense entry</p>
+      )}
+      {!manualNote && !separator && <div className="mb-4" />}
       <Link
         href={href}
-        className="w-full py-2 rounded-lg font-semibold transition text-center inline-block hover:opacity-90"
+        className="w-full py-2.5 rounded-lg font-semibold transition text-center inline-block hover:opacity-90"
         style={
           highlighted
             ? { backgroundColor: '#0C4A6E', color: '#E8E5DC' }
             : { border: '1px solid rgba(12,74,110,0.2)', color: '#0C1E2C' }
         }
       >
-        Get Started
+        {buttonLabel}
       </Link>
     </div>
   );
