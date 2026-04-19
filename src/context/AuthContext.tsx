@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
@@ -72,6 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCred.user, {
+        url: 'https://keipr.app/auth/action',
+        handleCodeInApp: false,
+      });
       const idToken = await userCred.user.getIdToken();
       await authAPI.register(idToken, fullName);
     } finally {
