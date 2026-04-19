@@ -65,6 +65,9 @@ export default function Home() {
             <a href="#pricing" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               Pricing
             </a>
+            <Link href="/faq" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
+              FAQ
+            </Link>
             <Link href="/auth/login" className="text-sm font-medium text-white hover:text-white/80 tracking-wide transition">
               Sign In
             </Link>
@@ -121,6 +124,9 @@ export default function Home() {
               <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/[0.05] rounded-lg transition">
                 Pricing
               </a>
+              <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/[0.05] rounded-lg transition">
+                FAQ
+              </Link>
               <div className="border-t border-white/[0.08] mt-2 pt-3 flex flex-col gap-2">
                 <Link href="/auth/login" className="px-4 py-3 text-sm text-white/80 hover:text-white rounded-lg transition text-center">
                   Sign In
@@ -201,8 +207,18 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t py-8 px-4 mt-auto" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
-        <div className="max-w-7xl mx-auto text-center" style={{ color: 'rgba(12,30,44,0.45)' }}>
-          <p>2026 Keipr. Paycheck-forward budgeting for everyone.</p>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p style={{ color: 'rgba(12,30,44,0.45)', fontSize: '0.85rem' }}>
+              &copy; 2026 Keipr. Paycheck-forward budgeting for everyone.
+            </p>
+            <div className="flex gap-6">
+              <Link href="/faq" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>FAQ</Link>
+              <Link href="/terms" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>Terms of Service</Link>
+              <Link href="/privacy" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>Privacy Policy</Link>
+              <a href="mailto:contact@keipr.app" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>Contact</a>
+            </div>
+          </div>
         </div>
       </footer>
 

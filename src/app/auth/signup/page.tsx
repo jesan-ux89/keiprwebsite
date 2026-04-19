@@ -369,6 +369,13 @@ export default function SignupPage() {
         {isSubmitting || loading ? 'Creating account...' : 'Sign up with Google'}
       </button>
 
+      <p style={{ fontSize: '12px', color: colors.textMuted, textAlign: 'center', marginTop: '16px', lineHeight: 1.5 }}>
+        By creating an account, you agree to our{' '}
+        <Link href="/terms" style={{ color: colors.electric, textDecoration: 'underline' }}>Terms of Service</Link>
+        {' '}and{' '}
+        <Link href="/privacy" style={{ color: colors.electric, textDecoration: 'underline' }}>Privacy Policy</Link>.
+      </p>
+
       <div style={styles.linksContainer}>
         <div>
           <span style={{ ...styles.signinText }}>Already have an account? </span>
