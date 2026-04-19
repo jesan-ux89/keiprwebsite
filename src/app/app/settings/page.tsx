@@ -2029,6 +2029,15 @@ function SettingsPage() {
         )}
       </Card>
 
+      {/* Legal */}
+      <div style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '0.8rem', color: colors.textMuted }}>
+        <span>Keipr v1.0.0</span>
+        <span style={{ margin: '0 8px' }}>·</span>
+        <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: colors.electric, textDecoration: 'underline' }}>Terms of Service</a>
+        <span style={{ margin: '0 8px' }}>·</span>
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: colors.electric, textDecoration: 'underline' }}>Privacy Policy</a>
+      </div>
+
       {/* Income Modal */}
       <Modal
         isOpen={showIncomeModal}
