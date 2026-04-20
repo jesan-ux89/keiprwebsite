@@ -24,12 +24,30 @@ interface PlanBill {
   is_removed: boolean;
 }
 
+interface ProjectionMonth {
+  year: number;
+  month: number;
+  label: string;
+  projectedIncome: number;
+  projectedBills: number;
+  projectedRemaining: number;
+  projectedRollover: number;
+  billsEndingThisMonth: { billId: string; name: string; amount: number }[];
+  isTight: boolean;
+  isSurplus: boolean;
+}
+
 export default function PlanPage() {
   const { colors, isDark } = useTheme();
   const { fmt, isPro, categories = [], incomeSources = [] } = useApp();
   const dangerColor = isDark ? '#F08070' : '#A32D2D';
   const dangerBg = isDark ? 'rgba(240,128,112,0.12)' : 'rgba(163,45,45,0.1)';
   const MONTH_COLORS = ['#0E7490', '#7C3AED', '#B45309', '#0F766E', '#BE185D', '#1D4ED8'];
+
+  // Multi-month projection (Pro+)
+  const [projection, setProjection] = useState<ProjectionMonth[]>([]);
+  const [projectionHorizon, setProjectionHorizon] = useState<6 | 12>(6);
+  const [projectionLoading, setProjectionLoading] = useState(false);
 
   // Current month label for the locked pill
   const now = new Date();
@@ -58,6 +76,20 @@ export default function PlanPage() {
     setMonths(getPlanMonths(isPro));
     setSelectedMonthIndex(0);
   }, [isPro]);
+
+  // Fetch multi-month projection (Pro only)
+  useEffect(() => {
+    if (!isPro) return;
+    let cancelled = false;
+    setProjectionLoading(true);
+    planAPI.getProjection(projectionHorizon)
+      .then((res: any) => {
+        if (!cancelled) setProjection(res.data?.projection || []);
+      })
+      .catch(() => { if (!cancelled) setProjection([]); })
+      .finally(() => { if (!cancelled) setProjectionLoading(false); });
+    return () => { cancelled = true; };
+  }, [isPro, projectionHorizon]);
 
   const loadPlanBills = useCallback(async () => {
     if (months.length === 0) return;
@@ -268,6 +300,132 @@ export default function PlanPage() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Projection (Pro+) — multi-month rollover-compounded forecast */}
+      {isPro && (
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Projection
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {([6, 12] as const).map(h => (
+                <button
+                  key={h}
+                  onClick={() => setProjectionHorizon(h)}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: `1px solid ${projectionHorizon === h ? colors.electric : colors.inputBorder}`,
+                    backgroundColor: projectionHorizon === h ? `${colors.electric}15` : 'transparent',
+                    color: projectionHorizon === h ? colors.electric : colors.textSub,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {h}mo
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {projectionLoading && projection.length === 0 ? (
+            <div style={{ fontSize: '12px', color: colors.textMuted, padding: '10px 0' }}>Loading projection…</div>
+          ) : projection.length === 0 ? (
+            <div style={{ fontSize: '12px', color: colors.textMuted, padding: '10px 0' }}>
+              Add bills and an income source to see your projected cash flow.
+            </div>
+          ) : (
+            <>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                overflowX: 'auto',
+                paddingBottom: '8px',
+              }}>
+                {projection.map(m => {
+                  const accent = m.isTight ? dangerColor : m.isSurplus ? '#0A7B6C' : colors.electric;
+                  return (
+                    <div
+                      key={`${m.year}-${m.month}`}
+                      style={{
+                        flex: '0 0 168px',
+                        backgroundColor: colors.card,
+                        borderRadius: '10px',
+                        padding: '14px',
+                        border: `1px solid ${colors.cardBorder}`,
+                      }}
+                    >
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                        {m.label}
+                      </div>
+                      <div style={{ fontSize: '20px', fontWeight: 700, color: accent, marginTop: '6px' }}>
+                        {fmt(m.projectedRollover)}
+                      </div>
+                      <div style={{ fontSize: '10px', color: colors.textMuted, marginTop: '2px' }}>
+                        projected rollover
+                      </div>
+                      <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: `1px solid ${colors.cardBorder}` }}>
+                        <div style={{ fontSize: '10px', color: colors.textSub }}>In: {fmt(m.projectedIncome)}</div>
+                        <div style={{ fontSize: '10px', color: colors.textSub }}>Bills: {fmt(m.projectedBills)}</div>
+                      </div>
+                      {m.billsEndingThisMonth.length > 0 && (
+                        <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: `1px solid ${colors.cardBorder}` }}>
+                          <div style={{ fontSize: '9px', color: '#0A7B6C', fontWeight: 700 }}>ENDS THIS MONTH</div>
+                          {m.billsEndingThisMonth.slice(0, 2).map(b => (
+                            <div key={b.billId} style={{ fontSize: '10px', color: colors.text, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {b.name} · {fmt(b.amount)}
+                            </div>
+                          ))}
+                          {m.billsEndingThisMonth.length > 2 && (
+                            <div style={{ fontSize: '9px', color: colors.textMuted, marginTop: '2px' }}>
+                              +{m.billsEndingThisMonth.length - 2} more
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {m.isTight && (
+                        <div style={{ fontSize: '9px', color: dangerColor, marginTop: '6px', fontWeight: 600 }}>⚠ Tight month</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {(() => {
+                const ending = projection.flatMap(m =>
+                  m.billsEndingThisMonth.map(b => ({ ...b, label: m.label }))
+                );
+                if (ending.length === 0) return null;
+                return (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '14px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(10,123,108,0.08)',
+                    border: '1px solid rgba(10,123,108,0.2)',
+                  }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0A7B6C', marginBottom: '6px' }}>
+                      Bills ending soon
+                    </div>
+                    {ending.slice(0, 4).map((b, i) => (
+                      <div key={`${b.billId}-${i}`} style={{ fontSize: '12px', color: colors.text, marginTop: '3px' }}>
+                        {b.name} ends {b.label} — {fmt(b.amount)}/mo frees up
+                      </div>
+                    ))}
+                    {ending.length > 4 && (
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px' }}>
+                        +{ending.length - 4} more over the next {projectionHorizon} months
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </>
+          )}
         </div>
       )}
 

@@ -86,6 +86,8 @@ export const planAPI = {
   get:           (year: number, month: number) => api.get(`/plan/${year}/${month}`),
   create:        (data: Record<string, unknown>) => api.post('/plan', data),
   update:        (id: string, data: Record<string, unknown>) => api.patch(`/plan/${id}`, data),
+  // Multi-month projection (Pro+): rollover-compounded forecast
+  getProjection: (months: number = 6) => api.get('/plan/projection', { params: { months } }),
   getBills:      (year: number, month: number) => api.get(`/plan/${year}/${month}/bills`),
   snapshotBills: (year: number, month: number) => api.post(`/plan/${year}/${month}/bills/snapshot`),
   updatePlanBill:(year: number, month: number, planBillId: string, data: Record<string, unknown>) => api.patch(`/plan/${year}/${month}/bills/${planBillId}`, data),
@@ -179,6 +181,13 @@ export const secondaryIncomeAPI = {
   allocate:       (data: Record<string, unknown>) => api.post('/secondary-income/allocate', data),
   removeAllocation: (id: string) => api.delete(`/secondary-income/allocations/${id}`),
   getSummary:     (month: number, year: number) => api.get('/secondary-income/summary', { params: { month, year } }),
+};
+
+// Reports (Ultra tier — analytics)
+export const reportsAPI = {
+  getSpendingByCategory: (months = 6) => api.get('/reports/spending-by-category', { params: { months } }),
+  getMonthlyTrend:       (months = 6) => api.get('/reports/monthly-trend', { params: { months } }),
+  getTopMerchants:       (months = 3, limit = 10) => api.get('/reports/top-merchants', { params: { months, limit } }),
 };
 
 // Spending budgets (Full Dollar Tracking)
