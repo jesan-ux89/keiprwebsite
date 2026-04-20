@@ -2,6 +2,14 @@
 
 @AGENTS.md
 
+## 🚨 TOP RULES — ALWAYS FOLLOW
+
+1. **No AI hallucinations.** Provide real answers backed by facts — actual code, actual DB state, actual logs. Never fabricate answers just to sound helpful or to make Jesse happy. If you don't know, say so. If you need to check, check first.
+
+2. **All fixes must be global.** Every bug fix must solve the problem for ALL users, not just Jesse. Never propose a one-off SQL patch or user-specific workaround as the solution — fix the code path that caused the bug so it can't happen again for anyone. One-time SQL is acceptable only as an IMMEDIATE relief alongside the real global fix.
+
+---
+
 ## 🔒 LOCKED DESIGN DECISIONS — DO NOT REVERSE
 
 These decisions were debated, tested, and finalized by Jesse. Do NOT change, "improve," or revert them without Jesse's explicit approval in the current session. If you think one is wrong, ASK Jesse — do not silently "fix" it.
@@ -146,7 +154,9 @@ The website has its own web-native design, inspired by Monarch. NOT a direct mir
 
 **Tracker** — SVG ring progress (120x120) with stats (Paid/Remaining/Total). Bill checklist: circular checkboxes + category icons + name/meta + amount. Right sidebar: paycheck totals + auto-verify hint.
 
-**Reports** (NEW, Ultra only) — Spending by category bar chart + monthly trend chart (6 months). Right sidebar: category breakdown with dots + totals + month-over-month comparison. Export to CSV.
+**Reports** (Ultra only) — Spending by category bar chart + monthly trend chart (6 months). Right sidebar: category breakdown with dots + totals + month-over-month comparison. Export to CSV. **Sprint 3 update:** Reports page now backed by real backend data from three Ultra-gated endpoints — `GET /api/reports/spending-by-category`, `/monthly-trend`, `/top-merchants`. Client wrapper: `reportsAPI` in `src/lib/api.ts`. Charts are inline SVG (no external chart library). Empty states use `EmptyState` component; loading uses `LoadingSkeleton`. The backend applies the full spending exclusion filter (`split_parent` included) so bill payments never show up as "spending" in the category chart.
+
+**Plan** (Free/Pro only in sidebar — Ultra reaches it from Budget's "Plan ahead" card) — Month list + DraftMonth editor + **Projection section** (Sprint 3 #10A). Projection renders horizontally-scrollable upcoming months with income/bills/remaining/rollover, tight-month warnings, surplus badges, and bill-ending chips. Horizon toggle: 6mo / 12mo. Data from `GET /api/plan/projection?months=N` (Pro+ gated). Website consumer at `src/app/app/plan/page.tsx` mirrors mobile `PlanScreen.tsx`.
 
 ## Mirrored Files (CRITICAL)
 | Website File | Mobile Source | What's Shared |
@@ -170,6 +180,7 @@ The website has its own web-native design, inspired by Monarch. NOT a direct mir
 - Splits sorted by `sort_order`, amounts in `p1`-`p4`, done flags in `p1done`-`p4done`
 - `funded` = sum of `is_saved_to_savings` amounts
 - Category from `budget_categories.name` join, defaults to `'Other'`
+- `ends_on` → `endsOn` (Sprint 3) — optional ISO date (YYYY-MM-DD). Drives the Plan projection's "bill ending" windfall logic. Mirrors mobile exactly.
 
 ## Key Patterns
 
@@ -469,3 +480,4 @@ If AI Accountant never ships:
 ## What's Left to Build
 1. ~~**Onboarding split**~~ — ✓ Complete on mobile (`SetupChoiceScreen.tsx`). Website onboarding mirror TBD.
 2. **Quick Spend section** — exists on mobile Budget screen (BillsUltraScreen.tsx) showing manual quick expenses + bank spending transactions in amber-themed collapsible section. Website mirror deferred because the website Budget uses Monarch column layout without paycheck groups.
+3. **SPLIT_TRANSACTION UI** — Sprint 3 shipped the backend handler + schema + spending-exclusion plumbing. There is no user-facing UI yet to author a split (neither mobile nor website). Currently only the AI Accountant can invoke the handler, and the Opus system prompt has not yet been taught how to use it. Follow-up: teach Opus about SPLIT_TRANSACTION (Sprint 4), then later add a manual "Split this transaction" flow on the Transactions page.
