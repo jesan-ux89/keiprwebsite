@@ -213,9 +213,9 @@ export default function ReportsPage() {
         {errorMsg && (
           <div
             style={{
-              backgroundColor: `${colors.danger || '#EF4444'}15`,
-              border: `1px solid ${colors.danger || '#EF4444'}40`,
-              color: colors.danger || '#EF4444',
+              backgroundColor: `${colors.red}15`,
+              border: `1px solid ${colors.red}40`,
+              color: colors.red,
               padding: '12px 16px',
               borderRadius: '12px',
               fontSize: '13px',
@@ -396,7 +396,7 @@ function TrendChart({
   const spentArea = `${spentLine} L${spentPts[spentPts.length - 1].x},${padT + innerH} L${spentPts[0].x},${padT + innerH} Z`;
 
   const spentColor = colors.electric || '#38BDF8';
-  const incomeColor = colors.success || '#10B981';
+  const incomeColor = colors.green;
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
 
   // Y-axis grid lines at 25%, 50%, 75%, 100%
@@ -515,8 +515,8 @@ function CategorySidebar({
     momPct === null
       ? colors.textMuted
       : momPct > 0
-        ? (colors.danger || '#EF4444')
-        : (colors.success || '#10B981');
+        ? (colors.red)
+        : (colors.green);
 
   const momLabel =
     momPct === null ? '—' : `${momPct > 0 ? '+' : ''}${momPct.toFixed(1)}%`;
