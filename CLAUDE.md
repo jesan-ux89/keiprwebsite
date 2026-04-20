@@ -138,7 +138,7 @@ The website has its own web-native design, inspired by Monarch. NOT a direct mir
 
 **Dashboard** — Hero stats row (Available/Income/Expenses) + detected alert banner + spending pace card + upcoming expenses + recent activity. Right sidebar: available number, income/bills/spent breakdown, paycheck progress, top spending categories.
 
-**Budget (Bills)** — Monarch-style columns: Expenses | Budget | Actual | Remaining. Groups: Fixed (recurring) and Flexible (discretionary). Items show category icon + name + budget/actual/remaining. Detected expenses banner with review CTA. Right sidebar: total expenses, income/fixed/flexible breakdown, left to spend, coverage progress.
+**Budget (Bills)** — Monarch-style columns: Expenses | Budget | Actual | Remaining. Groups: Fixed (recurring) and Flexible (discretionary). Items show category icon + name + budget/actual/remaining. Detected expenses banner with review CTA. Right sidebar: total expenses, income/fixed/flexible breakdown, left to spend, coverage progress. **Note:** Mobile has a "Quick Spend" section (amber-themed, combines manual quick expenses + bank spending transactions) that is NOT yet mirrored to the website — the website Budget uses a column layout without paycheck groups, so the Quick Spend display pattern doesn't apply directly. When the website gets paycheck-grouped views, Quick Spend should be added.
 
 **Transactions** — Date-grouped list with daily totals. Rows: colored merchant initials square + name + category dot + account name + amount. Tab filter: All / Expenses / Income. Search in top bar.
 
@@ -468,3 +468,4 @@ If AI Accountant never ships:
 
 ## What's Left to Build
 1. ~~**Onboarding split**~~ — ✓ Complete on mobile (`SetupChoiceScreen.tsx`). Website onboarding mirror TBD.
+2. **Quick Spend section** — exists on mobile Budget screen (BillsUltraScreen.tsx) showing manual quick expenses + bank spending transactions in amber-themed collapsible section. Website mirror deferred because the website Budget uses Monarch column layout without paycheck groups.
