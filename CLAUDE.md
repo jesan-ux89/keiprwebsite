@@ -29,9 +29,9 @@ The endpoint returns bills (active + inactive), income sources, payments, catego
 **This has been a game changer.** Issues that used to recur session after session get diagnosed in minutes because we see actual state instead of guessing. Keep using it.
 
 Quickest access (admin key — no Firebase token needed):
-- `DEBUG_ADMIN_KEY` is set as an env var on Railway. Use it as a Bearer token with `?email=` query param.
+- `DEBUG_ADMIN_KEY`: `NM9OOGFMyQTCLIZKQvwiC0Ej2v0onsbH` (set on Railway)
 - Jesse's app email: `jessenetworkengineer@gmail.com` (NOT `jessesan82@gmail.com` — that's his Railway/personal email)
-- curl: `curl -H "Authorization: Bearer <DEBUG_ADMIN_KEY>" "https://keipr-backend-production.up.railway.app/api/debug/user-state?email=jessenetworkengineer@gmail.com"`
+- curl: `curl -H "Authorization: Bearer NM9OOGFMyQTCLIZKQvwiC0Ej2v0onsbH" "https://keipr-backend-production.up.railway.app/api/debug/user-state?email=jessenetworkengineer@gmail.com"`
 - Also supports `?uid=<firebase_uid>` as an alternative lookup
 
 ## Project Overview
