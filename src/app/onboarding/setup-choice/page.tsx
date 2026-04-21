@@ -23,7 +23,7 @@ function SetupChoiceContent() {
   };
 
   const handleBankImport = () => {
-    router.push(`/onboarding/bank-import?${queryParams}`);
+    router.push(`/onboarding/ai-consent?${queryParams}`);
   };
 
   const handleBack = () => {
@@ -55,7 +55,7 @@ function SetupChoiceContent() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
           <span style={{ fontSize: 11, fontWeight: 500, color: electric, opacity: 0.8 }}>Choose your plan</span>
-          <span style={{ fontSize: 11, color: colors.textMuted }}>4 / 6</span>
+          <span style={{ fontSize: 11, color: colors.textMuted }}>3 / 5</span>
         </div>
         <div style={{
           height: 3,
@@ -63,7 +63,7 @@ function SetupChoiceContent() {
           borderRadius: 2,
           overflow: 'hidden',
         }}>
-          <div style={{ height: '100%', width: '67%', backgroundColor: electric, borderRadius: 2 }} />
+          <div style={{ height: '100%', width: '60%', backgroundColor: electric, borderRadius: 2 }} />
         </div>
       </div>
 

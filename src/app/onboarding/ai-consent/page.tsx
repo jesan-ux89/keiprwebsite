@@ -6,12 +6,15 @@ import { useTheme } from '@/context/ThemeContext';
 import { aiAPI } from '@/lib/api';
 
 /**
- * AI Consent — Step 3/6 of onboarding.
+ * AI Consent — Step 4/5 of onboarding (Ultra path only).
  *
- * Sits between /income and /setup-choice so consent is captured BEFORE
- * the user sees the plan picker. Accepting calls POST /me/ai-consent
- * and POST /me/ai-settings with enabled=true. Skipping is free and
- * stamps ai_prompted_at so the Dashboard prompt doesn't nag later.
+ * Only reached when the user picks the Ultra path from /setup-choice.
+ * AI Accountant is Ultra-only, so Free/Pro users never see this page.
+ *
+ * Accepting calls POST /me/ai-consent and POST /me/ai-settings with
+ * enabled=true so the AI Accountant can run its onboarding pass once
+ * Plaid finishes syncing. Skipping stamps ai_prompted_at so the
+ * Dashboard first-login prompt doesn't nag later.
  *
  * Mirrors mobile AIConsentScreen.tsx exactly.
  */
@@ -24,7 +27,7 @@ function AIConsentContent() {
   const [error, setError] = useState<string | null>(null);
 
   const queryString = searchParams.toString();
-  const continueTo = `/onboarding/setup-choice${queryString ? `?${queryString}` : ''}`;
+  const continueTo = `/onboarding/bank-import${queryString ? `?${queryString}` : ''}`;
 
   async function handleEnable() {
     setError(null);
@@ -101,7 +104,7 @@ function AIConsentContent() {
     progressFill: {
       height: '100%',
       backgroundColor: colors.electric,
-      width: '50%',
+      width: '80%',
       transition: 'width 0.3s ease',
     },
     content: {
@@ -208,7 +211,7 @@ function AIConsentContent() {
       <div style={styles.header}>
         <div style={styles.topBar}>
           <a style={styles.backLink} onClick={handleBack}>← Back</a>
-          <span style={styles.stepLabel}>Step 3 of 6 · AI Assistant</span>
+          <span style={styles.stepLabel}>Step 4 of 5 · AI Assistant</span>
         </div>
         <div style={styles.progressBar}>
           <div style={styles.progressFill} />

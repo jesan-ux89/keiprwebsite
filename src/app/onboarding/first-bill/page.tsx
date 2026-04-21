@@ -189,7 +189,7 @@ function FirstBillContent() {
     progressFill: {
       height: '100%',
       backgroundColor: colors.electric,
-      width: '83%',
+      width: '80%',
       transition: 'width 0.3s ease',
     },
     content: {
@@ -423,7 +423,7 @@ function FirstBillContent() {
           <a style={styles.backLink} onClick={handleBack}>
             ← Back
           </a>
-          <span style={styles.stepLabel}>Step 5 of 6</span>
+          <span style={styles.stepLabel}>Step 4 of 5</span>
         </div>
         <h1 style={styles.title}>Add your biggest bill first.</h1>
         <p style={styles.subtitle}>Start with rent or mortgage — you can add more after setup.</p>

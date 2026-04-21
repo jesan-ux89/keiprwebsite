@@ -64,7 +64,7 @@ export default function PaySchedulePage() {
     progressFill: {
       height: '100%',
       backgroundColor: colors.electric,
-      width: '17%',
+      width: '20%',
       transition: 'width 0.3s ease',
     },
     content: {
@@ -128,7 +128,7 @@ export default function PaySchedulePage() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div style={styles.stepLabel}>Step 1 of 6</div>
+        <div style={styles.stepLabel}>Step 1 of 5</div>
         <h1 style={styles.title}>How often do you get paid?</h1>
         <div style={styles.progressBar}>
           <div style={styles.progressFill} />

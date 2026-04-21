@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { aiAPI } from '@/lib/api';
+import { useApp } from '@/context/AppContext';
 import AIConsentModal from './AIConsentModal';
 
 /**
@@ -15,16 +16,23 @@ import AIConsentModal from './AIConsentModal';
  * via POST /me/ai-prompted so the prompt never shows again.
  *
  * Feature-flag safe: on 503 from /me/ai-settings, silently no-op.
+ *
+ * Ultra-only: AI Accountant is gated behind the Ultra tier, so
+ * Free/Pro users never see this modal — otherwise we'd be asking
+ * them to consent to a feature they can't actually use.
+ *
  * Mirrors mobile AIConsentFirstLoginPrompt.tsx.
  */
 export default function AIConsentFirstLoginPrompt() {
   const router = useRouter();
+  const { isUltra } = useApp();
   const [visible, setVisible] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
   const checkedRef = useRef(false);
 
   useEffect(() => {
     if (checkedRef.current) return;
+    if (!isUltra) return; // Ultra-only feature — never prompt Free/Pro
     checkedRef.current = true;
 
     let cancelled = false;
@@ -44,7 +52,7 @@ export default function AIConsentFirstLoginPrompt() {
     })();
 
     return () => { cancelled = true; };
-  }, []);
+  }, [isUltra]);
 
   if (!visible) return null;
 

@@ -198,19 +198,19 @@ function BankImportContent() {
     router.push(`/onboarding/allocate?${params.toString()}`);
   };
 
-  // Get progress percentage (6-step flow: bank-import is step 5 of 6)
+  // Get progress percentage (5-step flow: bank-import is step 5 of 5 on the Ultra path)
   const getProgress = () => {
     switch (step) {
       case 'trial':
-        return 75;
-      case 'connecting':
-        return 80;
-      case 'syncing':
         return 85;
-      case 'success':
+      case 'connecting':
+        return 90;
+      case 'syncing':
         return 95;
+      case 'success':
+        return 100;
       default:
-        return 83;
+        return 90;
     }
   };
 
@@ -218,15 +218,15 @@ function BankImportContent() {
   const getStepLabel = () => {
     switch (step) {
       case 'trial':
-        return 'Step 5 of 6';
+        return 'Step 5 of 5';
       case 'connecting':
-        return 'Step 5 of 6';
+        return 'Step 5 of 5';
       case 'syncing':
-        return 'Step 5 of 6';
+        return 'Step 5 of 5';
       case 'success':
-        return 'Step 5 of 6';
+        return 'Step 5 of 5';
       default:
-        return 'Step 5 of 6';
+        return 'Step 5 of 5';
     }
   };
 
