@@ -39,7 +39,7 @@ function IncomeContent() {
       nextPayday,
     });
 
-    router.push(`/onboarding/setup-choice?${params.toString()}`);
+    router.push(`/onboarding/ai-consent?${params.toString()}`);
   };
 
   const handleBack = () => {
@@ -93,7 +93,7 @@ function IncomeContent() {
     progressFill: {
       height: '100%',
       backgroundColor: colors.electric,
-      width: '40%',
+      width: '33%',
       transition: 'width 0.3s ease',
     },
     content: {
@@ -179,7 +179,7 @@ function IncomeContent() {
           <a style={styles.backLink} onClick={handleBack}>
             ← Back
           </a>
-          <span style={styles.stepLabel}>Step 2 of 5</span>
+          <span style={styles.stepLabel}>Step 2 of 6</span>
         </div>
         <h1 style={styles.title}>Tell us about your paycheck.</h1>
         <div style={styles.progressBar}>

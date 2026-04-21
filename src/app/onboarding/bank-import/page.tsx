@@ -198,19 +198,19 @@ function BankImportContent() {
     router.push(`/onboarding/allocate?${params.toString()}`);
   };
 
-  // Get progress percentage
+  // Get progress percentage (6-step flow: bank-import is step 5 of 6)
   const getProgress = () => {
     switch (step) {
       case 'trial':
-        return 50;
+        return 75;
       case 'connecting':
-        return 60;
+        return 80;
       case 'syncing':
-        return 70;
+        return 85;
       case 'success':
-        return 90;
+        return 95;
       default:
-        return 50;
+        return 83;
     }
   };
 
@@ -218,15 +218,15 @@ function BankImportContent() {
   const getStepLabel = () => {
     switch (step) {
       case 'trial':
-        return 'Step 3 of 5';
+        return 'Step 5 of 6';
       case 'connecting':
-        return 'Step 3 of 5';
+        return 'Step 5 of 6';
       case 'syncing':
-        return 'Step 3 of 5';
+        return 'Step 5 of 6';
       case 'success':
-        return 'Step 3 of 5';
+        return 'Step 5 of 6';
       default:
-        return 'Step 3 of 5';
+        return 'Step 5 of 6';
     }
   };
 

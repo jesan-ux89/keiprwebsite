@@ -525,7 +525,7 @@ function AllocateContent() {
           <a style={styles.backLink} onClick={handleBack}>
             ← Back
           </a>
-          <span style={styles.stepLabel}>Step 5 of 5</span>
+          <span style={styles.stepLabel}>Step 6 of 6</span>
         </div>
         <div style={styles.progressBar}>
           <div style={styles.progressFill} />
