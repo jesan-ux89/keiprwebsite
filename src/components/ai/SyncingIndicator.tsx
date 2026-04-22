@@ -15,13 +15,11 @@ if (typeof window !== 'undefined') {
 interface SyncingIndicatorProps {
   enabled?: boolean;
   onComplete?: () => void;
-  onViewBudget?: () => void;
 }
 
-export default function SyncingIndicator({ enabled = true, onComplete, onViewBudget }: SyncingIndicatorProps) {
+export default function SyncingIndicator({ enabled = true, onComplete }: SyncingIndicatorProps) {
   const { colors } = useTheme();
   const [status, setStatus] = useState<'idle' | 'running' | 'completed'>('idle');
-  const [updates, setUpdates] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const lastSeenRunIdRef = useRef<string | null>(null);
 
@@ -59,29 +57,21 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
             lastSeenRunIdRef.current = run.id;
           }
         } else if (run.status === 'completed' && run.id !== lastSeenRunIdRef.current) {
-          const applied = run.corrections_applied || 0;
+          // Run completed — hide immediately, refresh data silently
           lastSeenRunIdRef.current = run.id;
-          if (applied > 0 && mounted) {
-            setStatus('completed');
-            setUpdates(applied);
-            setIsVisible(true);
-            if (onComplete) onComplete();
-
-            // Auto-hide after 30 seconds and persist dismissal
-            setTimeout(() => {
-              if (mounted) dismissRun();
-            }, 30000);
-          }
-        } else if (run.status === 'completed' && run.id === lastSeenRunIdRef.current && status === 'running') {
-          // Same run just finished
-          const applied = run.corrections_applied || 0;
           if (mounted) {
             setStatus('completed');
-            setUpdates(applied);
+            setIsVisible(false);
+            dismissRun();
             if (onComplete) onComplete();
-            setTimeout(() => {
-              if (mounted) dismissRun();
-            }, 30000);
+          }
+        } else if (run.status === 'completed' && run.id === lastSeenRunIdRef.current && status === 'running') {
+          // Same run just finished — hide immediately, refresh data silently
+          if (mounted) {
+            setStatus('completed');
+            setIsVisible(false);
+            dismissRun();
+            if (onComplete) onComplete();
           }
         }
       } catch (err) {
@@ -90,6 +80,11 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
     };
 
     checkStatus();
+
+    // Stop polling once we've reached a terminal state
+    if (status === 'completed') {
+      return () => { mounted = false; };
+    }
 
     const interval = setInterval(checkStatus, 5000);
 
@@ -105,16 +100,13 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
     };
   }, [enabled, status, dismissRun]);
 
-  const handleClick = () => {
-    dismissRun();
-    if (onViewBudget) onViewBudget();
-  };
-
   if (!enabled || !isVisible || status === 'idle') return null;
+
+  // Only show during active running state — completed hides silently
+  if (status !== 'running') return null;
 
   return (
     <div
-      onClick={status === 'completed' && updates > 0 ? handleClick : undefined}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -126,8 +118,8 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
         fontSize: '0.85rem',
         color: '#9C5EFA',
         fontWeight: 500,
-        cursor: status === 'completed' && updates > 0 ? 'pointer' : 'default',
-        animation: status === 'running' ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none',
+        cursor: 'default',
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       }}
     >
       <style>{`
@@ -136,22 +128,8 @@ export default function SyncingIndicator({ enabled = true, onComplete, onViewBud
           50% { opacity: 0.5; }
         }
       `}</style>
-
-      {status === 'running' && (
-        <>
-          <span>✨</span>
-          <span>Refining your ledger…</span>
-        </>
-      )}
-
-      {status === 'completed' && updates > 0 && (
-        <>
-          <span>✨</span>
-          <span>Budget updated with {updates} change{updates !== 1 ? 's' : ''}.{' '}
-            <span style={{ fontWeight: 600, textDecoration: 'underline' }}>View budget</span>
-          </span>
-        </>
-      )}
+      <span>✨</span>
+      <span>Refining your ledger…</span>
     </div>
   );
 }
