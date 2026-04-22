@@ -37,6 +37,7 @@ export default function DashboardUltraContent() {
     availableNumber, availableBreakdown, spendingSummary, spendingBudgets, fetchAvailableNumber, fetchSpendingSummary,
     logQuickExpense,
     deleteBill,
+    budgetSuggestions, fetchBudgetSuggestions,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [refreshing, setRefreshing] = useState(false);
@@ -307,7 +308,7 @@ export default function DashboardUltraContent() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refreshBills(), refreshIncomeSources(), refreshPayments(), refreshCategories()]);
+      await Promise.all([refreshBills(), refreshIncomeSources(), refreshPayments(), refreshCategories(), fetchBudgetSuggestions()]);
     } finally {
       setRefreshing(false);
     }
@@ -651,6 +652,58 @@ export default function DashboardUltraContent() {
                     <span>{fmt(totalSpendingThisPeriod)} spent</span>
                     <span>Target {fmt(paceTarget)}</span>
                   </div>
+                </Card>
+              );
+            })()}
+
+            {/* Still Needed Before Payday */}
+            {budgetSuggestions?.coverage && budgetSuggestions.thisPaycheck?.length > 0 && (() => {
+              const cov = budgetSuggestions.coverage;
+              const totalNeeded = cov.totalSuggestedRemaining || 0;
+              const statusColor = cov.status === 'tight' ? '#EF4444' : cov.status === 'on_track' ? '#F59E0B' : '#0A7B6C';
+              const statusIcon = cov.status === 'tight' ? '⚠️' : cov.status === 'on_track' ? '📊' : '✅';
+              const statusLabel = cov.status === 'tight' ? 'Budget is tight' : cov.status === 'on_track' ? 'On track' : 'Looking good';
+              const top3 = budgetSuggestions.thisPaycheck
+                .filter((c: any) => c.remaining > 0)
+                .slice(0, 3);
+              return (
+                <Card style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: colors.textMuted }}>Still needed before payday</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <span style={{ fontSize: '0.8rem' }}>{statusIcon}</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>{statusLabel}</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '1.75rem', fontWeight: 700, color: statusColor, letterSpacing: '-0.02em' }}>
+                    {fmt(totalNeeded)}
+                  </span>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0.875rem 0' }}>
+                    {cov.daysUntilPayday} day{cov.daysUntilPayday !== 1 ? 's' : ''} left · {fmt(cov.availableAfterBills)} available after bills
+                  </p>
+                  {top3.length > 0 && (
+                    <div style={{ borderTop: `1px solid ${colors.divider}`, paddingTop: '0.75rem' }}>
+                      {top3.map((cat: any, idx: number) => (
+                        <div key={cat.category} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          marginBottom: idx < top3.length - 1 ? '0.5rem' : 0,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <CategoryIcon category={cat.category} size={22} isDark={isDark} />
+                            <div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 500, color: colors.text }}>{cat.category}</span>
+                              <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: '0.1rem 0 0 0' }}>
+                                {fmt(cat.spent)} of {fmt(cat.suggested)} spent
+                              </p>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: statusColor }}>
+                            {fmt(cat.remaining)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               );
             })()}

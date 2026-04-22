@@ -53,6 +53,12 @@ export interface Bill {
   expenseType?: string; // 'fixed' (default) or 'flexible'
   pinnedPaycheck?: number | null; // Manual paycheck assignment override (1 or 2, null = auto)
   endsOn?: string | null; // ISO date string — last month this bill applies (e.g. car loan payoff)
+  // Detection explanation metadata — why this bill was auto-detected
+  detectionReason?: string | null;
+  detectionConfidence?: number | null; // 0.0-1.0, derived from CV (1 - cv)
+  detectionOccurrences?: number | null;
+  detectionAvgInterval?: number | null;
+  detectionCv?: number | null;
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -210,6 +216,10 @@ interface AppContextType {
   fetchAvailableNumber: () => Promise<void>;
   fetchCreditCards: () => Promise<void>;
 
+  // Budget suggestions (auto-budget engine)
+  budgetSuggestions: any | null;
+  fetchBudgetSuggestions: () => Promise<void>;
+
   // Banking cache (stale-while-revalidate)
   bankAccounts: any[];
   bankAccountsLoading: boolean;
@@ -305,6 +315,10 @@ const AppContext = createContext<AppContextType>({
   fetchAvailableNumber: async () => {},
   fetchCreditCards: async () => {},
 
+  // Budget suggestions
+  budgetSuggestions: null,
+  fetchBudgetSuggestions: async () => {},
+
   // Banking cache
   bankAccounts: [],
   bankAccountsLoading: false,
@@ -387,6 +401,12 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     expenseType: (raw.expense_type as string) || 'fixed',
     pinnedPaycheck: raw.pinned_paycheck != null ? Number(raw.pinned_paycheck) : null,
     endsOn: raw.ends_on ? String(raw.ends_on) : null,
+    // Detection explanation metadata
+    detectionReason: raw.detection_reason ? String(raw.detection_reason) : null,
+    detectionConfidence: raw.detection_confidence != null ? Number(raw.detection_confidence) : null,
+    detectionOccurrences: raw.detection_occurrences != null ? Number(raw.detection_occurrences) : null,
+    detectionAvgInterval: raw.detection_avg_interval != null ? Number(raw.detection_avg_interval) : null,
+    detectionCv: raw.detection_cv != null ? Number(raw.detection_cv) : null,
   };
 }
 
@@ -484,6 +504,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [availableNumber, setAvailableNumber] = useState<number | null>(null);
   const [availableBreakdown, setAvailableBreakdown] = useState<any>(null);
   const [creditCards, setCreditCards] = useState<any[]>([]);
+  const [budgetSuggestions, setBudgetSuggestions] = useState<any>(null);
   const [plaidCards, setPlaidCards] = useState<any[]>([]);
 
   // Banking cache state (stale-while-revalidate)
@@ -782,6 +803,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // ── Fetch budget suggestions ─────────────────────────────
+  const fetchBudgetSuggestions = useCallback(async () => {
+    if (!user || !isUltra) {
+      setBudgetSuggestions(null);
+      return;
+    }
+    try {
+      const res = await spendingAPI.getSuggested();
+      setBudgetSuggestions(res.data || null);
+    } catch (err) {
+      console.log('fetchBudgetSuggestions error:', (err as any)?.message);
+    }
+  }, [user, isUltra]);
+
   // ── Fetch credit cards ───────────────────────────────────
   const fetchCreditCards = useCallback(async () => {
     if (!user) {
@@ -910,7 +945,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Fetch data
-      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards(), refreshPendingConfirmations()]);
+      await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards(), refreshPendingConfirmations(), fetchBudgetSuggestions()]);
       setInitialDataLoaded(true);
     }
 
@@ -1310,6 +1345,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchSpendingSummary,
         fetchAvailableNumber,
         fetchCreditCards,
+
+        budgetSuggestions,
+        fetchBudgetSuggestions,
 
         bankAccounts, bankAccountsLoading, bankTransactions, bankTransactionsLoading,
         fetchBankAccounts, fetchBankTransactions, invalidateBankingCache,
