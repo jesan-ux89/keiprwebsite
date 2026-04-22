@@ -2,6 +2,25 @@
 
 @AGENTS.md
 
+## 🛡️ SECURITY — RULE ZERO — NON-NEGOTIABLE
+
+**Security is the #1 priority across all Keipr codebases. It overrides convenience, speed, and even feature completeness.**
+
+Before writing or modifying ANY code, ask: "Could this expose user data, enable unauthorized access, or create a vulnerability?" If yes — stop and find a secure path forward.
+
+**Mandatory security rules — no exceptions:**
+- **Never log sensitive data.** No passwords, tokens, MFA codes, Firebase UIDs, Plaid credentials, or PII in any `console.log`, error message, or analytics event.
+- **Never expose secrets in client responses.** API responses, client-side state, and browser storage must never include internal keys, service tokens, or fields the user has no business reason to see.
+- **Never trust client input.** All data sent to the backend is validated server-side. The website must never assume the backend will "fix" bad input — sanitize before sending.
+- **Never put secrets in `NEXT_PUBLIC_*` env vars.** Public env vars are bundled into the client JS and visible to anyone. Only non-sensitive config (Firebase public keys, API base URL) belongs there.
+- **Never store sensitive data in localStorage or sessionStorage.** Firebase handles auth tokens. No PII, no payment info, no Plaid data in browser storage.
+- **Firebase auth tokens only.** All API calls must use the Firebase Bearer token interceptor in `src/lib/api.ts`. Never roll custom auth or pass raw user IDs as auth.
+- **Webhook endpoints must verify signatures.** Any new webhook integration must implement HMAC or equivalent signature verification before processing the payload.
+
+If you are ever unsure whether something is secure, **ask before implementing it.** A delayed feature is recoverable. A data breach is not.
+
+---
+
 ## 🚨 TOP RULES — ALWAYS FOLLOW
 
 1. **No AI hallucinations.** Provide real answers backed by facts — actual code, actual DB state, actual logs. Never fabricate answers just to sound helpful or to make Jesse happy. If you don't know, say so. If you need to check, check first.
