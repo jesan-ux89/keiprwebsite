@@ -26,6 +26,8 @@ These decisions were debated, tested, and finalized by Jesse. Do NOT change, "im
 
 6. **AI Accountant onboarding runs ONCE.** Backend enforces this — the first AI run uses `'onboarding'` trigger, all subsequent 48h-window runs downgrade to `'bank_sync'`. Website just displays results. Do not add AI trigger logic to the website.
 
+7. **SyncingIndicator: running spinner ONLY, no completion banners.** `src/components/ai/SyncingIndicator.tsx` shows "✨ Refining your ledger…" during active AI runs and hides SILENTLY on completion. Do NOT add "Budget updated with X changes — View budget" or "all good" banners. Completion triggers `onComplete` callback for silent data refresh. Mirrors mobile `AISyncingIndicator.tsx` exactly.
+
 ---
 
 ## ⚠ RULE #1 (MOST IMPORTANT): Hit `/api/debug/user-state` BEFORE speculating about state
@@ -344,7 +346,7 @@ Response shapes: design doc §9-10.
 
 1. `CorrectionDetailModal.tsx` — Full correction context, before/after JSON, reasoning, confidence, undo (admin-only)
 2. `CorrectionBadge.tsx` — ✨ sparkle with count, inline
-3. `SyncingIndicator.tsx` — Animated "Refining ledger…" pill, auto-hides
+3. `SyncingIndicator.tsx` — Animated "Refining your ledger…" spinner during AI runs, hides silently on completion (no completion banners)
 4. `StagingChainPanel.tsx` — Collapsible chain details, anchor setup, dissolve
 5. `StagingChainAnchorModal.tsx` — 4-option cycle setup
 
@@ -459,7 +461,7 @@ If AI Accountant never ships:
   - [x] Works alongside existing split/recurring/bank-synced tags
 - [x] **Dashboard Integration:**
   - [x] `SyncingIndicator` visible for Ultra users only
-  - [x] Animates during AI audit, shows completion message, auto-hides after 5s
+  - [x] Animates during AI audit, hides silently on completion (no completion banners — triggers onComplete for data refresh)
 - [x] History page: runs load, expand to show corrections
 - [x] Correction modal: before/after JSON, reasoning, confidence
 - [x] Overrides page: grouped, scope badges, remove action works
