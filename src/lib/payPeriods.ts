@@ -272,65 +272,111 @@ function getSemiMonthlyPeriods(today: Date, anchorStr?: string): PayPeriodInfo {
   const year = today.getFullYear();
   const month = today.getMonth();
   const day = today.getDate();
-  const lastDay = new Date(year, month + 1, 0).getDate();
 
-  // Derive two pay days from anchor (or default to 1/16)
+  // ── Derive two semimonthly pay days from anchor ──
+  // Mirrors payPeriodCalc.js deriveSemimonthlyPayDays()
   let payDay1 = 1;
-  let payDay2 = 16;
+  let payDay2 = 15;
+  let useEOM = false;
 
   if (anchorStr) {
     const anchor = new Date(anchorStr.includes('T') ? anchorStr : anchorStr + 'T00:00:00');
     if (!isNaN(anchor.getTime())) {
       const anchorDay = anchor.getDate();
-      if (anchorDay <= 15) {
-        payDay1 = anchorDay;
-        payDay2 = Math.min(anchorDay + 15, 28); // Cap at 28 for month-safety
+      if (anchorDay === 15) {
+        payDay1 = 15; useEOM = true;
+      } else if (anchorDay === 1) {
+        payDay1 = 1; payDay2 = 15;
+      } else if (anchorDay <= 15) {
+        payDay1 = anchorDay; payDay2 = anchorDay + 15;
       } else {
-        payDay2 = anchorDay;
-        payDay1 = Math.max(anchorDay - 15, 1);
+        payDay1 = anchorDay - 15; payDay2 = anchorDay;
       }
     }
   }
 
-  // Semi-monthly periods run payDay1→(payDay2-1) then payDay2→(payDay1-1 of next month).
-  // This ensures no gap at month boundaries (e.g. paid 5th/20th: Apr 5-19, Apr 20-May 4, May 5-19...).
-  const nextMonth = month + 1;
-  const nextYear = nextMonth > 11 ? year + 1 : year;
-  const nextMonthIdx = nextMonth > 11 ? 0 : nextMonth;
+  // ── Helper: clamp day to actual last day of month ──
+  const clamp = (d: number, y: number, m: number) =>
+    Math.min(d, new Date(y, m + 1, 0).getDate());
 
-  if (day < payDay2) {
-    // In first half: payDay1 to payDay2 - 1
-    const currentStart = new Date(year, month, payDay1);
-    const currentEnd = new Date(year, month, payDay2 - 1);
-    // Next period: payDay2 of this month to payDay1-1 of next month
-    const nextStart = new Date(year, month, payDay2);
-    const nextEnd = new Date(nextYear, nextMonthIdx, payDay1 - 1);
+  // ── Compute current and next period ──
+  // Mirrors payPeriodCalc.js getSemimonthlyPeriod()
+  let currentStart: Date, currentEnd: Date, nextStart: Date, nextEnd: Date;
+  let currentPaycheckNum: number, nextPaycheckNum: number;
 
-    return {
-      current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: 1 },
-      next: { start: nextStart, end: nextEnd, label: formatRange(nextStart, nextEnd), paycheckNumber: 2 },
-      isTwiceMonthly: true,
-      hasMultiplePeriods: true,
-      periodsPerMonth: 2,
-      frequency: 'semimonthly',
-    };
+  if (useEOM) {
+    // Pattern: payDay1 (e.g. 15) and last-day-of-month
+    const eom = new Date(year, month + 1, 0).getDate();
+    if (day >= payDay1) {
+      currentStart = new Date(year, month, payDay1);
+      currentEnd = new Date(year, month, eom);
+      currentPaycheckNum = 2;
+      const nxtMo = month + 1;
+      const nxtYr = nxtMo > 11 ? year + 1 : year;
+      const nxtMoIdx = nxtMo > 11 ? 0 : nxtMo;
+      nextStart = new Date(nxtYr, nxtMoIdx, 1);
+      nextEnd = new Date(nxtYr, nxtMoIdx, payDay1 - 1);
+      nextPaycheckNum = 1;
+    } else {
+      currentStart = new Date(year, month, 1);
+      currentEnd = new Date(year, month, payDay1 - 1);
+      currentPaycheckNum = 1;
+      const thisEom = new Date(year, month + 1, 0).getDate();
+      nextStart = new Date(year, month, payDay1);
+      nextEnd = new Date(year, month, thisEom);
+      nextPaycheckNum = 2;
+    }
   } else {
-    // In second half: payDay2 of this month to payDay1-1 of next month
-    const currentStart = new Date(year, month, payDay2);
-    const currentEnd = new Date(nextYear, nextMonthIdx, payDay1 - 1);
-    // Next period: payDay1 to payDay2-1 of next month
-    const nextStart = new Date(nextYear, nextMonthIdx, payDay1);
-    const nextEnd = new Date(nextYear, nextMonthIdx, payDay2 - 1);
+    // Pattern: payDay1 (e.g. 5) and payDay2 (e.g. 20)
+    const clampedPD1 = clamp(payDay1, year, month);
+    const clampedPD2 = clamp(payDay2, year, month);
 
-    return {
-      current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: 2 },
-      next: { start: nextStart, end: nextEnd, label: formatRange(nextStart, nextEnd), paycheckNumber: 1 },
-      isTwiceMonthly: true,
-      hasMultiplePeriods: true,
-      periodsPerMonth: 2,
-      frequency: 'semimonthly',
-    };
+    if (day >= clampedPD2) {
+      const nxtMo = month + 1;
+      const nxtYr = nxtMo > 11 ? year + 1 : year;
+      const nxtMoIdx = nxtMo > 11 ? 0 : nxtMo;
+      const endDay = clamp(payDay1 - 1, nxtYr, nxtMoIdx);
+      currentStart = new Date(year, month, clampedPD2);
+      currentEnd = new Date(nxtYr, nxtMoIdx, endDay);
+      currentPaycheckNum = 2;
+      const nxtPD1 = clamp(payDay1, nxtYr, nxtMoIdx);
+      const nxtPD2 = clamp(payDay2, nxtYr, nxtMoIdx);
+      nextStart = new Date(nxtYr, nxtMoIdx, nxtPD1);
+      nextEnd = new Date(nxtYr, nxtMoIdx, nxtPD2 - 1);
+      nextPaycheckNum = 1;
+    } else if (day >= clampedPD1) {
+      currentStart = new Date(year, month, clampedPD1);
+      currentEnd = new Date(year, month, clampedPD2 - 1);
+      currentPaycheckNum = 1;
+      const nxtMo = month + 1;
+      const nxtYr = nxtMo > 11 ? year + 1 : year;
+      const nxtMoIdx = nxtMo > 11 ? 0 : nxtMo;
+      const endDay = clamp(payDay1 - 1, nxtYr, nxtMoIdx);
+      nextStart = new Date(year, month, clampedPD2);
+      nextEnd = new Date(nxtYr, nxtMoIdx, endDay);
+      nextPaycheckNum = 2;
+    } else {
+      const prevMo = month - 1;
+      const prevYr = prevMo < 0 ? year - 1 : year;
+      const prevMoIdx = prevMo < 0 ? 11 : prevMo;
+      const startDay = clamp(payDay2, prevYr, prevMoIdx);
+      currentStart = new Date(prevYr, prevMoIdx, startDay);
+      currentEnd = new Date(year, month, clampedPD1 - 1);
+      currentPaycheckNum = 2;
+      nextStart = new Date(year, month, clampedPD1);
+      nextEnd = new Date(year, month, clampedPD2 - 1);
+      nextPaycheckNum = 1;
+    }
   }
+
+  return {
+    current: { start: currentStart, end: currentEnd, label: formatRange(currentStart, currentEnd), paycheckNumber: currentPaycheckNum },
+    next: { start: nextStart, end: nextEnd, label: formatRange(nextStart, nextEnd), paycheckNumber: nextPaycheckNum },
+    isTwiceMonthly: true,
+    hasMultiplePeriods: true,
+    periodsPerMonth: 2,
+    frequency: 'semimonthly',
+  };
 }
 
 // ── Monthly: full month as one period ────────────────────────
