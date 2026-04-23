@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { aiAPI } from '@/lib/api';
+import { aiAPI, bankingAPI } from '@/lib/api';
 import { getPayPeriods, isBillInPeriod, billBelongsToPaycheck } from '@/lib/payPeriods';
 import type { Bill } from '@/context/AppContext';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
@@ -13,6 +13,9 @@ import CorrectionBadge from '@/components/ai/CorrectionBadge';
 import CorrectionDetailModal from '@/components/ai/CorrectionDetailModal';
 import { TrackerSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
+
+// Statuses the backend considers a valid bank match — single source of truth.
+const VALID_MATCH_STATUSES = ['active', 'confirmed', 'pending_confirmation'];
 
 /**
  * Payment Tracker — REDESIGNED with modern UI
@@ -25,14 +28,34 @@ export default function TrackerPage() {
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
     isBillPaid, isSplitPaid, toggleSplitPaid, isUltra, deleteBill,
+    refreshBills, refreshPayments,
   } = useApp();
   const router = useRouter();
   const [showNext, setShowNext] = useState(false);
+
+  // Bank match data — keyed by bill_id
+  const [matchData, setMatchData] = useState<Record<string, any>>({});
 
   // AI Corrections state
   const [aiSettingsAvailable, setAiSettingsAvailable] = useState(false);
   const [aiCorrectionsByBill, setAiCorrectionsByBill] = useState<Record<string, any[]>>({});
   const [activeCorrectionId, setActiveCorrectionId] = useState<string | null>(null);
+
+  // Load match history for bank-confirmed bills
+  useEffect(() => {
+    if (!isUltra) return;
+    bankingAPI.getMatchHistory()
+      .then((res: any) => {
+        const matches: Record<string, any> = {};
+        for (const m of (res.data?.matches || [])) {
+          if (VALID_MATCH_STATUSES.includes(m.status)) {
+            matches[m.bill_id] = m;
+          }
+        }
+        setMatchData(matches);
+      })
+      .catch(() => {});
+  }, [isUltra]);
 
   useEffect(() => {
     aiAPI.getSettings().then(s => {
@@ -321,7 +344,9 @@ export default function TrackerPage() {
               const isPaid = bill.isSplit
                 ? isSplitPaid(bill.id, paycheckNumber)
                 : isBillPaid(bill.id);
-              const isBankMatched = bill.status === 'confirmed' && isUltra;
+              const match = matchData[bill.id];
+              const isBankMatched = isUltra && !!match && (match.status === 'active' || match.status === 'confirmed');
+              const isStaged = isBankMatched && match.match_method === 'staged';
 
               return (
                 <div
@@ -400,7 +425,9 @@ export default function TrackerPage() {
                     <div style={{ fontSize: '11px', color: colors.textMuted, display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {isBankMatched ? (
                         <>
-                          <span style={{ color: colors.green }}>🏦 Paid</span>
+                          <span style={{ color: isStaged ? colors.amber : colors.green }}>
+                            🏦 {isStaged ? 'Staged' : 'Paid'}
+                          </span>
                         </>
                       ) : (
                         <>Due {new Date(new Date().getFullYear(), new Date().getMonth(), bill.dueDay).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
