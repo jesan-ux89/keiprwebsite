@@ -69,6 +69,9 @@ export interface Bill {
       amount: number;
       isSetAside: boolean;
       setAsideAt: string | null;
+      aiReasoning: string | null;
+      aiConfidence: number | null;
+      source: 'system' | 'user' | 'ai_accountant' | 'detection_engine';
     }>;
   } | null;
 }
