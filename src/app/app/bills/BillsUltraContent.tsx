@@ -898,7 +898,29 @@ export default function BillsUltraContent() {
                                       borderRadius: '8px',
                                       backgroundColor: isDark ? 'rgba(168,130,255,0.15)' : 'rgba(109,40,217,0.1)',
                                       color: isDark ? '#A882FF' : '#6D28D9',
-                                    }}>Split</span>
+                                    }}>
+                                      {bill.funding
+                                        ? `Funded across ${bill.funding.stages.length} paychecks`
+                                        : 'Split'}
+                                    </span>
+                                  )}
+                                  {bill.isSplit && bill.funding && (
+                                    <span style={{
+                                      fontSize: '0.65rem',
+                                      fontWeight: 600,
+                                      padding: '0.125rem 0.375rem',
+                                      borderRadius: '8px',
+                                      backgroundColor: bill.funding.percentReady >= 100
+                                        ? (isDark ? 'rgba(52,211,153,0.15)' : 'rgba(4,120,87,0.1)')
+                                        : (isDark ? 'rgba(56,189,248,0.15)' : 'rgba(3,105,161,0.1)'),
+                                      color: bill.funding.percentReady >= 100
+                                        ? (isDark ? '#34D399' : '#047857')
+                                        : (isDark ? '#38BDF8' : '#0369A1'),
+                                    }}>
+                                      {bill.funding.percentReady >= 100
+                                        ? 'Fully funded'
+                                        : `${Math.round(bill.funding.percentReady)}% set aside`}
+                                    </span>
                                   )}
                                   {bill.isRecurring && (
                                     <span style={{

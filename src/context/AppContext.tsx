@@ -59,6 +59,18 @@ export interface Bill {
   detectionOccurrences?: number | null;
   detectionAvgInterval?: number | null;
   detectionCv?: number | null;
+  funding?: {
+    totalDue: number;
+    setAside: number;
+    stillNeeded: number;
+    percentReady: number;
+    stages: Array<{
+      sortOrder: number;
+      amount: number;
+      isSetAside: boolean;
+      setAsideAt: string | null;
+    }>;
+  } | null;
 }
 
 // ── Bill payment type (matches mobile: periodMonth/periodYear) ──
@@ -407,6 +419,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     detectionOccurrences: raw.detection_occurrences != null ? Number(raw.detection_occurrences) : null,
     detectionAvgInterval: raw.detection_avg_interval != null ? Number(raw.detection_avg_interval) : null,
     detectionCv: raw.detection_cv != null ? Number(raw.detection_cv) : null,
+    funding: (raw.funding as Bill['funding']) || null,
   };
 }
 
