@@ -33,7 +33,7 @@ export default function TrackerPage() {
   const router = useRouter();
   const [showNext, setShowNext] = useState(false);
 
-  // Bank match data — keyed by bill_id
+  // Bank match data — keyed by bill_id or "billId_p{sort_order}" for split bills
   const [matchData, setMatchData] = useState<Record<string, any>>({});
 
   // AI Corrections state
@@ -49,7 +49,9 @@ export default function TrackerPage() {
         const matches: Record<string, any> = {};
         for (const m of (res.data?.matches || [])) {
           if (VALID_MATCH_STATUSES.includes(m.status)) {
-            matches[m.bill_id] = m;
+            // For split bills, key by "billId_p{sort_order}" so each paycheck row gets its own badge
+            const key = m.split_sort_order ? `${m.bill_id}_p${m.split_sort_order}` : m.bill_id;
+            matches[key] = m;
           }
         }
         setMatchData(matches);
@@ -344,7 +346,9 @@ export default function TrackerPage() {
               const isPaid = bill.isSplit
                 ? isSplitPaid(bill.id, paycheckNumber)
                 : isBillPaid(bill.id);
-              const match = matchData[bill.id];
+              // For split bills, look up by composite key "billId_p{paycheckNum}" first, fall back to bill_id
+              const matchKey = bill.isSplit ? `${bill.id}_p${paycheckNumber}` : bill.id;
+              const match = matchData[matchKey] || (!bill.isSplit ? null : matchData[bill.id]);
               const isBankMatched = isUltra && !!match && (match.status === 'active' || match.status === 'confirmed');
               const isStaged = isBankMatched && match.match_method === 'staged';
 
