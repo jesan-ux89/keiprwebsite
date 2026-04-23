@@ -665,6 +665,7 @@ export default function DashboardUltraContent() {
               const statusLabel = cov.status === 'tight' ? 'Spending ahead of pace' : cov.status === 'on_track' ? 'On track' : 'Looking good';
               const top3 = budgetSuggestions.thisPaycheck
                 .filter((c: any) => c.remaining > 0)
+                .sort((a: any, b: any) => b.remaining - a.remaining)
                 .slice(0, 3);
               return (
                 <Card style={{ padding: '1.25rem' }}>
