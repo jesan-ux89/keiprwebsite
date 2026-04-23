@@ -805,7 +805,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Fetch budget suggestions ─────────────────────────────
   const fetchBudgetSuggestions = useCallback(async () => {
-    if (!user || !isUltra) {
+    if (!user) {
       setBudgetSuggestions(null);
       return;
     }
@@ -813,9 +813,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const res = await spendingAPI.getSuggested();
       setBudgetSuggestions(res.data || null);
     } catch (err) {
-      console.log('fetchBudgetSuggestions error:', (err as any)?.message);
+      // 403 = not Ultra tier (backend gates this) — silent
+      if ((err as any)?.response?.status !== 403) {
+        console.log('fetchBudgetSuggestions error:', (err as any)?.message);
+      }
     }
-  }, [user, isUltra]);
+  }, [user]);
 
   // ── Fetch credit cards ───────────────────────────────────
   const fetchCreditCards = useCallback(async () => {
