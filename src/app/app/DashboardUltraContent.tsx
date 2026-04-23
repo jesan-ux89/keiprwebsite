@@ -38,6 +38,7 @@ export default function DashboardUltraContent() {
     logQuickExpense,
     deleteBill,
     budgetSuggestions, fetchBudgetSuggestions,
+    bankAccounts, bankAccountsLoading, fetchBankAccounts,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [refreshing, setRefreshing] = useState(false);
@@ -77,7 +78,8 @@ export default function DashboardUltraContent() {
     bankingAPI.getAllTransactions({ limit: 5, sort: 'date_desc' })
       .then((res: any) => setRecentTransactions(res.data?.transactions || []))
       .catch(() => {});
-  }, []);
+    fetchBankAccounts();
+  }, [fetchBankAccounts]);
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
   const regularIncome = incomeSources.filter((s: any) => !s.isOneTime);
@@ -434,6 +436,28 @@ export default function DashboardUltraContent() {
       ) : (
         <TwoColumnLayout sidebar={<SummaryPanel />}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Incomplete Onboarding Banner */}
+            {!bankAccountsLoading && bankAccounts.length === 0 && (
+              <a href="/app/banking" style={{
+                display: 'flex', alignItems: 'center', gap: '1rem',
+                backgroundColor: isDark ? 'rgba(56,189,248,0.08)' : 'rgba(12,74,110,0.06)',
+                borderRadius: '0.75rem', padding: '1.25rem',
+                border: `0.5px solid ${isDark ? 'rgba(56,189,248,0.15)' : 'rgba(12,74,110,0.12)'}`,
+                textDecoration: 'none', cursor: 'pointer',
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>🏦</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text, margin: '0 0 0.25rem 0' }}>
+                    Finish setting up your budget
+                  </p>
+                  <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
+                    Connect your bank to unlock automated expense tracking and smart budgeting.
+                  </p>
+                </div>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.electric }}>Connect →</span>
+              </a>
+            )}
+
             {/* Rollover Prompt */}
             {currentRollover && currentRollover.action === 'pending' && currentRollover.previousLeftover > 0 && (
               <div style={{
