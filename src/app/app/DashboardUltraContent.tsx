@@ -657,12 +657,12 @@ export default function DashboardUltraContent() {
             })()}
 
             {/* Still Needed Before Payday */}
-            {budgetSuggestions?.coverage && budgetSuggestions.thisPaycheck?.length > 0 && (() => {
+            {budgetSuggestions?.coverage?.status && budgetSuggestions.thisPaycheck?.length > 0 && (() => {
               const cov = budgetSuggestions.coverage;
               const totalNeeded = cov.totalSuggestedRemaining || 0;
               const statusColor = cov.status === 'tight' ? '#EF4444' : cov.status === 'on_track' ? '#F59E0B' : '#0A7B6C';
               const statusIcon = cov.status === 'tight' ? '⚠️' : cov.status === 'on_track' ? '📊' : '✅';
-              const statusLabel = cov.status === 'tight' ? 'Budget is tight' : cov.status === 'on_track' ? 'On track' : 'Looking good';
+              const statusLabel = cov.status === 'tight' ? 'Spending ahead of pace' : cov.status === 'on_track' ? 'On track' : 'Looking good';
               const top3 = budgetSuggestions.thisPaycheck
                 .filter((c: any) => c.remaining > 0)
                 .slice(0, 3);
@@ -679,7 +679,7 @@ export default function DashboardUltraContent() {
                     {fmt(totalNeeded)}
                   </span>
                   <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0.875rem 0' }}>
-                    {cov.daysUntilPayday} day{cov.daysUntilPayday !== 1 ? 's' : ''} left · {fmt(cov.availableAfterBills)} available after bills
+                    {cov.daysUntilPayday} day{cov.daysUntilPayday !== 1 ? 's' : ''} left · {fmt(cov.totalSpent || 0)} of {fmt(cov.totalSuggested || 0)} spent
                   </p>
                   {top3.length > 0 && (
                     <div style={{ borderTop: `1px solid ${colors.divider}`, paddingTop: '0.75rem' }}>
