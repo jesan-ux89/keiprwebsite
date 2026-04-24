@@ -39,6 +39,7 @@ export default function DashboardUltraContent() {
     deleteBill,
     budgetSuggestions, fetchBudgetSuggestions,
     bankAccounts, bankAccountsLoading, fetchBankAccounts,
+    availableCalculatedAt, budgetSetupStatus,
   } = useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [refreshing, setRefreshing] = useState(false);
@@ -80,6 +81,33 @@ export default function DashboardUltraContent() {
       .catch(() => {});
     fetchBankAccounts();
   }, [fetchBankAccounts]);
+
+  // ── Freshness indicator helper ────────────────────────────
+  function formatRelativeTime(isoString: string | null): string | null {
+    if (!isoString) return null;
+    const then = new Date(isoString).getTime();
+    if (isNaN(then)) return null;
+    const diffMs = Date.now() - then;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 2) return 'Updated just now';
+    if (diffMin < 60) return `Updated ${diffMin} min ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `Updated ${diffHr} hr ago`;
+    const diffDays = Math.floor(diffHr / 24);
+    return `Updated ${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  }
+
+  // ── Onboarding "budget is adjusting" banner ─────────────────
+  const [bannerHidden, setBannerHidden] = useState(false);
+  useEffect(() => {
+    if (budgetSetupStatus === 'analyzing' || budgetSetupStatus === 'importing') {
+      const timer = setTimeout(() => setBannerHidden(true), 10 * 60 * 1000); // 10 minutes
+      return () => clearTimeout(timer);
+    }
+    setBannerHidden(false);
+  }, [budgetSetupStatus]);
+
+  const showSetupBanner = !bannerHidden && (budgetSetupStatus === 'analyzing' || budgetSetupStatus === 'importing');
 
   // ── Derive paycheck from income sources (MATCHES MOBILE) ──
   const regularIncome = incomeSources.filter((s: any) => !s.isOneTime);
@@ -358,6 +386,11 @@ export default function DashboardUltraContent() {
           <p style={{ fontSize: '0.8rem', color: colors.textMuted, margin: 0 }}>
             Available this paycheck
           </p>
+          {availableCalculatedAt && formatRelativeTime(availableCalculatedAt) && (
+            <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0', opacity: 0.7 }}>
+              {formatRelativeTime(availableCalculatedAt)}
+            </p>
+          )}
         </div>
 
         {/* Income / Bills / Spent Breakdown */}
@@ -456,6 +489,24 @@ export default function DashboardUltraContent() {
                 </div>
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: colors.electric }}>Connect →</span>
               </a>
+            )}
+
+            {/* Budget Setup In-Progress Banner */}
+            {showSetupBanner && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                backgroundColor: isDark ? 'rgba(156,94,250,0.08)' : 'rgba(156,94,250,0.06)',
+                borderRadius: '0.75rem',
+                padding: '0.875rem 1.25rem',
+                border: `0.5px solid ${isDark ? 'rgba(156,94,250,0.2)' : 'rgba(156,94,250,0.15)'}`,
+              }}>
+                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>&#10024;</span>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: colors.text }}>
+                  {budgetSetupStatus === 'importing'
+                    ? 'Setting up your budget...'
+                    : 'Analyzing your transactions...'}
+                </p>
+              </div>
             )}
 
             {/* Rollover Prompt */}
@@ -625,6 +676,11 @@ export default function DashboardUltraContent() {
                     <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>available next check</span>
                   </div>
                 </div>
+                {availableCalculatedAt && formatRelativeTime(availableCalculatedAt) && (
+                  <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: '0.5rem 0 0 0', opacity: 0.6 }}>
+                    {formatRelativeTime(availableCalculatedAt)}
+                  </p>
+                )}
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>

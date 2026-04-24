@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { billsAPI, usersAPI, authAPI, rolloverAPI, secondaryIncomeAPI, spendingAPI, bankingAPI, subscriptionsAPI } from '../lib/api';
 import { useAuth } from './AuthContext';
+import { cacheGet, cacheSet, cacheInvalidateGroups, cacheClear, INITIAL_CACHE_META, type CacheMeta, type InvalidationGroup } from '../lib/localCache';
 
 /**
  * AppContext — PORTED FROM MOBILE APP (src/context/AppContext.tsx)
@@ -248,6 +249,17 @@ interface AppContextType {
   // Quick expense
   logQuickExpense: (name: string, amount: number, category?: string) => Promise<string | null>;
 
+  // Cache metadata
+  cacheMeta: CacheMeta;
+
+  // Freshness timestamps (from backend)
+  availableCalculatedAt: string | null;
+  balanceFreshnessAt: string | null;
+  transactionsSyncedAt: string | null;
+
+  // Onboarding budget setup status
+  budgetSetupStatus: string | null;
+
   // Initial load flag (prevents premature onboarding redirect)
   initialDataLoaded: boolean;
 }
@@ -346,6 +358,13 @@ const AppContext = createContext<AppContextType>({
 
   // Quick expense
   logQuickExpense: async () => null,
+
+  cacheMeta: INITIAL_CACHE_META,
+  availableCalculatedAt: null,
+  balanceFreshnessAt: null,
+  transactionsSyncedAt: null,
+
+  budgetSetupStatus: null,
 
   // Initial load flag
   initialDataLoaded: false,
@@ -506,6 +525,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [incomeFetchSucceeded, setIncomeFetchSucceeded] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
+  // ── Cache metadata + freshness timestamps ──────────────────
+  const [cacheMeta, setCacheMeta] = useState<CacheMeta>(INITIAL_CACHE_META);
+  const [availableCalculatedAt, setAvailableCalculatedAt] = useState<string | null>(null);
+  const [balanceFreshnessAt, setBalanceFreshnessAt] = useState<string | null>(null);
+  const [transactionsSyncedAt, setTransactionsSyncedAt] = useState<string | null>(null);
+  const [budgetSetupStatus, setBudgetSetupStatus] = useState<string | null>(null);
+  const prevUidRef = useRef<string | null>(null);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
@@ -590,7 +617,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await billsAPI.getAll();
       const billsArray = Array.isArray(res.data?.bills) ? res.data.bills : [];
-      setBills(billsArray.map((b: Record<string, unknown>) => mapApiBill(b)));
+      const mapped = billsArray.map((b: Record<string, unknown>) => mapApiBill(b));
+      setBills(mapped);
+      cacheSet(user.uid, 'bills', mapped);
     } catch (error) {
       console.error('Failed to fetch bills:', error);
     } finally {
@@ -611,6 +640,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const advanced = autoAdvancePayDates(mapped);
       setIncomeSources(advanced);
       setIncomeFetchSucceeded(true);
+      cacheSet(user.uid, 'income', advanced);
     } catch (error) {
       console.error('Failed to fetch income sources:', error);
       // Don't set incomeFetchSucceeded — prevents false onboarding redirect on API failure
@@ -632,6 +662,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         icon: c.icon ? String(c.icon) : undefined,
       }));
       setCategories(cats);
+      cacheSet(user.uid, 'categories', cats);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     } finally {
@@ -664,6 +695,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }));
       });
       setBillPayments(payments);
+      cacheSet(user.uid, 'payments', payments);
     } catch (error) {
       console.error('Failed to fetch payments:', error);
     } finally {
@@ -727,6 +759,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         billId: data.billId || undefined,
         note: data.note || undefined,
       });
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
       await fetchSideIncome();
     } catch (error) {
       console.error('allocateSideIncome failed:', error);
@@ -738,6 +771,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSideIncomeAllocations(prev => prev.filter(a => a.id !== id));
     try {
       await secondaryIncomeAPI.removeAllocation(id);
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
       await fetchSideIncome();
     } catch (error) {
       console.error('removeAllocation failed:', error);
@@ -780,6 +814,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         periodMonth: currentRollover.periodMonth,
         periodYear: currentRollover.periodYear,
       });
+      if (user) cacheInvalidateGroups(user.uid, ['available']);
     } catch (error) {
       console.error('decideRollover failed:', error);
       fetchRollover();
@@ -808,7 +843,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const res = await spendingAPI.getSummary();
-      setSpendingSummary(res.data?.categories || []);
+      const cats = res.data?.categories || [];
+      setSpendingSummary(cats);
+      cacheSet(user.uid, 'budgetSummary', cats);
     } catch (err) {
       console.log('fetchSpendingSummary error:', (err as any)?.message);
     }
@@ -823,8 +860,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const res = await spendingAPI.getAvailable();
-      setAvailableNumber(res.data?.available?.availableNumber ?? null);
-      setAvailableBreakdown(res.data?.available || null);
+      const num = res.data?.available?.availableNumber ?? null;
+      const breakdown = res.data?.available || null;
+      setAvailableNumber(num);
+      setAvailableBreakdown(breakdown);
+      // Capture freshness timestamps from backend
+      if (res.data?.available?.calculatedAt) setAvailableCalculatedAt(res.data.available.calculatedAt);
+      if (res.data?.available?.balanceFreshnessAt) setBalanceFreshnessAt(res.data.available.balanceFreshnessAt);
+      // Persist to localStorage for next cold start
+      if (num !== null && breakdown) {
+        cacheSet(user.uid, 'available', { num, breakdown, calculatedAt: res.data?.available?.calculatedAt, balanceFreshnessAt: res.data?.available?.balanceFreshnessAt });
+      }
     } catch (err) {
       console.log('fetchAvailableNumber error:', (err as any)?.message);
     }
@@ -878,6 +924,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setBankAccounts(accts);
       bankAccountsLengthRef.current = accts.length;
       bankAccountsLastFetchedRef.current = Date.now();
+      cacheSet(user.uid, 'accounts', accts);
+      // Capture transactionsSyncedAt from lastSyncAt if present
+      if (res.data?.lastSyncAt) setTransactionsSyncedAt(res.data.lastSyncAt);
     } catch (err) {
       console.log('fetchBankAccounts failed:', (err as any)?.message);
     } finally {
@@ -907,6 +956,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setBankTransactions(txns);
       bankTransactionsLengthRef.current = txns.length;
       bankTransactionsLastFetchedRef.current = Date.now();
+      cacheSet(user.uid, 'transactions', txns);
     } catch (err) {
       console.log('fetchBankTransactions failed:', (err as any)?.message);
     } finally {
@@ -925,6 +975,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await billsAPI.quickExpense({ name, amount, category });
       const billId = res.data?.bill?.id || null;
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
       await Promise.all([fetchBills(), fetchAvailableNumber()]);
       return billId;
     } catch (err) {
@@ -932,6 +983,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       throw err;
     }
   }, [user, fetchBills, fetchAvailableNumber]);
+
+  // ── Hydrate from localStorage on cold start ────────────────
+  // Runs once per user change. Sets cached data immediately so UI is not blank.
+  // Does NOT set lastFetched timestamps — syncAndFetch still fires and overwrites.
+  useEffect(() => {
+    if (!user) return;
+    const uid = user.uid;
+
+    // Clear previous user's data if uid changed
+    if (prevUidRef.current && prevUidRef.current !== uid) {
+      cacheClear(prevUidRef.current);
+    }
+    prevUidRef.current = uid;
+
+    const cachedBills = cacheGet<Bill[]>(uid, 'bills');
+    const cachedIncome = cacheGet<IncomeSource[]>(uid, 'income');
+    const cachedPayments = cacheGet<BillPayment[]>(uid, 'payments');
+    const cachedCategories = cacheGet<Category[]>(uid, 'categories');
+    const cachedAccounts = cacheGet<any[]>(uid, 'accounts');
+    const cachedTransactions = cacheGet<any[]>(uid, 'transactions');
+    const cachedAvailable = cacheGet<{ num: number; breakdown: any; calculatedAt?: string; balanceFreshnessAt?: string }>(uid, 'available');
+    const cachedBudgetSummary = cacheGet<any[]>(uid, 'budgetSummary');
+    const cachedConfirmations = cacheGet<{ count: number }>(uid, 'confirmations');
+
+    let hydrated = false;
+    if (cachedBills) { setBills(cachedBills); hydrated = true; }
+    if (cachedIncome) { setIncomeSources(cachedIncome); setIncomeFetchSucceeded(true); hydrated = true; }
+    if (cachedPayments) { setBillPayments(cachedPayments); hydrated = true; }
+    if (cachedCategories) { setCategories(cachedCategories); hydrated = true; }
+    if (cachedAccounts) { setBankAccounts(cachedAccounts); bankAccountsLengthRef.current = cachedAccounts.length; hydrated = true; }
+    if (cachedTransactions) { setBankTransactions(cachedTransactions); bankTransactionsLengthRef.current = cachedTransactions.length; hydrated = true; }
+    if (cachedAvailable) {
+      setAvailableNumber(cachedAvailable.num);
+      setAvailableBreakdown(cachedAvailable.breakdown);
+      if (cachedAvailable.calculatedAt) setAvailableCalculatedAt(cachedAvailable.calculatedAt);
+      if (cachedAvailable.balanceFreshnessAt) setBalanceFreshnessAt(cachedAvailable.balanceFreshnessAt);
+      hydrated = true;
+    }
+    if (cachedBudgetSummary) { setSpendingSummary(cachedBudgetSummary); hydrated = true; }
+    if (cachedConfirmations) { setPendingConfirmationsCount(cachedConfirmations.count); hydrated = true; }
+
+    if (hydrated) {
+      setCacheMeta(prev => ({ ...prev, hydratedFromCache: true, lastHydratedAt: Date.now() }));
+    }
+  }, [user]);
 
   // ── Initial fetch + sync user profile ─────────────────────
   useEffect(() => {
@@ -969,13 +1065,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const dbPlan = userData.plan || 'free';
           if (dbPlan === 'pro' || dbPlan === 'ultra') setTier(dbPlan);
           else setTier('free');
+          if (userData.budget_setup_status) setBudgetSetupStatus(userData.budget_setup_status);
         }
       } catch (err) {
         console.log('Login sync unavailable:', err);
       }
 
-      // Fetch data
+      // Fetch data (revalidate — overwrites cache hydration with fresh API data)
       await Promise.all([fetchBills(), fetchIncomeSources(), fetchCategories(), fetchPayments(), fetchRollover(), fetchSideIncome(), fetchSpendingBudgets(), fetchSpendingSummary(), fetchAvailableNumber(), fetchCreditCards(), refreshPendingConfirmations(), fetchBudgetSuggestions()]);
+      setCacheMeta(prev => ({ ...prev, lastRefreshedAt: Date.now(), refreshInProgress: false }));
       setInitialDataLoaded(true);
     }
 
@@ -1012,6 +1110,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const res = await billsAPI.create(apiData);
     const bill = mapApiBill(res.data?.bill || res.data);
     setBills(prev => [...prev, bill]);
+    if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
 
     // If split, set split allocations
     if (data.isSplit && bill.id) {
@@ -1080,12 +1179,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fetchCreditCards().catch(() => {});
     }
 
+    if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
     return bill;
   };
 
   const deleteBill = async (id: string) => {
     await billsAPI.delete(id);
     setBills(prev => prev.filter((b) => b.id !== id));
+    if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
     // Refresh available number so quick expense deletions restore the balance
     fetchAvailableNumber();
   };
@@ -1126,6 +1227,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           prev.map(p => p.id === tempPayment.id ? { ...tempPayment, id: created.id } : p)
         );
       }
+      if (user) cacheInvalidateGroups(user.uid, ['tracker', 'available']);
     } catch (err) {
       console.log('markBillPaid API failed:', err);
     }
@@ -1145,6 +1247,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       for (const payment of payments) {
         await billsAPI.unmarkPaid(payment.id);
       }
+      if (user) cacheInvalidateGroups(user.uid, ['tracker', 'available']);
     } catch (err) {
       console.log('unmarkBillPaid API failed:', err);
       setBillPayments(prev => [...prev, ...payments]); // rollback
@@ -1214,17 +1317,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const refreshPendingConfirmations = useCallback(async () => {
     try {
       const res = await bankingAPI.getConfirmations();
-      const count = (res.data?.confirmations || []).length;
+      const confirmations = res.data?.confirmations || [];
+      const count = confirmations.length;
       setPendingConfirmationsCount(count);
+      if (user) cacheSet(user.uid, 'confirmations', { count });
     } catch {
       // Silently fail — not critical
     }
-  }, [isUltra]);
+  }, [isUltra, user]);
 
   const confirmDetectedBill = async (billId: string, overrides?: Record<string, unknown>) => {
     setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed' } : b));
     try {
       await billsAPI.confirmDetected(billId, overrides || {});
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'available', 'review']);
       refreshBills().catch(() => {});
     } catch (err) {
       console.log('confirmDetectedBill failed:', (err as Error)?.message);
@@ -1236,6 +1342,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed', isRecurring: false } : b));
     try {
       await billsAPI.confirmDetected(billId, { oneTime: true });
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'available', 'review']);
       refreshBills().catch(() => {});
       refreshPayments().catch(() => {});
     } catch (err) {
@@ -1248,6 +1355,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBills(prev => prev.filter(b => b.id !== billId));
     try {
       await billsAPI.dismissDetected(billId);
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'review']);
     } catch (err) {
       console.log('dismissDetectedBill failed:', (err as Error)?.message);
       await refreshBills();
@@ -1258,6 +1366,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBills(prev => prev.filter(b => b.id !== billId));
     try {
       await billsAPI.linkDuplicate(billId, targetBillId);
+      if (user) cacheInvalidateGroups(user.uid, ['budget', 'available', 'review']);
       await refreshBills(); // Refresh to sync with server
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || (err as Error)?.message || 'Unknown error';
@@ -1272,6 +1381,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const res = await usersAPI.addIncomeSource(data);
     const source = mapIncomeSource(res.data?.incomeSource || res.data?.income_source || res.data);
     setIncomeSources(prev => [...prev, source]);
+    if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
     return source;
   };
 
@@ -1279,12 +1389,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const res = await usersAPI.updateIncomeSource(id, data);
     const source = mapIncomeSource(res.data?.incomeSource || res.data?.income_source || res.data);
     setIncomeSources(prev => prev.map((s) => (s.id === id ? source : s)));
+    if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
     return source;
   };
 
   const deleteIncomeSource = async (id: string) => {
     const wasPrimary = incomeSources.find(s => s.id === id)?.isPrimary;
     await usersAPI.deleteIncomeSource(id);
+    if (user) cacheInvalidateGroups(user.uid, ['budget', 'available']);
     setIncomeSources(prev => {
       const remaining = prev.filter((s) => s.id !== id);
       // If deleted source was primary, promote the first remaining
@@ -1395,6 +1507,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         pendingConfirmationsCount,
         refreshPendingConfirmations,
+
+        cacheMeta,
+        availableCalculatedAt,
+        balanceFreshnessAt,
+        transactionsSyncedAt,
+
+        budgetSetupStatus,
 
         initialDataLoaded,
       }}
