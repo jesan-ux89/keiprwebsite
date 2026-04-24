@@ -207,10 +207,16 @@ export default function TrackerPage() {
     return isBillPaid(b.id, month, year) || autoChecked;
   }
 
+  // Period-scoped split paid check: resolves billing month, then checks bill_payments
+  function isSplitPaidForPaycheck(b: Bill, paycheckNum: number, pd: typeof currentPeriod): boolean {
+    const { month, year } = billPeriodForPaycheck(b, pd);
+    return isSplitPaid(b.id, paycheckNum, month, year);
+  }
+
   // Count paid bills (scoped to paycheck period)
   const paidCount = billsInPeriod.reduce((count, bill) => {
     if (bill.isSplit) {
-      return count + (isSplitPaid(bill.id, paycheckNumber) ? 1 : 0);
+      return count + (isSplitPaidForPaycheck(bill, paycheckNumber, period) ? 1 : 0);
     }
     return isNonSplitPaidForPaycheck(bill, period) ? count + 1 : count;
   }, 0);
@@ -287,7 +293,7 @@ export default function TrackerPage() {
         <div style={{ fontSize: '18px', fontWeight: '700', color: colors.green }}>
           {fmt(billsInPeriod.reduce((s, b) => {
             const amt = billAmountForPaycheck(b, paycheckNumber);
-            const isPaid = b.isSplit ? isSplitPaid(b.id, paycheckNumber) : isNonSplitPaidForPaycheck(b, period);
+            const isPaid = b.isSplit ? isSplitPaidForPaycheck(b, paycheckNumber, period) : isNonSplitPaidForPaycheck(b, period);
             return s + (isPaid ? amt : 0);
           }, 0))}
         </div>
@@ -408,22 +414,33 @@ export default function TrackerPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {billsInPeriod.map((bill) => {
               const amt = billAmountForPaycheck(bill, paycheckNumber);
-              const isPaid = bill.isSplit
-                ? isSplitPaid(bill.id, paycheckNumber)
-                : isNonSplitPaidForPaycheck(bill, period);
               const { month: billPeriodMonth, year: billPeriodYear } = billPeriodForPaycheck(bill, period);
-              // Bank match badge — resolved at load time, no ambiguous fallback
+              const isPaid = bill.isSplit
+                ? isSplitPaidForPaycheck(bill, paycheckNumber, period)
+                : isNonSplitPaidForPaycheck(bill, period);
+              // Bank match badge — resolved at load time, period-filtered at render time.
+              // A match from April shouldn't badge a May row.
               const matchKey = bill.isSplit ? `${bill.id}_p${paycheckNumber}` : bill.id;
-              const match = matchData[matchKey];
-              const isBankMatched = isUltra && !!match && (match.status === 'active' || match.status === 'confirmed');
-              const isStaged = isBankMatched && match.match_method === 'staged';
+              const rawMatch = matchData[matchKey];
+              const matchInPeriod = (() => {
+                if (!rawMatch || !VALID_MATCH_STATUSES.includes(rawMatch.status)) return null;
+                if (rawMatch.transaction_date) {
+                  const txDate = new Date(rawMatch.transaction_date);
+                  const txMonth = txDate.getMonth() + 1;
+                  const txYear = txDate.getFullYear();
+                  if (txMonth !== billPeriodMonth || txYear !== billPeriodYear) return null;
+                }
+                return rawMatch;
+              })();
+              const isBankMatched = isUltra && !!matchInPeriod;
+              const isStaged = isBankMatched && matchInPeriod!.match_method === 'staged';
 
               return (
                 <div
                   key={bill.id}
                   onClick={() => {
                     if (bill.isSplit) {
-                      toggleSplitPaid(bill.id, paycheckNumber);
+                      toggleSplitPaid(bill.id, paycheckNumber, billPeriodMonth, billPeriodYear);
                     } else {
                       if (isPaid) unmarkBillPaid(bill.id, billPeriodMonth, billPeriodYear);
                       else markBillPaid(bill.id, billPeriodMonth, billPeriodYear);

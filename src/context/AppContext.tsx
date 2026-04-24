@@ -82,6 +82,7 @@ export interface BillPayment {
   billId: string;
   periodMonth: number;
   periodYear: number;
+  paycheckNumber?: number | null; // For split bills: which paycheck (1-4). NULL for non-split.
   paidAt: string;
 }
 
@@ -156,11 +157,11 @@ interface AppContextType {
   // Bill payments (tracker) — matches mobile API
   billPayments: BillPayment[];
   paymentsLoading: boolean;
-  markBillPaid: (billId: string, periodMonth?: number, periodYear?: number) => Promise<void>;
-  unmarkBillPaid: (billId: string, periodMonth?: number, periodYear?: number) => Promise<void>;
+  markBillPaid: (billId: string, periodMonth?: number, periodYear?: number, paycheckNumber?: number) => Promise<void>;
+  unmarkBillPaid: (billId: string, periodMonth?: number, periodYear?: number, paycheckNumber?: number) => Promise<void>;
   isBillPaid: (billId: string, periodMonth?: number, periodYear?: number) => boolean;
-  toggleSplitPaid: (billId: string, paycheckNum: number) => Promise<void>;
-  isSplitPaid: (billId: string, paycheckNum: number) => boolean;
+  toggleSplitPaid: (billId: string, paycheckNum: number, periodMonth?: number, periodYear?: number) => Promise<void>;
+  isSplitPaid: (billId: string, paycheckNum: number, periodMonth?: number, periodYear?: number) => boolean;
   refreshPayments: () => Promise<void>;
 
   // Income sources
@@ -658,6 +659,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           billId: String(p.bill_id),
           periodMonth: Number(p.period_month),
           periodYear: Number(p.period_year),
+          paycheckNumber: p.paycheck_number != null ? Number(p.paycheck_number) : null,
           paidAt: String(p.paid_at || ''),
         }));
       });
@@ -1099,7 +1101,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const markBillPaid = async (billId: string, periodMonth?: number, periodYear?: number) => {
+  const markBillPaid = async (billId: string, periodMonth?: number, periodYear?: number, paycheckNumber?: number) => {
     const now = new Date();
     const month = periodMonth ?? now.getMonth() + 1;
     const year = periodYear ?? now.getFullYear();
@@ -1109,11 +1111,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       billId,
       periodMonth: month,
       periodYear: year,
+      paycheckNumber: paycheckNumber ?? null,
       paidAt: now.toISOString(),
     };
     setBillPayments(prev => [...prev, tempPayment]);
     try {
-      const response = await billsAPI.markPaid({ billId, periodMonth: month, periodYear: year });
+      const response = await billsAPI.markPaid({ billId, periodMonth: month, periodYear: year, paycheckNumber: paycheckNumber ?? undefined });
       const created = response.data?.payment;
       if (created) {
         setBillPayments(prev =>
@@ -1125,11 +1128,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const unmarkBillPaid = async (billId: string, periodMonth?: number, periodYear?: number) => {
+  const unmarkBillPaid = async (billId: string, periodMonth?: number, periodYear?: number, paycheckNumber?: number) => {
     const payments = billPayments.filter(p =>
       p.billId === billId &&
       (periodMonth == null || p.periodMonth === periodMonth) &&
-      (periodYear == null || p.periodYear === periodYear)
+      (periodYear == null || p.periodYear === periodYear) &&
+      (paycheckNumber == null || p.paycheckNumber === paycheckNumber)
     );
     if (payments.length === 0) return;
     // Optimistic: remove matching payment records for this bill/period
@@ -1144,10 +1148,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Per-split paid tracking (MATCHES MOBILE)
-  const isSplitPaid = (billId: string, paycheckNum: number): boolean => {
+  // Per-split paid tracking — period-scoped (MATCHES MOBILE)
+  // Checks bill_payments with paycheckNumber + period instead of global p1done/p2done flags.
+  const isSplitPaid = (billId: string, paycheckNum: number, periodMonth?: number, periodYear?: number): boolean => {
     const bill = bills.find(b => b.id === billId);
-    if (!bill || !bill.isSplit) return isBillPaid(billId);
+    if (!bill || !bill.isSplit) return isBillPaid(billId, periodMonth, periodYear);
+
+    // If period is specified, check bill_payments for this specific period + paycheck
+    if (periodMonth != null && periodYear != null) {
+      return billPayments.some(p =>
+        p.billId === billId &&
+        p.paycheckNumber === paycheckNum &&
+        p.periodMonth === periodMonth &&
+        p.periodYear === periodYear
+      );
+    }
+
+    // Fallback to legacy p1done/p2done when no period specified (backward compat)
     if (paycheckNum === 1) return bill.p1done;
     if (paycheckNum === 2) return bill.p2done;
     if (paycheckNum === 3) return bill.p3done;
@@ -1155,44 +1172,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const toggleSplitPaid = async (billId: string, paycheckNum: number) => {
+  // toggleSplitPaid now uses period-scoped bill_payments instead of the global
+  // is_saved_to_savings flag on bill_splits.
+  const toggleSplitPaid = async (billId: string, paycheckNum: number, periodMonth?: number, periodYear?: number) => {
     if (paycheckNum < 1 || paycheckNum > 4) return;
     const bill = bills.find(b => b.id === billId);
     if (!bill || !bill.isSplit) {
-      // Non-split: toggle global paid state
-      if (isBillPaid(billId)) await unmarkBillPaid(billId);
-      else await markBillPaid(billId);
+      // Non-split: toggle period-scoped paid state
+      if (isBillPaid(billId, periodMonth, periodYear)) await unmarkBillPaid(billId, periodMonth, periodYear);
+      else await markBillPaid(billId, periodMonth, periodYear);
       return;
     }
 
-    // Split bill: toggle the specific paycheck's done state
-    const splitIndex = paycheckNum - 1;
-    const splitId = bill.splitIds[splitIndex];
-    if (!splitId) {
-      console.log(`[toggleSplitPaid] No splitId for bill ${billId} paycheck ${paycheckNum}`);
-      return;
-    }
+    // Split bill: toggle via bill_payments with paycheckNumber
+    const month = periodMonth ?? new Date().getMonth() + 1;
+    const year = periodYear ?? new Date().getFullYear();
+    const currentlyPaid = isSplitPaid(billId, paycheckNum, month, year);
 
-    const doneKey = `p${paycheckNum}done` as keyof Bill;
-    const currentlyDone = bill[doneKey] as boolean;
-
-    // Optimistic update
-    setBills(prev => prev.map(b =>
-      b.id === billId ? { ...b, [doneKey]: !currentlyDone } : b
-    ));
-
-    try {
-      if (currentlyDone) {
-        await billsAPI.unmarkSaved(splitId);
-      } else {
-        await billsAPI.markSaved(splitId);
-      }
-    } catch (err) {
-      console.log('toggleSplitPaid API failed:', err);
-      // Rollback
-      setBills(prev => prev.map(b =>
-        b.id === billId ? { ...b, [doneKey]: currentlyDone } : b
-      ));
+    if (currentlyPaid) {
+      await unmarkBillPaid(billId, month, year, paycheckNum);
+    } else {
+      await markBillPaid(billId, month, year, paycheckNum);
     }
   };
 
