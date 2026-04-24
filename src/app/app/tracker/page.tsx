@@ -41,23 +41,60 @@ export default function TrackerPage() {
   const [aiCorrectionsByBill, setAiCorrectionsByBill] = useState<Record<string, any[]>>({});
   const [activeCorrectionId, setActiveCorrectionId] = useState<string | null>(null);
 
+  // Build bill lookup for normalizing legacy match_log rows
+  const billsById = React.useMemo(() => {
+    const map: Record<string, any> = {};
+    for (const b of bills) map[b.id] = b;
+    return map;
+  }, [bills]);
+
+  /**
+   * Normalize raw match_log rows into a keyed map.
+   * - Matches WITH split_sort_order → keyed as "billId_p{sort_order}"
+   * - Non-split bills → keyed by bill_id
+   * - Legacy split-bill matches (no split_sort_order) → assigned to exactly ONE
+   *   split row (first unpaid, else lowest sort_order) to prevent one legacy row
+   *   from lighting up every paycheck row.
+   */
+  function normalizeMatchData(rawMatches: any[]): Record<string, any> {
+    const keyed: Record<string, any> = {};
+    for (const m of rawMatches) {
+      if (!VALID_MATCH_STATUSES.includes(m.status)) continue;
+
+      if (m.split_sort_order) {
+        keyed[`${m.bill_id}_p${m.split_sort_order}`] = m;
+        continue;
+      }
+
+      const bill = billsById[m.bill_id];
+      if (!bill?.isSplit) {
+        keyed[m.bill_id] = m;
+        continue;
+      }
+
+      // Legacy split-bill match — resolve to one deterministic paycheck row
+      const splits = (bill.splits || []).sort((a: any, b: any) => (a.sortOrder || 1) - (b.sortOrder || 1));
+      const firstUnpaid = splits.find((s: any) => !isSplitPaid(bill.id, s.sortOrder));
+      const fallbackSortOrder = firstUnpaid?.sortOrder ?? splits[0]?.sortOrder ?? 1;
+
+      keyed[`${m.bill_id}_p${fallbackSortOrder}`] = {
+        ...m,
+        split_sort_order: fallbackSortOrder,
+        _inferred_legacy: true,
+      };
+    }
+    return keyed;
+  }
+
   // Load match history for bank-confirmed bills
   useEffect(() => {
     if (!isUltra) return;
     bankingAPI.getMatchHistory()
       .then((res: any) => {
-        const matches: Record<string, any> = {};
-        for (const m of (res.data?.matches || [])) {
-          if (VALID_MATCH_STATUSES.includes(m.status)) {
-            // For split bills, key by "billId_p{sort_order}" so each paycheck row gets its own badge
-            const key = m.split_sort_order ? `${m.bill_id}_p${m.split_sort_order}` : m.bill_id;
-            matches[key] = m;
-          }
-        }
-        setMatchData(matches);
+        setMatchData(normalizeMatchData(res.data?.matches || []));
       })
       .catch(() => {});
-  }, [isUltra]);
+  }, [isUltra, billsById]);
 
   useEffect(() => {
     aiAPI.getSettings().then(s => {
@@ -346,9 +383,9 @@ export default function TrackerPage() {
               const isPaid = bill.isSplit
                 ? isSplitPaid(bill.id, paycheckNumber)
                 : isBillPaid(bill.id);
-              // For split bills, look up by composite key "billId_p{paycheckNum}" first, fall back to bill_id
+              // Bank match badge — resolved at load time, no ambiguous fallback
               const matchKey = bill.isSplit ? `${bill.id}_p${paycheckNumber}` : bill.id;
-              const match = matchData[matchKey] || (!bill.isSplit ? null : matchData[bill.id]);
+              const match = matchData[matchKey];
               const isBankMatched = isUltra && !!match && (match.status === 'active' || match.status === 'confirmed');
               const isStaged = isBankMatched && match.match_method === 'staged';
 
