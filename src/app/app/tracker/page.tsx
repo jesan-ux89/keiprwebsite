@@ -72,7 +72,9 @@ export default function TrackerPage() {
         continue;
       }
 
-      // Legacy split-bill match — resolve to one deterministic paycheck row
+      // Backward-compat: match_log rows created before the split_sort_order column
+      // don't specify which split they belong to. Assign to exactly one row
+      // (first unpaid, else lowest sort_order) so one legacy record can't badge every row.
       const splits = (bill.splits || []).sort((a: any, b: any) => (a.sortOrder || 1) - (b.sortOrder || 1));
       const firstUnpaid = splits.find((s: any) => !isSplitPaid(bill.id, s.sortOrder));
       const fallbackSortOrder = firstUnpaid?.sortOrder ?? splits[0]?.sortOrder ?? 1;
