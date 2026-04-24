@@ -1080,6 +1080,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     syncAndFetch();
   }, [user, fetchBills, fetchIncomeSources, fetchCategories, fetchPayments, fetchRollover, fetchSideIncome]);
 
+  // ── Poll budget_setup_status while importing/analyzing ─────
+  // Checks /auth/me every 10s until status flips to 'ready' or 10 min elapses.
+  useEffect(() => {
+    if (!user) return;
+    if (budgetSetupStatus !== 'importing' && budgetSetupStatus !== 'analyzing') return;
+
+    const POLL_INTERVAL = 10_000;  // 10 seconds
+    const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
+    const startedAt = Date.now();
+
+    const timer = setInterval(async () => {
+      if (Date.now() - startedAt > MAX_POLL_MS) {
+        clearInterval(timer);
+        setBudgetSetupStatus(null); // timeout — hide banner
+        return;
+      }
+      try {
+        const res = await authAPI.me();
+        const status = res.data?.user?.budget_setup_status || null;
+        setBudgetSetupStatus(status);
+        if (status === 'ready' || status === null) {
+          clearInterval(timer);
+          // Status is ready — refresh all data to pick up AI changes
+          if (status === 'ready') {
+            Promise.all([fetchBills(), fetchIncomeSources(), fetchPayments(), fetchAvailableNumber(), fetchSpendingSummary()]).catch(() => {});
+          }
+        }
+      } catch {
+        // Network error — keep polling
+      }
+    }, POLL_INTERVAL);
+
+    return () => clearInterval(timer);
+  }, [user, budgetSetupStatus, fetchBills, fetchIncomeSources, fetchPayments, fetchAvailableNumber, fetchSpendingSummary]);
+
   // ── Auto-fetch banking data once tier is known as Ultra ───
   useEffect(() => {
     if (user && isUltra) {
