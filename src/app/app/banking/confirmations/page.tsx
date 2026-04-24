@@ -249,7 +249,7 @@ export default function ConfirmationsPage() {
                           margin: 0,
                           fontSize: '1rem',
                           fontWeight: 700,
-                          color: colors.primary || colors.electric,
+                          color: colors.electric,
                         }}
                       >
                         {group.billName}
