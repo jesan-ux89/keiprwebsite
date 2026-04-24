@@ -1,23 +1,34 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { bankingAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, AlertCircle, Check, X } from 'lucide-react';
+import { ChevronLeft, Check, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 
 interface Confirmation {
   id: string;
-  transaction_name: string;
-  transaction_amount: number;
-  bill_name: string;
-  bill_amount: number;
-  confidence_score: number;
+  bill_id: string;
+  plaid_transaction_id: string;
+  merchant_name: string;
+  amount: number;
   transaction_date: string;
+  confidence_score: number;
+  match_method: string;
+  status: string;
+  bills?: { name: string; total_amount: number; due_day_of_month?: number; is_split?: boolean; split_count?: number };
+}
+
+interface BillGroup {
+  billId: string;
+  billName: string;
+  billAmount: number;
+  dueDayOfMonth?: number;
+  items: Confirmation[];
 }
 
 export default function ConfirmationsPage() {
@@ -25,9 +36,37 @@ export default function ConfirmationsPage() {
   const { fmt, refreshPendingConfirmations } = useApp();
 
   const [confirmations, setConfirmations] = useState<Confirmation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actioning, setActioning] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [excluding, setExcluding] = useState<string | null>(null);
+  const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  // Group confirmations by bill
+  const billGroups: BillGroup[] = useMemo(() => {
+    const groupMap = new Map<string, BillGroup>();
+    for (const conf of confirmations) {
+      const key = conf.bill_id;
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          billId: key,
+          billName: conf.bills?.name || 'Unknown Bill',
+          billAmount: conf.bills?.total_amount || 0,
+          dueDayOfMonth: conf.bills?.due_day_of_month,
+          items: [],
+        });
+      }
+      groupMap.get(key)!.items.push(conf);
+    }
+    const groups = Array.from(groupMap.values());
+    groups.sort((a, b) => a.billName.localeCompare(b.billName));
+    for (const g of groups) {
+      g.items.sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
+    }
+    return groups;
+  }, [confirmations]);
 
   useEffect(() => {
     fetchConfirmations();
@@ -40,53 +79,89 @@ export default function ConfirmationsPage() {
       setConfirmations(Array.isArray(res.data?.confirmations) ? res.data.confirmations : []);
       setError(null);
     } catch (err) {
-      console.error('Failed to fetch confirmations:', err);
       setError('Failed to load pending confirmations');
     } finally {
       setLoading(false);
     }
   };
 
+  const clearItemError = (id: string) => {
+    setItemErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
   const handleConfirm = async (id: string) => {
-    setActioning(id);
+    clearItemError(id);
+    setConfirming(id);
     try {
       await bankingAPI.confirmMatch(id);
-      setConfirmations(confirmations.filter((c) => c.id !== id));
+      setConfirmations((prev) => prev.filter((c) => c.id !== id));
       refreshPendingConfirmations();
-    } catch (err) {
-      console.error('Failed to confirm match:', err);
-      alert('Failed to confirm match');
+    } catch (err: any) {
+      const status = err.response?.status;
+      const serverError = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm match';
+      const hint = status === 422 ? '\nSet up your pay schedule in Settings to resolve this.' : '';
+      setItemErrors((prev) => ({ ...prev, [id]: serverError + hint }));
     } finally {
-      setActioning(null);
+      setConfirming(null);
     }
   };
 
   const handleReject = async (id: string) => {
-    setActioning(id);
+    clearItemError(id);
+    setRejecting(id);
     try {
       await bankingAPI.rejectMatch(id);
-      setConfirmations(confirmations.filter((c) => c.id !== id));
+      setConfirmations((prev) => prev.filter((c) => c.id !== id));
       refreshPendingConfirmations();
-    } catch (err) {
-      console.error('Failed to reject match:', err);
-      alert('Failed to reject match');
+    } catch (err: any) {
+      const serverError = err.response?.data?.error || err.response?.data?.message || 'Failed to reject match';
+      setItemErrors((prev) => ({ ...prev, [id]: serverError }));
     } finally {
-      setActioning(null);
+      setRejecting(null);
     }
   };
 
-  const confidenceColor = (score: number | undefined | null) => {
-    if (score == null) return colors.textMuted;
-    if (score >= 0.8) return colors.green;
-    if (score >= 0.6) return colors.amber;
-    return colors.red;
+  const handleIgnoreMerchant = async (conf: Confirmation) => {
+    setExcluding(conf.id);
+    try {
+      await bankingAPI.addExclusionRule({
+        merchant_pattern: conf.merchant_name,
+        rule_type: 'merchant',
+      });
+      const merchantLower = conf.merchant_name.toLowerCase();
+      setConfirmations((prev) => prev.filter((c) => c.merchant_name.toLowerCase() !== merchantLower));
+      refreshPendingConfirmations();
+    } catch (err: any) {
+      const serverError = err.response?.data?.error || err.response?.data?.message || 'Failed to ignore merchant';
+      setItemErrors((prev) => ({ ...prev, [conf.id]: serverError }));
+    } finally {
+      setExcluding(null);
+    }
+  };
+
+  const toggleGroup = (billId: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [billId]: !prev[billId] }));
+  };
+
+  const formatDate = (dateStr: string): string => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
   };
 
   return (
-    <AppLayout pageTitle="Confirmations">
+    <AppLayout pageTitle="Confirm Payments">
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        {/* Header back button */}
-        <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link href="/app/banking" style={{ textDecoration: 'none' }}>
             <Button variant="ghost" size="sm">
               <ChevronLeft size={18} style={{ color: colors.text }} />
@@ -97,136 +172,221 @@ export default function ConfirmationsPage() {
           </p>
         </div>
 
-      {/* Error State */}
-      {error && (
-        <Card
-          style={{
-            backgroundColor: `${colors.red}15`,
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-          }}
-        >
-          <AlertCircle size={20} style={{ color: colors.red, flexShrink: 0 }} />
-          <p style={{ color: colors.red, margin: 0, fontSize: '0.95rem' }}>
-            {error}
-          </p>
-        </Card>
-      )}
+        {/* Screen-level error */}
+        {error && (
+          <Card
+            style={{
+              backgroundColor: `${colors.red}15`,
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}
+          >
+            <AlertTriangle size={20} style={{ color: colors.red, flexShrink: 0 }} />
+            <p style={{ color: colors.red, margin: 0, fontSize: '0.95rem', flex: 1 }}>{error}</p>
+          </Card>
+        )}
 
-      {/* Loading State */}
-      {loading ? (
-        <Card style={{ padding: '2rem', textAlign: 'center' }}>
-          <p style={{ color: colors.textMuted }}>Loading confirmations...</p>
-        </Card>
-      ) : confirmations.length === 0 ? (
-        <Card
-          style={{
-            textAlign: 'center',
-            padding: '3rem 2rem',
-            backgroundColor: colors.background,
-          }}
-        >
-          <Check size={40} style={{ color: colors.green, marginBottom: '1rem' }} />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, margin: '0 0 0.5rem 0' }}>
-            All caught up!
-          </h2>
-          <p style={{ color: colors.textMuted, margin: 0 }}>
-            No pending confirmations. All matches have been reviewed.
-          </p>
-        </Card>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {confirmations.map((confirmation) => (
-            <Card key={confirmation.id}>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.textMuted, margin: '0 0 0.5rem 0' }}>
-                  Transaction
-                </h3>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-                      {confirmation.transaction_name}
-                    </p>
-                    <p style={{ color: colors.textMuted, fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
-                      {confirmation.transaction_date && !isNaN(new Date(confirmation.transaction_date).getTime()) ? new Date(confirmation.transaction_date).toLocaleDateString() : 'Unknown date'}
-                    </p>
-                  </div>
-                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                    {fmt(confirmation.transaction_amount ?? 0)}
-                  </p>
-                </div>
-              </div>
+        {/* Loading */}
+        {loading ? (
+          <Card style={{ padding: '2rem', textAlign: 'center' }}>
+            <p style={{ color: colors.textMuted }}>Loading confirmations...</p>
+          </Card>
+        ) : billGroups.length === 0 ? (
+          /* Empty state */
+          <Card style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                backgroundColor: `${colors.green}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem',
+              }}
+            >
+              <Check size={28} style={{ color: colors.green }} />
+            </div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, margin: '0 0 0.5rem 0' }}>
+              All caught up!
+            </h2>
+            <p style={{ color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
+              No pending confirmations right now.
+              <br />
+              We&apos;ll notify you when new matches arrive.
+            </p>
+          </Card>
+        ) : (
+          /* Bill groups */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {billGroups.map((group) => {
+              const isCollapsed = collapsedGroups[group.billId] === true;
+              const count = group.items.length;
 
-              <div style={{ paddingBottom: '1rem', marginBottom: '1rem', borderBottom: `1px solid ${colors.divider}` }}>
-                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.textMuted, margin: '0 0 0.5rem 0' }}>
-                  Matched Bill
-                </h3>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.text, margin: 0 }}>
-                    {confirmation.bill_name}
-                  </p>
-                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: colors.text, margin: 0 }}>
-                    {fmt(confirmation.bill_amount ?? 0)}
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <span style={{ color: colors.textMuted, fontSize: '0.875rem' }}>Confidence:</span>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.25rem 0.75rem',
-                    backgroundColor: colors.background,
-                    borderRadius: '1rem',
-                  }}
-                >
-                  <div
+              return (
+                <Card key={group.billId} style={{ padding: 0, overflow: 'hidden' }}>
+                  {/* Group header */}
+                  <button
+                    onClick={() => toggleGroup(group.billId)}
                     style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: confidenceColor(confirmation.confidence_score),
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '1rem 1.25rem',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      textAlign: 'left',
                     }}
-                  />
-                  <span style={{ color: confidenceColor(confirmation.confidence_score), fontWeight: 600, fontSize: '0.875rem' }}>
-                    {confirmation.confidence_score != null ? `${Math.round(confirmation.confidence_score * 100)}%` : 'N/A'}
-                  </span>
-                </div>
-              </div>
+                  >
+                    <div>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                          color: colors.primary || colors.electric,
+                        }}
+                      >
+                        {group.billName}
+                      </p>
+                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: colors.textMuted }}>
+                        {fmt(group.billAmount)}
+                        {group.dueDayOfMonth ? ` · Due day ${group.dueDayOfMonth}` : ''}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span
+                        style={{
+                          backgroundColor: colors.electric,
+                          color: '#fff',
+                          borderRadius: '9999px',
+                          padding: '0.15rem 0.6rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {count}
+                      </span>
+                      {isCollapsed ? (
+                        <ChevronRight size={16} style={{ color: colors.textMuted }} />
+                      ) : (
+                        <ChevronDown size={16} style={{ color: colors.textMuted }} />
+                      )}
+                    </div>
+                  </button>
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <Button
-                  variant="danger"
-                  size="md"
-                  onClick={() => handleReject(confirmation.id)}
-                  loading={actioning === confirmation.id}
-                  disabled={actioning !== null}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                >
-                  <X size={18} />
-                  Reject
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={() => handleConfirm(confirmation.id)}
-                  loading={actioning === confirmation.id}
-                  disabled={actioning !== null}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                >
-                  <Check size={18} />
-                  Confirm
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+                  {/* Transactions within group */}
+                  {!isCollapsed &&
+                    group.items.map((conf, idx) => {
+                      const confidencePct = Math.round((conf.confidence_score || 0) * 100);
+                      const variancePct =
+                        group.billAmount > 0
+                          ? Math.round((Math.abs(conf.amount - group.billAmount) / group.billAmount) * 100)
+                          : 0;
+                      const itemError = itemErrors[conf.id];
+                      const isAnyActioning = confirming !== null || rejecting !== null || excluding !== null;
+
+                      return (
+                        <div
+                          key={conf.id}
+                          style={{
+                            padding: '1rem 1.25rem',
+                            borderTop: `1px solid ${colors.divider}`,
+                          }}
+                        >
+                          {/* Transaction info */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ margin: 0, fontWeight: 600, color: colors.text, fontSize: '0.95rem' }}>
+                                {conf.merchant_name}
+                              </p>
+                              <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                                {formatDate(conf.transaction_date)}
+                                {' · '}
+                                {confidencePct}% match
+                                {variancePct > 0 && (
+                                  <span style={{ color: variancePct > 5 ? colors.amber : colors.green }}>
+                                    {' · '}{variancePct}% variance
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <p style={{ margin: 0, fontWeight: 700, color: colors.text, fontSize: '1rem' }}>
+                              {fmt(conf.amount)}
+                            </p>
+                          </div>
+
+                          {/* Inline error */}
+                          {itemError && (
+                            <div
+                              style={{
+                                backgroundColor: `${colors.amber}15`,
+                                borderRadius: '0.5rem',
+                                padding: '0.5rem 0.75rem',
+                                marginBottom: '0.5rem',
+                              }}
+                            >
+                              <p style={{ margin: 0, fontSize: '0.8rem', color: colors.amber, whiteSpace: 'pre-line' }}>
+                                {itemError}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Action buttons */}
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleReject(conf.id)}
+                              loading={rejecting === conf.id}
+                              disabled={isAnyActioning}
+                              style={{ flex: 1 }}
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleConfirm(conf.id)}
+                              loading={confirming === conf.id}
+                              disabled={isAnyActioning}
+                              style={{ flex: 1 }}
+                            >
+                              Confirm
+                            </Button>
+                          </div>
+
+                          {/* Ignore merchant */}
+                          <button
+                            onClick={() => handleIgnoreMerchant(conf)}
+                            disabled={excluding === conf.id}
+                            style={{
+                              marginTop: '0.5rem',
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: excluding === conf.id ? 'wait' : 'pointer',
+                              color: colors.textMuted,
+                              fontSize: '0.75rem',
+                              textDecoration: 'underline',
+                              padding: 0,
+                              opacity: excluding === conf.id ? 0.5 : 1,
+                            }}
+                          >
+                            {excluding === conf.id ? 'Ignoring...' : `Don't ask again for "${conf.merchant_name}"`}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
