@@ -129,8 +129,8 @@ export default function ConfirmationsPage() {
     setExcluding(conf.id);
     try {
       await bankingAPI.addExclusionRule({
-        merchant_pattern: conf.merchant_name,
         rule_type: 'merchant',
+        rule_value: conf.merchant_name,
       });
       const merchantLower = conf.merchant_name.toLowerCase();
       setConfirmations((prev) => prev.filter((c) => c.merchant_name.toLowerCase() !== merchantLower));
