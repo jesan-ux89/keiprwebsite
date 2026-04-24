@@ -156,9 +156,9 @@ interface AppContextType {
   // Bill payments (tracker) — matches mobile API
   billPayments: BillPayment[];
   paymentsLoading: boolean;
-  markBillPaid: (billId: string) => Promise<void>;
-  unmarkBillPaid: (billId: string) => Promise<void>;
-  isBillPaid: (billId: string) => boolean;
+  markBillPaid: (billId: string, periodMonth?: number, periodYear?: number) => Promise<void>;
+  unmarkBillPaid: (billId: string, periodMonth?: number, periodYear?: number) => Promise<void>;
+  isBillPaid: (billId: string, periodMonth?: number, periodYear?: number) => boolean;
   toggleSplitPaid: (billId: string, paycheckNum: number) => Promise<void>;
   isSplitPaid: (billId: string, paycheckNum: number) => boolean;
   refreshPayments: () => Promise<void>;
@@ -638,21 +638,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  // ── Fetch payments for current month (MATCHES MOBILE) ────
+  // ── Fetch payments for prev/current/next month (MATCHES MOBILE) ────
   const fetchPayments = useCallback(async () => {
     if (!user) return;
     setPaymentsLoading(true);
     try {
       const now = new Date();
-      const res = await billsAPI.getPayments(now.getFullYear(), now.getMonth() + 1);
-      const paymentsArray = Array.isArray(res.data?.payments) ? res.data.payments : [];
-      setBillPayments(paymentsArray.map((p: Record<string, unknown>) => ({
-        id: String(p.id),
-        billId: String(p.bill_id),
-        periodMonth: Number(p.period_month),
-        periodYear: Number(p.period_year),
-        paidAt: String(p.paid_at || ''),
-      })));
+      const periods = [-1, 0, 1].map(offset => {
+        const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+        return { year: date.getFullYear(), month: date.getMonth() + 1 };
+      });
+      const responses = await Promise.all(
+        periods.map(period => billsAPI.getPayments(period.year, period.month))
+      );
+      const payments: BillPayment[] = responses.flatMap(response => {
+        const paymentsArray = Array.isArray(response.data?.payments) ? response.data.payments : [];
+        return paymentsArray.map((p: Record<string, unknown>) => ({
+          id: String(p.id),
+          billId: String(p.bill_id),
+          periodMonth: Number(p.period_month),
+          periodYear: Number(p.period_year),
+          paidAt: String(p.paid_at || ''),
+        }));
+      });
+      setBillPayments(payments);
     } catch (error) {
       console.error('Failed to fetch payments:', error);
     } finally {
@@ -1081,15 +1090,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getBill = (id: string) => bills.find((b) => b.id === id);
 
-  // ── Payment operations (MATCHES MOBILE) ──────────────────
-  const isBillPaid = (billId: string): boolean => {
-    return billPayments.some((p) => p.billId === billId);
+  // ── Payment operations (MATCHES MOBILE — per-paycheck scoped) ──────────────────
+  const isBillPaid = (billId: string, periodMonth?: number, periodYear?: number): boolean => {
+    return billPayments.some((p) =>
+      p.billId === billId &&
+      (periodMonth == null || p.periodMonth === periodMonth) &&
+      (periodYear == null || p.periodYear === periodYear)
+    );
   };
 
-  const markBillPaid = async (billId: string) => {
+  const markBillPaid = async (billId: string, periodMonth?: number, periodYear?: number) => {
     const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
+    const month = periodMonth ?? now.getMonth() + 1;
+    const year = periodYear ?? now.getFullYear();
     // Optimistic
     const tempPayment: BillPayment = {
       id: Date.now().toString(),
@@ -1112,11 +1125,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const unmarkBillPaid = async (billId: string) => {
-    const payments = billPayments.filter(p => p.billId === billId);
+  const unmarkBillPaid = async (billId: string, periodMonth?: number, periodYear?: number) => {
+    const payments = billPayments.filter(p =>
+      p.billId === billId &&
+      (periodMonth == null || p.periodMonth === periodMonth) &&
+      (periodYear == null || p.periodYear === periodYear)
+    );
     if (payments.length === 0) return;
-    // Optimistic: remove all payments for this bill
-    setBillPayments(prev => prev.filter(p => p.billId !== billId));
+    // Optimistic: remove matching payment records for this bill/period
+    setBillPayments(prev => prev.filter(p => !payments.some(payment => payment.id === p.id)));
     try {
       for (const payment of payments) {
         await billsAPI.unmarkPaid(payment.id);

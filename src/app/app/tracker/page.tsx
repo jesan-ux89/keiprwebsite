@@ -28,7 +28,7 @@ export default function TrackerPage() {
   const {
     bills, billsLoading, incomeSources, incomeLoading, fmt,
     isBillPaid, isSplitPaid, toggleSplitPaid, isUltra, deleteBill,
-    refreshBills, refreshPayments,
+    refreshBills, refreshPayments, markBillPaid, unmarkBillPaid,
   } = useApp();
   const router = useRouter();
   const [showNext, setShowNext] = useState(false);
@@ -181,12 +181,38 @@ export default function TrackerPage() {
     return b.total || 0;
   }
 
-  // Count paid bills
+  const now = new Date();
+
+  // Per-paycheck paid scoping (MATCHES MOBILE TrackerScreen.tsx)
+  // Resolves which billing month a non-split bill belongs to based on its due day
+  // and the paycheck period's start/end dates.
+  function billPeriodForPaycheck(b: Bill, pd: typeof currentPeriod): { month: number; year: number } {
+    const crossesMonth = pd.start.getMonth() !== pd.end.getMonth() ||
+      pd.start.getFullYear() !== pd.end.getFullYear();
+    const billMonthDate = crossesMonth && (b.dueDay || 1) >= pd.start.getDate()
+      ? pd.start
+      : pd.end;
+    return { month: billMonthDate.getMonth() + 1, year: billMonthDate.getFullYear() };
+  }
+
+  function billDueDateForPaycheck(b: Bill, pd: typeof currentPeriod): Date {
+    const { month, year } = billPeriodForPaycheck(b, pd);
+    const lastDay = new Date(year, month, 0).getDate();
+    return new Date(year, month - 1, Math.min(b.dueDay || 1, lastDay));
+  }
+
+  function isNonSplitPaidForPaycheck(b: Bill, pd: typeof currentPeriod): boolean {
+    const { month, year } = billPeriodForPaycheck(b, pd);
+    const autoChecked = b.isAutoPay && billDueDateForPaycheck(b, pd) <= now;
+    return isBillPaid(b.id, month, year) || autoChecked;
+  }
+
+  // Count paid bills (scoped to paycheck period)
   const paidCount = billsInPeriod.reduce((count, bill) => {
     if (bill.isSplit) {
       return count + (isSplitPaid(bill.id, paycheckNumber) ? 1 : 0);
     }
-    return isBillPaid(bill.id) ? count + 1 : count;
+    return isNonSplitPaidForPaycheck(bill, period) ? count + 1 : count;
   }, 0);
 
   const totalCount = billsInPeriod.length;
@@ -261,7 +287,7 @@ export default function TrackerPage() {
         <div style={{ fontSize: '18px', fontWeight: '700', color: colors.green }}>
           {fmt(billsInPeriod.reduce((s, b) => {
             const amt = billAmountForPaycheck(b, paycheckNumber);
-            const isPaid = b.isSplit ? isSplitPaid(b.id, paycheckNumber) : isBillPaid(b.id);
+            const isPaid = b.isSplit ? isSplitPaid(b.id, paycheckNumber) : isNonSplitPaidForPaycheck(b, period);
             return s + (isPaid ? amt : 0);
           }, 0))}
         </div>
@@ -384,7 +410,8 @@ export default function TrackerPage() {
               const amt = billAmountForPaycheck(bill, paycheckNumber);
               const isPaid = bill.isSplit
                 ? isSplitPaid(bill.id, paycheckNumber)
-                : isBillPaid(bill.id);
+                : isNonSplitPaidForPaycheck(bill, period);
+              const { month: billPeriodMonth, year: billPeriodYear } = billPeriodForPaycheck(bill, period);
               // Bank match badge — resolved at load time, no ambiguous fallback
               const matchKey = bill.isSplit ? `${bill.id}_p${paycheckNumber}` : bill.id;
               const match = matchData[matchKey];
@@ -394,7 +421,14 @@ export default function TrackerPage() {
               return (
                 <div
                   key={bill.id}
-                  onClick={() => toggleSplitPaid(bill.id, paycheckNumber)}
+                  onClick={() => {
+                    if (bill.isSplit) {
+                      toggleSplitPaid(bill.id, paycheckNumber);
+                    } else {
+                      if (isPaid) unmarkBillPaid(bill.id, billPeriodMonth, billPeriodYear);
+                      else markBillPaid(bill.id, billPeriodMonth, billPeriodYear);
+                    }
+                  }}
                   style={{
                     backgroundColor: colors.card,
                     borderRadius: '10px',
