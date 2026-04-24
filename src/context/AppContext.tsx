@@ -1093,9 +1093,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getBill = (id: string) => bills.find((b) => b.id === id);
 
   // ── Payment operations (MATCHES MOBILE — per-paycheck scoped) ──────────────────
+  // For non-split bills: only match rows where paycheckNumber is null.
+  // This prevents a split P1 payment from accidentally counting as whole-bill paid.
   const isBillPaid = (billId: string, periodMonth?: number, periodYear?: number): boolean => {
     return billPayments.some((p) =>
       p.billId === billId &&
+      p.paycheckNumber == null &&
       (periodMonth == null || p.periodMonth === periodMonth) &&
       (periodYear == null || p.periodYear === periodYear)
     );

@@ -424,12 +424,12 @@ export default function TrackerPage() {
               const rawMatch = matchData[matchKey];
               const matchInPeriod = (() => {
                 if (!rawMatch || !VALID_MATCH_STATUSES.includes(rawMatch.status)) return null;
-                if (rawMatch.transaction_date) {
-                  const txDate = new Date(rawMatch.transaction_date);
-                  const txMonth = txDate.getMonth() + 1;
-                  const txYear = txDate.getFullYear();
-                  if (txMonth !== billPeriodMonth || txYear !== billPeriodYear) return null;
-                }
+                // No transaction_date = can't prove it belongs to this period → no badge
+                if (!rawMatch.transaction_date) return null;
+                const txDate = new Date(rawMatch.transaction_date);
+                const txMonth = txDate.getMonth() + 1;
+                const txYear = txDate.getFullYear();
+                if (txMonth !== billPeriodMonth || txYear !== billPeriodYear) return null;
                 return rawMatch;
               })();
               const isBankMatched = isUltra && !!matchInPeriod;
