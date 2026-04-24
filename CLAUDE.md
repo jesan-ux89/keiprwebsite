@@ -289,6 +289,11 @@ All rules for recurring-expense detection (when a transaction becomes a bill, ho
 2. The bug is in the backend; verify with `npm test` in `_keipr-complete-backend`
 3. Fix goes in `detectionEngine.js`
 
+## Split Bill Clean Rule
+Backend enforces a strict rule: split bill + unresolvable paycheck = abort all writes. The website Tracker's `normalizeMatchData()` mirrors this — match_log rows for split bills without `split_sort_order` are skipped (invariant violations, not legitimate data). No legacy inference or "first unpaid" guessing. The debug endpoint's invariant 7 (`split_bill_match_no_sort_order`) catches these.
+
+**Backend hardening pass:** Onboarding duplicate-optimization (upgrades webhook-created bills instead of skipping), AI Accountant deferred rerun (blocked triggers queued, not dropped), auto-split PFC guard (only bill-like categories get auto-split), and split diagnostic logs. All backend-only — no website changes needed.
+
 ## Debug Endpoint (for diagnosing web bugs)
 Backend exposes `GET /api/debug/user-state` — tier-aware JSON dump of everything needed to diagnose a user's issue (bills, income, payments, connections, transactions, match log, exclusions). Use this FIRST before speculating about state.
 
