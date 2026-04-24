@@ -52,9 +52,7 @@ export default function TrackerPage() {
    * Normalize raw match_log rows into a keyed map.
    * - Matches WITH split_sort_order → keyed as "billId_p{sort_order}"
    * - Non-split bills → keyed by bill_id
-   * - Legacy split-bill matches (no split_sort_order) → assigned to exactly ONE
-   *   split row (first unpaid, else lowest sort_order) to prevent one legacy row
-   *   from lighting up every paycheck row.
+   * - Split-bill matches WITHOUT split_sort_order → skipped (invariant violation)
    */
   function normalizeMatchData(rawMatches: any[]): Record<string, any> {
     const keyed: Record<string, any> = {};
@@ -72,18 +70,11 @@ export default function TrackerPage() {
         continue;
       }
 
-      // Backward-compat: match_log rows created before the split_sort_order column
-      // don't specify which split they belong to. Assign to exactly one row
-      // (first unpaid, else lowest sort_order) so one legacy record can't badge every row.
-      const splits = (bill.splits || []).sort((a: any, b: any) => (a.sortOrder || 1) - (b.sortOrder || 1));
-      const firstUnpaid = splits.find((s: any) => !isSplitPaid(bill.id, s.sortOrder));
-      const fallbackSortOrder = firstUnpaid?.sortOrder ?? splits[0]?.sortOrder ?? 1;
-
-      keyed[`${m.bill_id}_p${fallbackSortOrder}`] = {
-        ...m,
-        split_sort_order: fallbackSortOrder,
-        _inferred_legacy: true,
-      };
+      // Split bill match_log without split_sort_order is an invariant violation
+      // (invariant 7: split_bill_match_no_sort_order). All write paths now enforce
+      // the clean rule, so these rows should not exist. Skip them rather than
+      // guessing which paycheck they belong to — guessing masks data bugs.
+      // The invariant check in /api/debug/user-state will surface these for cleanup.
     }
     return keyed;
   }
