@@ -215,6 +215,357 @@ export default function LandingStyles() {
       .splitPill span { display: block; margin-top: 3px; color: var(--quiet); font-size: 10px; font-weight: 850; }
 
       .section { padding: 92px 0; }
+      .howWorksPage {
+        min-height: calc(100vh - 112px);
+        padding: 92px 0 120px;
+        border-top: 1px solid rgba(255, 248, 239, 0.08);
+        background:
+          radial-gradient(circle at 10% 12%, rgba(53, 195, 245, 0.18), transparent 34rem),
+          radial-gradient(circle at 90% 4%, rgba(56, 217, 159, 0.12), transparent 31rem),
+          radial-gradient(circle at 70% 86%, rgba(255, 176, 24, 0.08), transparent 30rem),
+          linear-gradient(180deg, rgba(17, 22, 20, 0.9), rgba(15, 13, 11, 0.96));
+      }
+      .howHero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.78fr);
+        gap: 56px;
+        align-items: end;
+        margin: 20px 0 46px;
+      }
+      .storyEyebrow {
+        margin: 0 0 14px;
+        color: #9be7ff;
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .howHero h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(46px, 5vw, 76px);
+        line-height: 0.96;
+        letter-spacing: -0.07em;
+        font-weight: 950;
+      }
+      .howHero h1 span {
+        display: block;
+        color: var(--blue);
+      }
+      .howHero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.72;
+        font-weight: 650;
+      }
+      .howHero p strong {
+        color: var(--blue);
+        font-weight: 950;
+      }
+      .journeyRail {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin: 0 0 26px;
+      }
+      .journeyStep {
+        position: relative;
+        min-height: 118px;
+        padding: 18px;
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
+          rgba(20, 17, 14, 0.82);
+        border: 1px solid rgba(255, 248, 239, 0.1);
+        box-shadow: 0 20px 70px rgba(0, 0, 0, 0.24);
+      }
+      .journeyStep span {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        margin-bottom: 14px;
+        border-radius: 999px;
+        color: #071019;
+        background: var(--blue);
+        font-weight: 950;
+      }
+      .journeyStep.green span { background: var(--green); }
+      .journeyStep.gold span { background: var(--gold); }
+      .journeyStep.teal span { background: #61e2cf; }
+      .journeyStep strong {
+        display: block;
+        color: var(--ink);
+        font-size: 16px;
+        letter-spacing: -0.02em;
+      }
+      .journeyStep small {
+        display: block;
+        margin-top: 6px;
+        color: var(--quiet);
+        line-height: 1.35;
+        font-weight: 700;
+      }
+      .walkthroughGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+      }
+      .walkthroughCard {
+        min-height: 360px;
+        padding: 28px;
+        border-radius: 30px;
+        background:
+          radial-gradient(circle at 18% 14%, rgba(53, 195, 245, 0.10), transparent 18rem),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
+          rgba(20, 17, 14, 0.92);
+        border: 1px solid rgba(255, 248, 239, 0.12);
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+      }
+      .walkthroughCard.featureLarge,
+      .walkthroughCard.featureWide {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.78fr);
+        gap: 28px;
+        align-items: center;
+      }
+      .walkthroughCard.featureWide {
+        grid-column: 1 / -1;
+        grid-template-columns: minmax(0, 0.78fr) minmax(430px, 1fr);
+      }
+      .walkthroughCard.availableStory {
+        grid-row: span 2;
+      }
+      .stepLabel {
+        margin: 0 0 14px;
+        color: #9be7ff;
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .walkthroughCard h2 {
+        max-width: 560px;
+        margin: 0 0 12px;
+        color: var(--ink);
+        font-size: clamp(25px, 2.4vw, 38px);
+        line-height: 1.03;
+        letter-spacing: -0.055em;
+        font-weight: 950;
+      }
+      .walkthroughCard p:not(.stepLabel) {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.64;
+        font-weight: 650;
+      }
+      .paycheckMock,
+      .availableStoryCard,
+      .splitMock,
+      .bankMatchPanel {
+        border-radius: 24px;
+        border: 1px solid rgba(255, 248, 239, 0.11);
+        background:
+          linear-gradient(135deg, rgba(53, 195, 245, 0.13), transparent 52%),
+          rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      }
+      .paycheckMock {
+        padding: 24px;
+      }
+      .mockTop,
+      .splitHeader {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        color: var(--quiet);
+        font-weight: 850;
+      }
+      .mockDeposit {
+        margin: 18px 0;
+        color: var(--green);
+        font-size: 44px;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.06em;
+      }
+      .mockSplitLine {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 8px 0;
+        color: var(--muted);
+        font-weight: 800;
+      }
+      .greenText {
+        color: var(--green);
+      }
+      .billStack {
+        display: grid;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .billStack div,
+      .aiList span {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 13px 14px;
+        border-radius: 15px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 248, 239, 0.07);
+        font-weight: 800;
+      }
+      .billStack strong {
+        color: var(--ink);
+      }
+      .billStack .nextCheck {
+        color: #9be7ff;
+        background: rgba(53, 195, 245, 0.07);
+      }
+      .billStack .nextCheck strong {
+        color: var(--blue);
+      }
+      .splitMock {
+        margin-top: 24px;
+        padding: 20px;
+      }
+      .splitHeader strong {
+        color: var(--ink);
+        font-size: 21px;
+      }
+      .splitPills {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 18px 0 14px;
+      }
+      .splitPills div {
+        min-height: 82px;
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(56, 217, 159, 0.08);
+        border: 1px solid rgba(56, 217, 159, 0.22);
+      }
+      .splitPills div + div {
+        background: rgba(255, 176, 24, 0.08);
+        border-color: rgba(255, 176, 24, 0.22);
+      }
+      .splitPills strong {
+        display: block;
+        color: var(--green);
+        font-size: 26px;
+      }
+      .splitPills div + div strong {
+        color: var(--gold);
+      }
+      .splitPills span {
+        display: block;
+        margin-top: 6px;
+        color: var(--quiet);
+        font-weight: 800;
+      }
+      .splitBar {
+        overflow: hidden;
+        height: 9px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+      }
+      .splitBar i {
+        display: block;
+        width: 75%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--green), var(--gold));
+      }
+      .bankMatchPanel {
+        display: grid;
+        gap: 12px;
+        padding: 18px;
+      }
+      .bankMatchLine {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,248,239,0.07);
+      }
+      .bankMatchLine strong {
+        display: block;
+        color: var(--ink);
+        font-size: 16px;
+      }
+      .bankMatchLine span {
+        display: block;
+        margin-top: 2px;
+        color: var(--quiet);
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .bankMatchLine em {
+        color: var(--green);
+        font-style: normal;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+      .availableStoryCard {
+        margin-top: 22px;
+        padding: 22px;
+      }
+      .storyMoney {
+        margin: 12px 0 18px;
+        color: var(--blue);
+        font-size: 52px;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.06em;
+      }
+      .aiList {
+        display: grid;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .aiList span {
+        justify-content: flex-start;
+      }
+      .aiList span::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        margin-top: 6px;
+        border-radius: 999px;
+        background: var(--blue);
+        box-shadow: 0 0 20px rgba(53,195,245,0.5);
+      }
+      .futureBars {
+        display: grid;
+        gap: 18px;
+        margin-top: 28px;
+      }
+      .futureBars div {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 16px;
+        color: var(--muted);
+        font-weight: 900;
+      }
+      .futureBars strong {
+        color: var(--blue);
+      }
+      .futureBars i {
+        grid-column: 1 / -1;
+        display: block;
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--blue), var(--green));
+      }
       .paycheckStory {
         border-top: 1px solid rgba(255, 248, 239, 0.08);
         border-bottom: 1px solid rgba(255, 248, 239, 0.08);
@@ -301,12 +652,19 @@ export default function LandingStyles() {
           background: rgba(15, 13, 11, 0.96);
           box-shadow: 0 24px 70px rgba(0,0,0,0.36);
         }
-        .hero, .sectionHead, .pricingPanel { grid-template-columns: 1fr; }
+        .hero, .sectionHead, .pricingPanel, .howHero { grid-template-columns: 1fr; }
         .floatingMatch { grid-template-columns: 1fr; text-align: left; }
         .matchRow { grid-template-columns: 42px minmax(0, 1fr); }
         .matchStatus { grid-column: 2; text-align: left; }
         .splitStatus { grid-column: 2; }
-        .flowGrid, .screenGrid, .priceGrid { grid-template-columns: 1fr; }
+        .flowGrid, .screenGrid, .priceGrid, .journeyRail, .walkthroughGrid { grid-template-columns: 1fr; }
+        .walkthroughCard.featureLarge,
+        .walkthroughCard.featureWide,
+        .walkthroughCard.availableStory {
+          grid-column: auto;
+          grid-row: auto;
+          grid-template-columns: 1fr;
+        }
         .priceCard { min-height: auto; }
       }
 
@@ -317,6 +675,17 @@ export default function LandingStyles() {
         .hero { padding: 42px 0 56px; gap: 30px; }
         .hero h1 { font-size: clamp(44px, 14vw, 60px); }
         .heroCopy { font-size: 17px; }
+        .howWorksPage { padding: 64px 0 82px; }
+        .howHero { gap: 20px; margin-top: 8px; }
+        .howHero h1 { font-size: clamp(38px, 12vw, 52px); }
+        .howHero p { font-size: 16px; }
+        .journeyStep { min-height: auto; }
+        .walkthroughCard { min-height: auto; padding: 22px; border-radius: 24px; }
+        .walkthroughCard h2 { font-size: 27px; }
+        .bankMatchLine { grid-template-columns: 42px minmax(0, 1fr); }
+        .bankMatchLine em { grid-column: 2; }
+        .splitPills { grid-template-columns: 1fr; }
+        .storyMoney { font-size: 40px; }
         .productStage { padding: 14px; border-radius: 28px; }
         .dashboardCard { padding: 16px; border-radius: 24px; }
         .availableCard { padding: 18px; }
