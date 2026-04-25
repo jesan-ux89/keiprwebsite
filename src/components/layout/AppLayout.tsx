@@ -157,6 +157,15 @@ export default function AppLayout({
   const navItems = isUltra ? ULTRA_NAV : FREE_PRO_NAV;
   const sections = [...new Set(navItems.map(item => item.section))];
 
+  // Pick the most-specific nav href that matches the current path. Prevents the parent
+  // Dashboard ('/app') from staying highlighted on /app/banking, /app/bills, etc., and
+  // prevents Accounts ('/app/banking') from highlighting on /app/banking/transactions.
+  const activeHref = navItems
+    .filter(item => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    .reduce<string | null>((best, item) => (
+      best === null || item.href.length > best.length ? item.href : best
+    ), null);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: colors.background, color: colors.text }}>
@@ -290,7 +299,7 @@ export default function AppLayout({
                     .filter(item => item.section === section)
                     .map((item) => {
                       const Icon = item.icon;
-                      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                      const isActive = item.href === activeHref;
 
                       return (
                         <Link
