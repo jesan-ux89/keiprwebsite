@@ -672,7 +672,7 @@ export default function DashboardUltraContent() {
             )}
 
             {/* Command Center Hero */}
-            <Card style={{
+            <Card className="app-grid-pattern" style={{
               padding: '1.75rem',
               background: isDark
                 ? 'linear-gradient(135deg, rgba(56,189,248,0.12), transparent 36%), linear-gradient(160deg, rgba(10,123,108,0.16), transparent 44%), #221F1A'

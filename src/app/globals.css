@@ -169,6 +169,29 @@ body {
   max-width: 42rem;
 }
 
+/* Reusable notepad/grid overlay (same effect as .app-page-hero::before).
+   Apply to any container that already has a background — only adds the grid pattern. */
+.app-grid-pattern {
+  position: relative;
+  overflow: hidden;
+}
+.app-grid-pattern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(90deg, black, transparent 78%);
+          mask-image: linear-gradient(90deg, black, transparent 78%);
+}
+.app-grid-pattern > * {
+  position: relative;
+  z-index: 1;
+}
+
 .app-metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
