@@ -488,11 +488,11 @@ function PricingCard({ name, price, annualNote, subtitle, features, separator, m
    ══════════════════════════════════════════════════════════ */
 function PainSection() {
   const storyCardStyle: React.CSSProperties = {
-    background: 'rgba(15,20,30,0.94)',
-    border: '1px solid rgba(56,189,248,0.18)',
+    background: 'rgba(8,15,29,0.74)',
+    border: '1px solid rgba(56,189,248,0.22)',
     borderRadius: '18px',
-    padding: '22px 22px 26px',
-    boxShadow: '0 8px 28px rgba(0,0,0,0.25), 0 0 12px rgba(56,189,248,0.04)',
+    padding: '24px',
+    boxShadow: '0 24px 70px rgba(0,0,0,0.24)',
   };
   const stepStyle = (bg: string): React.CSSProperties => ({
     width: '28px', height: '28px', borderRadius: '50%', background: bg,
@@ -504,15 +504,15 @@ function PainSection() {
   const progressTrack: React.CSSProperties = { width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: '6px' };
 
   return (
-    <section className="border-t px-4" style={{ backgroundColor: '#17120F', borderColor: 'rgba(255,248,239,0.1)', padding: '80px 24px 72px' }}>
+    <section className="border-t px-4 overflow-hidden" style={{ background: 'radial-gradient(circle at 14% 30%, rgba(56,189,248,0.1), transparent 28rem), linear-gradient(180deg, #1B2B45 0%, #16243A 65%, #121E31 100%)', borderColor: 'rgba(255,248,239,0.08)', padding: '104px 24px 96px' }}>
       <div className="max-w-7xl mx-auto">
         {/* Headline */}
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#FFF8EF', lineHeight: 1.3 }}>
-            Every budgeting app assumes you get paid on the 1st.<br />
+        <div className="grid lg:grid-cols-[1fr_420px] gap-12 items-end mb-14">
+          <h2 className="text-4xl md:text-5xl font-bold" style={{ color: '#FFF8EF', lineHeight: 1.06, letterSpacing: '-0.03em' }}>
+            Every budgeting app assumes you get paid on the 1st.{' '}
             <span style={{ color: '#38BDF8' }}>You probably don&apos;t.</span>
           </h2>
-          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(255,248,239,0.58)', lineHeight: 1.8 }}>
+          <p className="text-lg" style={{ color: 'rgba(255,248,239,0.68)', lineHeight: 1.75 }}>
             Most people get paid biweekly, weekly, or twice a month — but every budgeting tool forces you into a calendar-month view.
             Bills don&apos;t line up. Money feels tight one week, fine the next. You&apos;re always guessing.
             Keipr flips the model: <strong style={{ color: '#FFF8EF' }}>your budget starts when your paycheck lands.</strong>
@@ -649,24 +649,28 @@ function HowItWorks() {
 function HeroWithFloatingCards() {
   return (
     <section className="relative overflow-hidden px-4" style={{
-      background: 'linear-gradient(160deg, #0B1120 0%, #0F172A 40%, #162032 100%)',
-      padding: '80px 24px 100px',
+      background: 'radial-gradient(circle at 23% 34%, rgba(56,189,248,0.13), transparent 35rem), radial-gradient(circle at 82% 18%, rgba(49,215,155,0.08), transparent 25rem), linear-gradient(135deg, #0D1423 0%, #10192B 55%, #111827 100%)',
+      minHeight: 'calc(100vh - 100px)',
+      padding: '64px 24px 78px',
+      display: 'grid',
+      alignItems: 'center',
+      borderBottom: '1px solid rgba(92,200,255,0.12)'
     }}>
       {/* Subtle radial glow */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 60% 50% at 30% 50%, rgba(56,189,248,0.06) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 60% 50% at 30% 50%, rgba(56,189,248,0.08) 0%, transparent 70%)',
       }} />
 
-      <div className="relative z-10 max-w-[1100px] mx-auto flex flex-col md:flex-row items-center gap-14">
+      <div className="relative z-10 max-w-[1180px] mx-auto flex flex-col md:flex-row items-center gap-16 lg:gap-20">
         {/* Phone on LEFT */}
         <div className="flex-shrink-0 md:order-first order-first">
-          <div style={{ position: 'relative', width: '300px' }}>
+          <div style={{ position: 'relative', width: '304px' }}>
             <div style={{
               borderRadius: '36px',
               border: '4px solid rgba(255,255,255,0.15)',
               overflow: 'hidden',
               background: '#1A1814',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05), 0 0 48px rgba(56,189,248,0.06)',
+              boxShadow: '0 28px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05), 0 0 90px rgba(56,189,248,0.13)',
             }}>
               <img src="/screen-dashboard.png" alt="Keipr Dashboard — Available to Spend front and center" style={{ width: '100%', height: 'auto', display: 'block' }} />
             </div>
@@ -690,11 +694,11 @@ function HeroWithFloatingCards() {
             PAYCHECK-FORWARD BUDGETING
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2.4rem, 5vw, 3.2rem)', fontWeight: 800, color: '#F5F3EF', lineHeight: 1.1, marginBottom: '20px', letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: 'clamp(2.9rem, 5vw, 4.5rem)', fontWeight: 900, color: '#F5F3EF', lineHeight: 0.98, marginBottom: '24px', letterSpacing: '-2px' }}>
             Know What&apos;s Left <span style={{ color: '#38BDF8' }}>After Every Payday</span>
           </h1>
 
-          <p style={{ fontSize: '1.1rem', color: 'rgba(245,243,239,0.5)', lineHeight: 1.75, maxWidth: '560px', marginBottom: '36px' }} className="mx-auto md:mx-0">
+          <p style={{ fontSize: '1.12rem', color: 'rgba(245,243,239,0.64)', lineHeight: 1.7, maxWidth: '650px', marginBottom: '36px' }} className="mx-auto md:mx-0">
             Budget by your pay cycle — not the calendar month. See your bills, splits, and spending mapped to each paycheck so you always know what you can actually spend. <span style={{ color: '#38BDF8', fontWeight: 600 }}>Available to Spend</span> is front and center every time you open the app.
           </p>
 
@@ -720,7 +724,7 @@ function HeroWithFloatingCards() {
       {/* Responsive: smaller phone on mobile */}
       <style>{`
         @media (max-width: 768px) {
-          .relative.z-10.max-w-\\[1100px\\] > div:first-child > div { width: 240px !important; }
+          .relative.z-10.max-w-\\[1180px\\] > div:first-child > div { width: 240px !important; }
         }
       `}</style>
     </section>
