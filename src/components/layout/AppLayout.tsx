@@ -772,6 +772,7 @@ export function TwoColumnLayout({
 
   return (
     <div
+      className="two-column-layout"
       style={{
         display: 'grid',
         gridTemplateColumns: sidebar ? '1fr 340px' : '1fr',

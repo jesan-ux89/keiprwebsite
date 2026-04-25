@@ -94,26 +94,36 @@ export default function IncomePage() {
 
   return (
     <AppLayout pageTitle="Income">
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto' }}>
 
-      {/* Hero */}
-      <Card style={{
-        padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem',
-        background: isDark ? 'rgba(10,123,108,0.08)' : 'rgba(10,123,108,0.06)',
-        border: `1px solid ${isDark ? 'rgba(10,123,108,0.2)' : 'rgba(10,123,108,0.15)'}`,
-      }}>
-        <p style={{ fontSize: '0.75rem', color: '#0A7B6C', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, margin: '0 0 0.5rem 0' }}>
-          Per Paycheck
-        </p>
-        <p style={{ fontSize: '2.25rem', fontWeight: 800, color: '#0A7B6C', margin: 0, letterSpacing: '-0.5px' }}>
-          {fmt(totalPaycheck)}
-        </p>
-        {regularSources.length > 1 && (
-          <p style={{ fontSize: '0.8rem', color: colors.textSub, margin: '0.375rem 0 0 0' }}>
-            from {regularSources.length} income sources
+      <section className="app-page-hero" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <p className="app-page-kicker">Income</p>
+          <h1 className="app-page-title">Every dollar coming in.</h1>
+          <p className="app-page-subtitle">
+            Track regular paychecks and one-time funds so the budget knows what belongs to this cycle.
           </p>
-        )}
-      </Card>
+          <div className="app-metric-grid" style={{ marginTop: '1.35rem' }}>
+            {[
+              { label: 'Per paycheck', value: fmt(totalPaycheck), detail: `${regularSources.length} regular source${regularSources.length === 1 ? '' : 's'}`, color: colors.green },
+              { label: 'One-time funds', value: oneTimeSources.length, detail: 'tracked separately', color: colors.amber },
+              { label: 'Recent deposits', value: fmt(totalDeposits), detail: `${deposits.length} detected`, color: colors.text },
+            ].map((item) => (
+              <div key={item.label} className="app-soft-panel" style={{ padding: '0.95rem' }}>
+                <p style={{ margin: '0 0 0.4rem', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                  {item.label}
+                </p>
+                <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: item.color }}>
+                  {item.value}
+                </p>
+                <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                  {item.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Income Sources */}
       <h2 style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textSub, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>

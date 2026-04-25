@@ -108,6 +108,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const isDark = themeMode === 'system' ? systemDark : themeMode === 'dark';
   const colors = isDark ? darkColors : lightColors;
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+  }, [isDark]);
+
   return (
     <ThemeContext.Provider value={{ themeMode, setThemeMode, isDark, colors }}>
       {children}

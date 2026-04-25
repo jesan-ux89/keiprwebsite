@@ -223,6 +223,34 @@ export default function PlanPage() {
   return (
     <AppLayout pageTitle="Plan">
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <section className="app-page-hero" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <p className="app-page-kicker">Plan ahead</p>
+          <h1 className="app-page-title">Draft the months before they arrive.</h1>
+          <p className="app-page-subtitle">
+            Preview upcoming expenses, adjust one-off changes, and keep future paycheck pressure visible.
+          </p>
+          <div className="app-metric-grid" style={{ marginTop: '1.35rem' }}>
+            {[
+              { label: 'Selected month', value: selectedMonth.label || 'This month', detail: `${activeBills.length} planned expenses`, color: colors.text },
+              { label: 'Planned bills', value: fmt(totalBillsAmt), detail: 'active in this draft', color: colors.amber },
+              { label: 'Paycheck', value: fmt(perPaycheck), detail: primaryIncome?.name || 'income source', color: colors.green },
+            ].map((item) => (
+              <div key={item.label} className="app-soft-panel" style={{ padding: '0.95rem' }}>
+                <p style={{ margin: '0 0 0.4rem', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                  {item.label}
+                </p>
+                <p style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: item.color }}>
+                  {item.value}
+                </p>
+                <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                  {item.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Month Selector */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px', alignItems: 'center' }}>

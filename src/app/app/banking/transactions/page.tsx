@@ -432,6 +432,35 @@ function AllTransactionsPage() {
       pageTitle={searchParams?.get('accountName') || 'Transactions'}
     >
       <div style={{ maxWidth: '900px' }}>
+        <section className="app-page-hero" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p className="app-page-kicker">Transactions</p>
+            <h1 className="app-page-title">Bank activity, cleaned up.</h1>
+            <p className="app-page-subtitle">
+              Review what synced, what matched bills, and what stayed as everyday spending.
+            </p>
+            <div className="app-metric-grid" style={{ marginTop: '1.35rem' }}>
+              {[
+                { label: 'All', value: allCount, detail: 'synced items', color: colors.text },
+                { label: 'Bill matches', value: matchedCount, detail: 'linked to expenses', color: colors.green },
+                { label: 'Spending', value: unmatchedCount, detail: 'not bill-matched', color: colors.amber },
+              ].map((item) => (
+                <div key={item.label} className="app-soft-panel" style={{ padding: '0.95rem' }}>
+                  <p style={{ margin: '0 0 0.4rem', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                    {item.label}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: item.color }}>
+                    {item.value}
+                  </p>
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Tab Bar with underline style */}
         <Card style={{ padding: '0 1rem', marginBottom: '1.5rem', borderBottom: 'none' }}>
           <div style={{ display: 'flex', gap: '0', borderBottom: `1px solid ${colors.divider}` }}>

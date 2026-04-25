@@ -267,16 +267,43 @@ export default function ConfirmationsPage() {
     <AppLayout pageTitle="Confirm Payments">
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link href="/app/banking" style={{ textDecoration: 'none' }}>
             <Button variant="ghost" size="sm">
               <ChevronLeft size={18} style={{ color: colors.text }} />
             </Button>
           </Link>
-          <p style={{ color: colors.textMuted, margin: 0, fontSize: '0.95rem' }}>
-            Review and confirm transaction-to-bill matches
-          </p>
+          <p style={{ color: colors.textMuted, margin: 0, fontSize: '0.95rem' }}>Back to accounts</p>
         </div>
+
+        <section className="app-page-hero" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p className="app-page-kicker">Bank match review</p>
+            <h1 className="app-page-title">Confirm only what needs judgment.</h1>
+            <p className="app-page-subtitle">
+              Keipr auto-confirms obvious matches. This queue is for amount changes, timing differences, and noisy merchants.
+            </p>
+            <div className="app-metric-grid" style={{ marginTop: '1.35rem' }}>
+              {[
+                { label: 'To review', value: confirmations.length, detail: 'pending matches', color: colors.text },
+                { label: 'Looks right', value: obviousCount, detail: 'safe bulk action', color: colors.green },
+                { label: 'Needs care', value: Math.max(confirmations.length - obviousCount, 0), detail: 'manual decisions', color: colors.amber },
+              ].map((item) => (
+                <div key={item.label} className="app-soft-panel" style={{ padding: '0.95rem' }}>
+                  <p style={{ margin: '0 0 0.4rem', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                    {item.label}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: item.color }}>
+                    {item.value}
+                  </p>
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* Screen-level error */}
         {error && (

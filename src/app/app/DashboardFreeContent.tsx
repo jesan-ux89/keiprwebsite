@@ -458,6 +458,35 @@ export default function DashboardFreeContent() {
       ) : (
         <TwoColumnLayout sidebar={<SummaryPanel />}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <section className="app-page-hero" style={{ padding: '2rem' }}>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <p className="app-page-kicker">{greetingTime}, {userName || 'there'}</p>
+                <h1 className="app-page-title">Your paycheck plan.</h1>
+                <p className="app-page-subtitle">
+                  See what is already spoken for, what is still flexible, and what is coming next.
+                </p>
+                <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
+                  {[
+                    { label: 'Available', value: fmt(remaining), detail: `${currentPeriod.label}`, color: remaining >= 0 ? colors.green : colors.red },
+                    { label: 'Bills this check', value: fmt(totalAllBillsThisCheck), detail: `${thisPaycheckBills.length} expenses`, color: colors.amber },
+                    { label: 'Income', value: fmt(totalPaycheck), detail: incomeName, color: colors.green },
+                  ].map((item) => (
+                    <div key={item.label} className="app-soft-panel" style={{ padding: '1rem' }}>
+                      <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                        {item.label}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
+                        {item.value}
+                      </p>
+                      <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
+                        {item.detail}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
             {/* Rollover Prompt */}
             {currentRollover && currentRollover.action === 'pending' && currentRollover.previousLeftover > 0 && (
               <div style={{

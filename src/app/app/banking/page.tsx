@@ -420,11 +420,42 @@ export default function BankingPage() {
       topBarActions={topBarActions}
     >
       <TwoColumnLayout sidebar={renderSummaryCard()}>
-        <div style={{ maxWidth: '600px' }}>
+        <div style={{ maxWidth: '980px' }}>
+
+          {!loading && accounts.length > 0 && (
+            <section
+              className="app-page-hero"
+              style={{
+                padding: '2rem',
+                marginBottom: '1.5rem',
+              }}
+            >
+              <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 0.45fr)', gap: '1.5rem', alignItems: 'end' }}>
+                <div>
+                  <p className="app-page-kicker">Connected accounts</p>
+                  <h1 className="app-page-title">Your money map.</h1>
+                  <p className="app-page-subtitle">
+                    Keep balances, account health, and payment accounts in one place without turning the page into a spreadsheet.
+                  </p>
+                </div>
+                <div className="app-soft-panel" style={{ padding: '1rem' }}>
+                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                    Cash available
+                  </p>
+                  <p style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: colors.green }}>
+                    {fmt(summaryTotals.totalCash)}
+                  </p>
+                  <p style={{ margin: '0.35rem 0 0', color: colors.textMuted, fontSize: '0.82rem' }}>
+                    {accounts.length} linked account{accounts.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Hero Stats: Net Worth + Cash Balance */}
           {!loading && accounts.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+            <div className="app-metric-grid" style={{ marginBottom: '1.5rem' }}>
               {/* Net Worth Card */}
               <Card style={{ padding: '1.5rem' }}>
                 <p style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textMuted, margin: '0 0 0.75rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -470,6 +501,17 @@ export default function BankingPage() {
                       return d.toLocaleDateString();
                     })()
                     : 'never'}
+                </p>
+              </Card>
+              <Card style={{ padding: '1.5rem' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textMuted, margin: '0 0 0.75rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Debt tracked
+                </p>
+                <p style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.5rem 0' }}>
+                  {fmt(summaryTotals.totalDebt)}
+                </p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>
+                  Credit cards and loans
                 </p>
               </Card>
             </div>

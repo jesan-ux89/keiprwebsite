@@ -69,6 +69,8 @@ export default function BillsFreeContent() {
   // Group bills by expense type
   const fixedBills = useMemo(() => filteredBills.filter(b => (b.expenseType || 'fixed') === 'fixed'), [filteredBills]);
   const flexibleBills = useMemo(() => filteredBills.filter(b => b.expenseType === 'flexible'), [filteredBills]);
+  const fixedTotal = useMemo(() => fixedBills.reduce((sum, bill) => sum + bill.total, 0), [fixedBills]);
+  const flexibleTotal = useMemo(() => flexibleBills.reduce((sum, bill) => sum + bill.total, 0), [flexibleBills]);
 
   // Get all category names from bills
   const allCategoryNames = useMemo(() => {
@@ -268,11 +270,39 @@ export default function BillsFreeContent() {
       }
     >
       <TwoColumnLayout sidebar={<BudgetSummary />}>
+        <section className="app-page-hero" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p className="app-page-kicker">Expenses</p>
+            <h1 className="app-page-title">A cleaner monthly plan.</h1>
+            <p className="app-page-subtitle">
+              Keep fixed and flexible expenses organized before they start crowding the paycheck.
+            </p>
+            <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
+              {[
+                { label: 'Total', value: fmt(totalExpenses), detail: `${filteredBills.length} expenses`, color: colors.text },
+                { label: 'Fixed', value: fmt(fixedTotal), detail: `${fixedBills.length} predictable`, color: colors.green },
+                { label: 'Flexible', value: fmt(flexibleTotal), detail: `${flexibleBills.length} variable`, color: colors.amber },
+              ].map((item) => (
+                <div key={item.label} className="app-soft-panel" style={{ padding: '1rem' }}>
+                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                    {item.label}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
+                    {item.value}
+                  </p>
+                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* Search and Sort Controls */}
         <Card
           style={{
-            marginBottom: '2rem',
+            marginBottom: '1.5rem',
             display: 'grid',
             gridTemplateColumns: '1fr auto',
             gap: '1rem',

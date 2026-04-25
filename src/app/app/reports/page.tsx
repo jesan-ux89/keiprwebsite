@@ -210,6 +210,35 @@ export default function ReportsPage() {
           />
         }
       >
+        <section className="app-page-hero" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p className="app-page-kicker">Insights</p>
+            <h1 className="app-page-title">Spending trends without the noise.</h1>
+            <p className="app-page-subtitle">
+              See the categories and monthly movement that actually matter for your paycheck plan.
+            </p>
+            <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
+              {[
+                { label: 'Last 6 months', value: fmt(centsToDollars(totalSpent)), detail: 'categorized spending', color: colors.text },
+                { label: 'Top categories', value: catsWithColor.length, detail: 'with transactions', color: colors.green },
+                { label: 'Month over month', value: momPct == null ? '—' : `${momPct > 0 ? '+' : ''}${momPct.toFixed(0)}%`, detail: 'latest trend', color: momPct != null && momPct > 0 ? colors.amber : colors.green },
+              ].map((item) => (
+                <div key={item.label} className="app-soft-panel" style={{ padding: '1rem' }}>
+                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                    {item.label}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
+                    {item.value}
+                  </p>
+                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {errorMsg && (
           <div
             style={{
