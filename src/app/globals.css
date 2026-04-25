@@ -87,6 +87,19 @@
     linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
 }
 
+/* Theme-aware grid lines for the reusable .app-grid-pattern overlay
+   (white on dark, dark-blue on light — same approach as .app-page-hero). */
+:root[data-theme="light"] .app-grid-pattern::before {
+  background-image:
+    linear-gradient(rgba(12, 74, 110, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 74, 110, 0.045) 1px, transparent 1px);
+}
+:root[data-theme="dark"] .app-grid-pattern::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
 :root[data-theme="dark"] .app-page-kicker,
 :root[data-theme="dark"] .app-page-subtitle {
   color: rgba(238, 233, 222, 0.72);
