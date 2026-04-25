@@ -648,39 +648,58 @@ export default function DashboardUltraContent() {
               </a>
             )}
 
-            {/* Hero Stats Row (3-column grid) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-              <Card style={{ padding: '1.25rem' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Available</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: (availableNumber !== null ? availableNumber : remaining) >= 0 ? '#0A7B6C' : '#EF4444', margin: '0 0 0.25rem 0' }}>{fmt(availableNumber !== null ? availableNumber : remaining)}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38BDF8', boxShadow: '0 0 6px rgba(56,189,248,0.4)', flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38BDF8', width: 80, fontVariantNumeric: 'tabular-nums' }}>
-                      {availableBreakdown?.checkingBalance != null
-                        ? fmt(availableBreakdown.checkingBalance)
-                        : fmt(availableNumber !== null ? availableNumber : remaining)}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                      {availableBreakdown?.checkingBalance != null ? 'available in checking' : 'available to spend'}
-                    </span>
+            {/* Command Center Hero */}
+            <Card style={{
+              padding: '1.75rem',
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(56,189,248,0.12), transparent 36%), linear-gradient(160deg, rgba(10,123,108,0.16), transparent 44%), #221F1A'
+                : 'linear-gradient(135deg, rgba(0,107,153,0.12), transparent 36%), linear-gradient(160deg, rgba(0,127,115,0.12), transparent 44%), #FFFFFF',
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.05fr) minmax(260px, 0.95fr)', gap: '1.5rem', alignItems: 'end' }}>
+                <div>
+                  <p style={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted, margin: '0 0 0.65rem 0' }}>
+                    Available to spend
+                  </p>
+                  <p style={{
+                    fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+                    lineHeight: 1,
+                    fontWeight: 850,
+                    color: (availableNumber !== null ? availableNumber : remaining) >= 0 ? colors.text : colors.red,
+                    letterSpacing: '-0.03em',
+                    margin: 0,
+                  }}>
+                    {fmt(availableNumber !== null ? availableNumber : remaining)}
+                  </p>
+                  <p style={{ fontSize: '0.95rem', color: colors.textMuted, lineHeight: 1.5, margin: '0.9rem 0 0 0', maxWidth: 560 }}>
+                    {pendingConfirmationsCount > 0
+                      ? `${pendingConfirmationsCount} bill ${pendingConfirmationsCount === 1 ? 'match needs' : 'matches need'} a quick review.`
+                      : 'Your paycheck is organized and current.'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${colors.cardBorder}` }}>
+                    <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>Checking balance</span>
+                    <strong style={{ color: colors.text }}>{availableBreakdown?.checkingBalance != null ? fmt(availableBreakdown.checkingBalance) : fmt(availableNumber !== null ? availableNumber : remaining)}</strong>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0A7B6C', boxShadow: '0 0 6px rgba(10,123,108,0.4)', flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0A7B6C', width: 80, fontVariantNumeric: 'tabular-nums' }}>{fmt(remaining > 0 ? remaining : 0)}</span>
-                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>available this check</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${colors.cardBorder}` }}>
+                    <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>This check</span>
+                    <strong style={{ color: colors.green }}>{fmt(remaining > 0 ? remaining : 0)}</strong>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9a9589', flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#9a9589', width: 80, fontVariantNumeric: 'tabular-nums' }}>{fmt(nextRemaining > 0 ? nextRemaining : 0)}</span>
-                    <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>available next check</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${colors.cardBorder}` }}>
+                    <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>Next check</span>
+                    <strong style={{ color: colors.text }}>{fmt(nextRemaining > 0 ? nextRemaining : 0)}</strong>
                   </div>
                 </div>
-                {availableCalculatedAt && formatRelativeTime(availableCalculatedAt) && (
-                  <p style={{ fontSize: '0.7rem', color: colors.textMuted, margin: '0.5rem 0 0 0', opacity: 0.6 }}>
-                    {formatRelativeTime(availableCalculatedAt)}
-                  </p>
-                )}
+              </div>
+            </Card>
+
+            {/* Key Metrics Row */}
+            <div className="dashboard-metric-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1rem' }}>
+              <Card style={{ padding: '1.25rem' }}>
+                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.5rem 0' }}>Bills this check</p>
+                <p style={{ fontSize: '1.75rem', fontWeight: 800, color: colors.text, margin: '0 0 0.25rem 0' }}>{thisPaycheckBills.length}</p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{directBillsThisCheck.length} direct · {ccBillsThisCheck.length} on cards</p>
               </Card>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
@@ -1639,6 +1658,12 @@ export default function DashboardUltraContent() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 980px) {
+          .dashboard-metric-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
       `}</style>
     </AppLayout>
