@@ -19,9 +19,9 @@ export default function LandingNav() {
       </div>
 
       <div className="navLinks">
-        <a href="#story">How it works</a>
-        <a href="#product">Product</a>
-        <a href="#pricing">Pricing</a>
+        <Link href="/how-it-works">How it works</Link>
+        <Link href="/product">Product</Link>
+        <Link href="/pricing">Pricing</Link>
         <Link href="/faq">FAQ</Link>
       </div>
 
@@ -41,9 +41,9 @@ export default function LandingNav() {
 
       {mobileMenuOpen && (
         <div className="mobileMenu">
-          <a href="#story" onClick={closeMenu}>How it works</a>
-          <a href="#product" onClick={closeMenu}>Product</a>
-          <a href="#pricing" onClick={closeMenu}>Pricing</a>
+          <Link href="/how-it-works" onClick={closeMenu}>How it works</Link>
+          <Link href="/product" onClick={closeMenu}>Product</Link>
+          <Link href="/pricing" onClick={closeMenu}>Pricing</Link>
           <Link href="/faq" onClick={closeMenu}>FAQ</Link>
           <Link href="/auth/login" onClick={closeMenu}>Sign in</Link>
           <Link className="solidBtn" href="/auth/signup" onClick={closeMenu}>Start free</Link>

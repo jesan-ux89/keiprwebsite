@@ -1,14 +1,14 @@
 import LandingStyles from '@/components/landing/LandingStyles';
 import LandingNav from '@/components/landing/LandingNav';
-import HeroSection from '@/components/landing/HeroSection';
+import PainSection from '@/components/landing/PainSection';
 import FooterSection from '@/components/landing/FooterSection';
 
-export default function Home() {
+export default function HowItWorksPage() {
   return (
     <div className="landingRoot">
       <LandingStyles />
       <LandingNav />
-      <HeroSection />
+      <PainSection />
       <FooterSection />
     </div>
   );
