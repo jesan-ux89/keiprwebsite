@@ -325,75 +325,121 @@ export default function LandingStyles() {
         line-height: 1.35;
         font-weight: 620;
       }
-      .walkthroughGrid {
+      /* ============ Section headers (used between rail / core / tiers) ============ */
+      .sectionHeader {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+        gap: 36px;
+        align-items: end;
+        margin: 0 0 28px;
+      }
+      .sectionHeader h2 {
+        max-width: 620px;
+        margin: 0;
+        font-size: clamp(28px, 2.8vw, 42px);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+        font-weight: 880;
+      }
+      .sectionHeader h2 em {
+        color: var(--blue);
+        font-style: normal;
+      }
+      .sectionHeader p {
+        margin: 0;
+        color: #c9c0b5;
+        font-size: 16px;
+        line-height: 1.65;
+        font-weight: 540;
+      }
+      .sectionHeader p strong {
+        color: var(--ink);
+        font-weight: 900;
+      }
+
+      /* ============ Core flow grid (4 uniform cards expanding the 1-4 rail) ============ */
+      .coreGrid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
+        gap: 20px;
+        margin: 0 0 80px;
       }
-      .walkthroughCard {
-        min-height: auto;
-        padding: 24px;
+      .coreCard {
+        position: relative;
+        padding: 28px;
         border-radius: 24px;
         background:
-          radial-gradient(circle at 18% 12%, rgba(53, 195, 245, 0.09), transparent 17rem),
+          radial-gradient(circle at 18% 12%, rgba(53, 195, 245, 0.07), transparent 17rem),
           linear-gradient(180deg, rgba(255, 255, 255, 0.074), rgba(255, 255, 255, 0.03)),
           rgba(29, 25, 21, 0.94);
         border: 1px solid rgba(255, 248, 239, 0.14);
         box-shadow: 0 22px 68px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.06);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
       }
-      .walkthroughCard.featureLarge,
-      .walkthroughCard.featureWide {
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
-        gap: 24px;
+      .stepBadge {
+        display: inline-flex;
         align-items: center;
-      }
-      .walkthroughCard.featureWide {
-        grid-column: 1 / -1;
-        grid-template-columns: minmax(0, 0.72fr) minmax(430px, 1fr);
-      }
-      .walkthroughCard.availableStory {
-        grid-row: auto;
-      }
-      .stepLabel {
-        margin: 0 0 14px;
-        color: #9be7ff;
+        gap: 10px;
+        padding: 6px 12px 6px 6px;
+        width: fit-content;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,248,239,0.1);
         font-size: 12px;
         font-weight: 950;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.13em;
         text-transform: uppercase;
+        color: #c9c0b5;
       }
-      .walkthroughCard h2 {
-        max-width: 560px;
-        margin: 0 0 12px;
+      .stepBadge i {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        color: #071019;
+        font-style: normal;
+        font-weight: 950;
+        font-size: 13px;
+      }
+      .stepBadge.green i { background: var(--green); }
+      .stepBadge.blue  i { background: var(--blue); }
+      .stepBadge.gold  i { background: var(--gold); }
+      .stepBadge.teal  i { background: #61e2cf; }
+      .coreCard h3 {
+        margin: 0;
         color: #fff4e7;
-        font-size: clamp(23px, 1.8vw, 31px);
+        font-size: clamp(22px, 1.7vw, 28px);
         line-height: 1.13;
         letter-spacing: -0.035em;
         font-weight: 850;
       }
-      .walkthroughCard p:not(.stepLabel) {
+      .coreCard p {
         margin: 0;
         color: #d6ccc1;
         font-size: 15px;
         line-height: 1.65;
         font-weight: 540;
       }
+      .coreCard p em {
+        color: var(--ink);
+        font-style: italic;
+      }
+
+      /* ============ Mock surfaces (shared by core cards) ============ */
       .paycheckMock,
-      .availableStoryCard,
       .splitMock,
-      .bankMatchPanel {
-        border-radius: 24px;
+      .availableStoryCard {
+        border-radius: 20px;
         border: 1px solid rgba(255, 248, 239, 0.11);
         background:
           linear-gradient(135deg, rgba(53, 195, 245, 0.13), transparent 52%),
           rgba(255, 255, 255, 0.04);
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
       }
-      .paycheckMock {
-        padding: 24px;
-      }
+      .paycheckMock { padding: 22px; }
       .mockTop,
       .splitHeader {
         display: flex;
@@ -401,11 +447,12 @@ export default function LandingStyles() {
         gap: 14px;
         color: var(--quiet);
         font-weight: 850;
+        font-size: 13px;
       }
       .mockDeposit {
-        margin: 18px 0;
+        margin: 16px 0;
         color: var(--green);
-        font-size: 40px;
+        font-size: 38px;
         line-height: 1;
         font-weight: 950;
         letter-spacing: -0.06em;
@@ -417,79 +464,69 @@ export default function LandingStyles() {
         padding: 8px 0;
         color: #d4cabe;
         font-weight: 680;
+        font-size: 14px;
       }
-      .greenText {
-        color: var(--green);
-      }
+      .greenText { color: var(--green); }
+
       .billStack {
         display: grid;
-        gap: 10px;
-        margin-top: 24px;
+        gap: 8px;
       }
-      .billStack div,
-      .aiList span {
+      .billStack > div {
         display: flex;
         justify-content: space-between;
         gap: 16px;
         padding: 13px 14px;
-        border-radius: 15px;
+        border-radius: 14px;
         color: var(--muted);
         background: rgba(255, 255, 255, 0.035);
         border: 1px solid rgba(255, 248, 239, 0.07);
         font-weight: 700;
+        font-size: 14px;
       }
-      .billStack strong {
-        color: var(--ink);
-      }
+      .billStack strong { color: var(--ink); }
       .billStack .nextCheck {
         color: #9be7ff;
         background: rgba(53, 195, 245, 0.07);
       }
-      .billStack .nextCheck strong {
-        color: var(--blue);
-      }
-      .splitMock {
-        margin-top: 24px;
-        padding: 20px;
-      }
-      .splitHeader strong {
-        color: var(--ink);
-        font-size: 21px;
-      }
+      .billStack .nextCheck strong { color: var(--blue); }
+
+      .splitMock { padding: 18px; }
+      .splitHeader strong { color: var(--ink); font-size: 19px; }
       .splitPills {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-        margin: 18px 0 14px;
+        margin: 14px 0 12px;
       }
-      .splitPills div {
-        min-height: 82px;
-        border-radius: 18px;
-        padding: 14px;
+      .splitPills > div {
+        min-height: 76px;
+        border-radius: 16px;
+        padding: 12px 14px;
         background: rgba(56, 217, 159, 0.08);
         border: 1px solid rgba(56, 217, 159, 0.22);
       }
-      .splitPills div + div {
+      .splitPills > div + div {
         background: rgba(255, 176, 24, 0.08);
         border-color: rgba(255, 176, 24, 0.22);
       }
       .splitPills strong {
         display: block;
         color: var(--green);
-        font-size: 26px;
+        font-size: 22px;
+        font-weight: 950;
       }
-      .splitPills div + div strong {
-        color: var(--gold);
-      }
+      .splitPills > div + div strong { color: var(--gold); }
       .splitPills span {
         display: block;
-        margin-top: 6px;
+        margin-top: 4px;
         color: var(--quiet);
         font-weight: 800;
+        font-size: 12px;
       }
       .splitBar {
         overflow: hidden;
-        height: 9px;
+        height: 8px;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.12);
       }
@@ -500,90 +537,245 @@ export default function LandingStyles() {
         border-radius: inherit;
         background: linear-gradient(90deg, var(--green), var(--gold));
       }
-      .bankMatchPanel {
-        display: grid;
-        gap: 12px;
-        padding: 18px;
-      }
-      .bankMatchLine {
-        display: grid;
-        grid-template-columns: 42px minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 12px;
-        padding: 10px;
-        border-radius: 18px;
-        background: rgba(255,255,255,0.035);
-        border: 1px solid rgba(255,248,239,0.07);
-      }
-      .bankMatchLine strong {
-        display: block;
-        color: #fff4e7;
-        font-size: 16px;
-      }
-      .bankMatchLine span {
-        display: block;
-        margin-top: 2px;
-        color: #bfb5aa;
+
+      .availableStoryCard { padding: 22px; }
+      .availableStoryCard .label {
+        color: var(--quiet);
+        font-weight: 850;
         font-size: 13px;
-        font-weight: 650;
-      }
-      .bankMatchLine em {
-        color: var(--green);
-        font-style: normal;
-        font-weight: 950;
-        white-space: nowrap;
-      }
-      .availableStoryCard {
-        margin-top: 22px;
-        padding: 22px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
       }
       .storyMoney {
-        margin: 12px 0 18px;
+        margin: 10px 0 14px;
         color: var(--blue);
         font-size: 44px;
         line-height: 1;
         font-weight: 950;
         letter-spacing: -0.06em;
       }
-      .aiList {
+
+      /* ============ Tier strip (Free / Pro / Ultra) ============ */
+      .tierGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 60px;
+      }
+      .tierCard {
+        position: relative;
+        padding: 26px 24px 24px;
+        border-radius: 24px;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+          rgba(29, 25, 21, 0.94);
+        border: 1px solid rgba(255,248,239,0.12);
+        box-shadow: 0 22px 68px rgba(0,0,0,0.22);
+        display: flex;
+        flex-direction: column;
+      }
+      .tierCard.featured {
+        border-color: rgba(53,195,245,0.4);
+        box-shadow: 0 26px 80px rgba(53,195,245,0.16), 0 22px 68px rgba(0,0,0,0.28);
+      }
+      .tierBadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 11px;
+        width: fit-content;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,248,239,0.12);
+        color: #c9c0b5;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .tierBadge.featuredBadge {
+        background: rgba(53,195,245,0.15);
+        border-color: rgba(53,195,245,0.4);
+        color: #9be7ff;
+      }
+      .tierName {
+        margin: 0 0 4px;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+      .tierPrice {
+        margin: 0 0 6px;
+        color: var(--quiet);
+        font-weight: 800;
+        font-size: 14px;
+      }
+      .tierPrice strong { color: var(--ink); font-size: 18px; }
+      .tierPriceMuted { opacity: 0.7; }
+      .tierTagline {
+        margin: 8px 0 18px;
+        color: #c9c0b5;
+        font-size: 14px;
+        line-height: 1.55;
+        font-weight: 560;
+      }
+      .tierBoundary {
+        margin: 0 0 14px;
+        border: 0;
+        border-top: 1px solid rgba(255,248,239,0.1);
+      }
+      .tierFeatures {
         display: grid;
         gap: 10px;
-        margin-top: 24px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
       }
-      .aiList span {
-        justify-content: flex-start;
-        color: #d7cec4;
+      .tierFeatures li {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 10px;
+        color: #d6ccc1;
+        font-size: 14px;
+        line-height: 1.5;
+        font-weight: 600;
       }
-      .aiList span::before {
+      .tierFeatures li::before {
         content: "";
-        width: 9px;
-        height: 9px;
-        margin-top: 6px;
+        margin-top: 7px;
+        width: 7px;
+        height: 7px;
         border-radius: 999px;
+        background: var(--quiet);
+        grid-column: 1;
+        align-self: start;
+        justify-self: center;
+      }
+      .tierCard.free .tierFeatures li::before { background: #b4aba0; }
+      .tierCard.pro .tierFeatures li::before {
+        background: var(--green);
+        box-shadow: 0 0 12px rgba(56,217,159,0.5);
+      }
+      .tierCard.ultra .tierFeatures li::before {
         background: var(--blue);
-        box-shadow: 0 0 20px rgba(53,195,245,0.5);
+        box-shadow: 0 0 12px rgba(53,195,245,0.5);
+      }
+
+      /* mini-mocks inside tier cards */
+      .miniMock {
+        margin: 18px 0 4px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255,248,239,0.08);
+        background: rgba(255,255,255,0.03);
+      }
+      .miniLabel {
+        color: var(--quiet);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        margin: 0 0 10px;
       }
       .futureBars {
         display: grid;
-        gap: 18px;
-        margin-top: 28px;
+        gap: 10px;
       }
-      .futureBars div {
+      .futureBars .row {
         display: grid;
         grid-template-columns: 1fr auto;
-        gap: 8px 16px;
+        gap: 4px 12px;
         color: var(--muted);
-        font-weight: 900;
+        font-weight: 800;
+        font-size: 13px;
       }
-      .futureBars strong {
-        color: var(--blue);
-      }
+      .futureBars strong { color: var(--green); }
       .futureBars i {
         grid-column: 1 / -1;
         display: block;
-        height: 8px;
+        height: 6px;
         border-radius: 999px;
         background: linear-gradient(90deg, var(--blue), var(--green));
+      }
+      .ultraMatch {
+        display: grid;
+        gap: 6px;
+      }
+      .ultraMatchRow {
+        display: grid;
+        grid-template-columns: 26px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 7px 8px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.025);
+        font-size: 12.5px;
+      }
+      .ultraMatchRow .chip {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 950;
+        color: #fff;
+      }
+      .ultraMatchRow .chip.netflix { background: #E50914; }
+      .ultraMatchRow .chip.spotify { background: #1DB954; color: #051c0d; }
+      .ultraMatchRow .chip.chase   { background: #117ACA; }
+      .ultraMatchRow .name {
+        color: #fff4e7;
+        font-weight: 800;
+        font-size: 13px;
+      }
+      .ultraMatchRow .verified {
+        color: var(--green);
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+      }
+
+      /* ============ Privacy callout ============ */
+      .privacyStrip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: center;
+        padding: 26px 28px;
+        border-radius: 22px;
+        border: 1px solid rgba(255,248,239,0.12);
+        background:
+          radial-gradient(circle at 95% 30%, rgba(56,217,159,0.08), transparent 22rem),
+          linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
+          rgba(29, 25, 21, 0.92);
+      }
+      .privacyStrip h4 {
+        margin: 0 0 6px;
+        font-size: 19px;
+        font-weight: 880;
+        letter-spacing: -0.025em;
+      }
+      .privacyStrip p {
+        margin: 0;
+        color: #c9c0b5;
+        font-size: 14.5px;
+        line-height: 1.55;
+        max-width: 720px;
+      }
+      .privacyStrip .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(53,195,245,0.12);
+        color: #9be7ff;
+        border: 1px solid rgba(53,195,245,0.3);
+        font-weight: 900;
+        font-size: 13px;
+        white-space: nowrap;
       }
       .paycheckStory {
         border-top: 1px solid rgba(255, 248, 239, 0.08);
@@ -676,14 +868,8 @@ export default function LandingStyles() {
         .matchRow { grid-template-columns: 42px minmax(0, 1fr); }
         .matchStatus { grid-column: 2; text-align: left; }
         .splitStatus { grid-column: 2; }
-        .flowGrid, .screenGrid, .priceGrid, .journeyRail, .walkthroughGrid { grid-template-columns: 1fr; }
-        .walkthroughCard.featureLarge,
-        .walkthroughCard.featureWide,
-        .walkthroughCard.availableStory {
-          grid-column: auto;
-          grid-row: auto;
-          grid-template-columns: 1fr;
-        }
+        .flowGrid, .screenGrid, .priceGrid, .journeyRail, .coreGrid, .tierGrid { grid-template-columns: 1fr; }
+        .sectionHeader, .privacyStrip { grid-template-columns: 1fr; gap: 18px; }
         .priceCard { min-height: auto; }
       }
 
@@ -699,10 +885,10 @@ export default function LandingStyles() {
         .howHero h1 { font-size: clamp(38px, 12vw, 52px); }
         .howHero p { font-size: 16px; }
         .journeyStep { min-height: auto; }
-        .walkthroughCard { min-height: auto; padding: 22px; border-radius: 24px; }
-        .walkthroughCard h2 { font-size: 27px; }
-        .bankMatchLine { grid-template-columns: 42px minmax(0, 1fr); }
-        .bankMatchLine em { grid-column: 2; }
+        .coreCard { padding: 22px; border-radius: 22px; }
+        .coreCard h3 { font-size: 24px; }
+        .tierCard { padding: 22px; }
+        .privacyStrip { padding: 20px 22px; }
         .splitPills { grid-template-columns: 1fr; }
         .storyMoney { font-size: 40px; }
         .productStage { padding: 14px; border-radius: 28px; }

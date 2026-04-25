@@ -3,41 +3,22 @@
 type MatchRow = {
   name: string;
   amount: string;
-  detail: string;
-  logo?: string;
-  logoText?: string;
-  logoClass?: string;
-  chase?: boolean;
+  logoText: string;
+  logoClass: string;
 };
 
 const matchRows: MatchRow[] = [
-  {
-    name: 'Netflix',
-    amount: '$24.99',
-    detail: 'Matched to your Netflix bill',
-    logoText: 'N',
-    logoClass: 'netflixTile',
-  },
-  {
-    name: 'Spotify',
-    amount: '$10.99',
-    detail: 'Matched to your Spotify bill',
-    logoText: 'S',
-    logoClass: 'spotifyTile',
-  },
-  {
-    name: 'Mortgage',
-    amount: '$2,000',
-    detail: 'Matched your bill split staging',
-    logo: '/chase-logo.jpg',
-    chase: true,
-  },
+  { name: 'Netflix',  amount: '$24.99', logoText: 'N', logoClass: 'netflix' },
+  { name: 'Spotify',  amount: '$10.99', logoText: 'S', logoClass: 'spotify' },
+  { name: 'Mortgage', amount: '$2,000', logoText: 'C', logoClass: 'chase' },
 ];
 
 export default function PainSection() {
   return (
     <section id="story" className="section howWorksPage">
       <div className="pageShell">
+
+        {/* ============ HERO (kept) ============ */}
         <div className="howHero">
           <div>
             <p className="storyEyebrow">How Keipr works</p>
@@ -47,18 +28,19 @@ export default function PainSection() {
             </h1>
           </div>
           <p>
-            Keipr keeps paycheck cycles and monthly overviews connected. Bills, splits, bank
-            matches, and future months all roll into one number: <strong>what is safe to spend now.</strong>
+            Keipr keeps paycheck cycles and monthly overviews connected. Bills, splits, and future
+            months all roll into one number: <strong>what is safe to spend now.</strong>
           </p>
         </div>
 
+        {/* ============ JOURNEY RAIL 1-4 (kept) ============ */}
         <div className="journeyRail" aria-label="Keipr paycheck budgeting flow">
           <div className="journeyStep green">
             <span>1</span>
             <strong>Paycheck lands</strong>
             <small>Keipr opens the right cycle</small>
           </div>
-          <div className="journeyStep blue">
+          <div className="journeyStep">
             <span>2</span>
             <strong>Bills claim their share</strong>
             <small>This check and next check stay separate</small>
@@ -75,39 +57,44 @@ export default function PainSection() {
           </div>
         </div>
 
-        <div className="walkthroughGrid">
-          <article className="walkthroughCard featureLarge">
-            <div className="featureCopy">
-              <p className="stepLabel">01 - Paycheck cycle</p>
-              <h2>Keipr starts where your money starts.</h2>
-              <p>
-                A paycheck creates a working cycle. Instead of asking whether April is on track,
-                Keipr asks what this paycheck needs to cover before the next one arrives.
-              </p>
-            </div>
+        {/* ============ Section: Core flow expanded ============ */}
+        <div className="sectionHeader">
+          <h2>The four steps, <em>up close</em>.</h2>
+          <p>
+            These run on <strong>every</strong> Keipr account &mdash; Free, Pro, or Ultra. No bank
+            connection required. The math behind the Available number is the same whether you type
+            your bills in by hand or let Keipr detect them automatically.
+          </p>
+        </div>
+
+        <div className="coreGrid">
+
+          {/* Step 1 */}
+          <article className="coreCard">
+            <span className="stepBadge green"><i>1</i> Paycheck cycle</span>
+            <h3>Keipr starts where your money starts.</h3>
+            <p>
+              A paycheck creates a working cycle. Instead of asking whether April is on track, Keipr
+              asks what <em>this paycheck</em> needs to cover before the next one arrives.
+            </p>
             <div className="paycheckMock">
               <div className="mockTop">
                 <span>Paycheck 2</span>
-                <strong>Apr 18 - May 1</strong>
+                <strong>Apr 18 &ndash; May 1</strong>
               </div>
               <div className="mockDeposit">+$2,847</div>
-              <div className="mockSplitLine">
-                <span>Before deposit</span>
-                <strong>$1,243</strong>
-              </div>
-              <div className="mockSplitLine">
-                <span>After deposit</span>
-                <strong className="greenText">$4,090</strong>
-              </div>
+              <div className="mockSplitLine"><span>Before deposit</span><strong>$1,243</strong></div>
+              <div className="mockSplitLine"><span>After deposit</span><strong className="greenText">$4,090</strong></div>
             </div>
           </article>
 
-          <article className="walkthroughCard">
-            <p className="stepLabel">02 - Bills mapped</p>
-            <h2>Bills are assigned to the paycheck that actually pays them.</h2>
+          {/* Step 2 */}
+          <article className="coreCard">
+            <span className="stepBadge blue"><i>2</i> Bills claim their share</span>
+            <h3>Bills get assigned to the paycheck that pays them.</h3>
             <p>
               Rent, subscriptions, loans, utilities, and card payments land in the right paycheck
-              view so the user sees obligations before they spend.
+              view, so you see obligations before you spend.
             </p>
             <div className="billStack">
               <div><span>Capital One Auto</span><strong>$545.54</strong></div>
@@ -117,12 +104,13 @@ export default function PainSection() {
             </div>
           </article>
 
-          <article className="walkthroughCard">
-            <p className="stepLabel">03 - Split bills</p>
-            <h2>Large bills can be staged across real paychecks.</h2>
+          {/* Step 3 */}
+          <article className="coreCard">
+            <span className="stepBadge gold"><i>3</i> Big bills get staged</span>
+            <h3>Large bills can split across real paychecks.</h3>
             <p>
-              Mortgage and loan patterns can be split using observed transfer behavior instead of
-              fake equal halves.
+              Mortgage and loan patterns split using your actual transfer behavior &mdash; not fake
+              equal halves.
             </p>
             <div className="splitMock">
               <div className="splitHeader">
@@ -137,38 +125,14 @@ export default function PainSection() {
             </div>
           </article>
 
-          <article className="walkthroughCard featureWide">
-            <div className="featureCopy">
-              <p className="stepLabel">04 - Bank verified</p>
-              <h2>Tracker payments verify themselves.</h2>
-              <p>
-                When bank transactions match bills, Keipr marks the right bill or split row with
-                clean evidence instead of making the user manually check everything off.
-              </p>
-            </div>
-            <div className="bankMatchPanel">
-              {matchRows.map((row) => (
-                <div className="bankMatchLine" key={row.name}>
-                  <div className="logoChip">
-                    {row.logo ? (
-                      <img className={row.chase ? 'chaseLogo' : ''} src={row.logo} alt="" />
-                    ) : (
-                      <span className={row.logoClass}>{row.logoText}</span>
-                    )}
-                  </div>
-                  <div>
-                    <strong>{row.name} {row.amount}</strong>
-                    <span>{row.detail}</span>
-                  </div>
-                  <em>Auto-verified</em>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className="walkthroughCard availableStory">
-            <p className="stepLabel">05 - Available to Spend</p>
-            <h2>The number updates after bills are spoken for.</h2>
+          {/* Step 4 (was card 05; now correctly placed as the climax) */}
+          <article className="coreCard">
+            <span className="stepBadge teal"><i>4</i> Available to spend</span>
+            <h3>One number, after everything is spoken for.</h3>
+            <p>
+              The Available number updates the moment a bill is claimed, a split is staged, or a
+              deposit lands. No mental math, no spreadsheet reconciliation.
+            </p>
             <div className="availableStoryCard">
               <div className="label">Available to spend</div>
               <div className="storyMoney">$1,327.90</div>
@@ -178,34 +142,114 @@ export default function PainSection() {
             </div>
           </article>
 
-          <article className="walkthroughCard">
-            <p className="stepLabel">06 - AI Accountant</p>
-            <h2>Quiet cleanup runs after syncs.</h2>
-            <p>
-              Keipr can spot duplicate bills, weird categories, staging transfers, and split
-              patterns. It cleans up the budget without turning the app into a spreadsheet.
+        </div>
+
+        {/* ============ Section: Tier breakdown ============ */}
+        <div className="sectionHeader">
+          <h2>Pick how much Keipr should <em>do for you</em>.</h2>
+          <p>
+            The flow above is the same for everyone. These are the layers you can stack on top
+            &mdash; depending on how hands-on you want to be, and whether you want to connect a bank.
+          </p>
+        </div>
+
+        <div className="tierGrid">
+
+          {/* Free */}
+          <article className="tierCard free">
+            <span className="tierBadge">Free</span>
+            <h3 className="tierName">Manual + simple.</h3>
+            <p className="tierPrice"><strong>$0</strong> &middot; forever</p>
+            <p className="tierTagline">
+              For people who&rsquo;d rather not connect a bank &mdash; or just want to try Keipr&rsquo;s
+              paycheck math first.
             </p>
-            <div className="aiList">
-              <span>Duplicate card payment found</span>
-              <span>Mortgage staging chain detected</span>
-              <span>Subscription moved to the right paycheck</span>
+            <hr className="tierBoundary" />
+            <ul className="tierFeatures">
+              <li>The full 4-step flow above</li>
+              <li>1 income source, 1 split bill</li>
+              <li>This month&rsquo;s planning view</li>
+              <li>Manual entry &mdash; no bank credentials shared</li>
+            </ul>
+          </article>
+
+          {/* Pro */}
+          <article className="tierCard pro">
+            <span className="tierBadge">Pro</span>
+            <h3 className="tierName">Plan months ahead.</h3>
+            <p className="tierPrice">
+              <strong>$7.99</strong>/mo &middot;{' '}
+              <span className="tierPriceMuted">$6.99/mo annual</span>
+            </p>
+            <p className="tierTagline">
+              Everything in Free, plus forward planning, unlimited splits, trends, and CSV export.
+              Still fully manual &mdash; no bank connection needed.
+            </p>
+            <hr className="tierBoundary" />
+            <ul className="tierFeatures">
+              <li>Unlimited income sources &amp; splits</li>
+              <li>Plan months ahead with rollover, tight-month warnings, and bill-ending windfalls</li>
+              <li>Spending trends + CSV export</li>
+            </ul>
+            <div className="miniMock">
+              <p className="miniLabel">Forward projection</p>
+              <div className="futureBars">
+                <div className="row"><span>May 2026</span><strong>+$420</strong><i style={{ width: '75%' }} /></div>
+                <div className="row"><span>Jun 2026</span><strong>+$210</strong><i style={{ width: '42%' }} /></div>
+                <div className="row"><span>Jul 2026</span><strong>+$680</strong><i style={{ width: '88%' }} /></div>
+              </div>
             </div>
           </article>
 
-          <article className="walkthroughCard">
-            <p className="stepLabel">07 - Forward planning</p>
-            <h2>Plan months ahead before expenses hit.</h2>
-            <p>
-              Draft future months, simulate new bills, and see how the next paycheck changes before
-              committing to anything.
+          {/* Ultra (featured) */}
+          <article className="tierCard ultra featured">
+            <span className="tierBadge featuredBadge">Ultra &middot; most automated</span>
+            <h3 className="tierName">Bank does the work.</h3>
+            <p className="tierPrice">
+              <strong>$11.99</strong>/mo &middot;{' '}
+              <span className="tierPriceMuted">$10.99/mo annual</span>
             </p>
-            <div className="futureBars">
-              <div><span>May 2026</span><strong>75%</strong><i style={{ width: '75%' }} /></div>
-              <div><span>June 2026</span><strong>42%</strong><i style={{ width: '42%' }} /></div>
-              <div><span>July 2026</span><strong>18%</strong><i style={{ width: '18%' }} /></div>
+            <p className="tierTagline">
+              Connect a bank and Keipr matches transactions to bills, verifies the tracker, and
+              quietly cleans up your budget after every sync.
+            </p>
+            <hr className="tierBoundary" />
+            <ul className="tierFeatures">
+              <li>Everything in Pro</li>
+              <li>Bank match &mdash; transactions auto-link to bills &amp; split rows</li>
+              <li>Tracker self-verifies (no manual check-offs)</li>
+              <li>AI Accountant &mdash; quiet cleanup of duplicates, miscategorizations, and staging chains</li>
+              <li>Detected expenses banner for new recurring patterns</li>
+            </ul>
+            <div className="miniMock">
+              <p className="miniLabel">Bank match &mdash; auto-verified</p>
+              <div className="ultraMatch">
+                {matchRows.map((row) => (
+                  <div className="ultraMatchRow" key={row.name}>
+                    <span className={`chip ${row.logoClass}`}>{row.logoText}</span>
+                    <span className="name">{row.name} &middot; {row.amount}</span>
+                    <span className="verified">&#10003; Auto</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </article>
+
         </div>
+
+        {/* ============ Privacy callout ============ */}
+        <div className="privacyStrip">
+          <div>
+            <h4>Don&rsquo;t want to connect a bank? You don&rsquo;t have to.</h4>
+            <p>
+              Free and Pro never ask for bank credentials. The 4-step paycheck math is identical
+              &mdash; Ultra just adds automation on top of the same engine. You decide how hands-off
+              you want to be.
+            </p>
+          </div>
+          <span className="pill">Manual-friendly</span>
+        </div>
+
       </div>
     </section>
   );
