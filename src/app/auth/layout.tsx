@@ -1,10 +1,16 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { colors, isDark } = useTheme();
+  const pathname = usePathname();
+
+  if (pathname === '/auth/login') {
+    return <>{children}</>;
+  }
 
   const styles = {
     container: {
