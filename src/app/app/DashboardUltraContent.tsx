@@ -377,9 +377,32 @@ export default function DashboardUltraContent() {
     const paycheckProgressPct = Math.min(100, (dayOfPayPeriod / totalPeriodDays) * 100);
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {pendingConfirmationsCount > 0 && (
+          <Card
+            style={{
+              padding: '1.25rem',
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(245,158,11,0.16), transparent 48%), #221F1A'
+                : 'linear-gradient(135deg, rgba(245,158,11,0.13), transparent 48%), #FFFFFF',
+              border: '1px solid rgba(245,158,11,0.28)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
+              <p style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: colors.text }}>
+                {pendingConfirmationsCount} {pendingConfirmationsCount === 1 ? 'match' : 'matches'} need review
+              </p>
+              <a href="/app/banking/confirmations" style={{ color: colors.amber, fontSize: '0.8rem', fontWeight: 800, textDecoration: 'none', flexShrink: 0 }}>
+                Review →
+              </a>
+            </div>
+            <p style={{ margin: 0, color: colors.textMuted, fontSize: '0.85rem', lineHeight: 1.5 }}>
+              Most obvious matches are handled automatically. These need a quick look.
+            </p>
+          </Card>
+        )}
         {/* Available Number */}
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ display: 'none', textAlign: 'right' }}>
           <p style={{ fontSize: '2rem', fontWeight: 700, color: (availableNumber !== null ? availableNumber : remaining) >= 0 ? colors.text : '#EF4444', margin: '0 0 0.25rem 0' }}>
             {fmt(availableNumber !== null ? availableNumber : remaining)}
           </p>
@@ -394,7 +417,7 @@ export default function DashboardUltraContent() {
         </div>
 
         {/* Income / Bills / Spent Breakdown */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        <div style={{ display: 'none', flexDirection: 'column', gap: '0.875rem' }}>
           <a href="/app/income" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#0A7B6C' }} />
             <span style={{ fontSize: '0.875rem', color: colors.textMuted, flex: 1 }}>Income</span>
@@ -418,11 +441,11 @@ export default function DashboardUltraContent() {
           </a>
         </div>
 
-        <div style={{ height: '1px', backgroundColor: colors.divider }} />
+        <div style={{ display: 'none', height: '1px', backgroundColor: colors.divider }} />
 
         {/* Paycheck Progress */}
         {currentPeriod && (
-          <div>
+          <Card style={{ padding: '1.25rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text }}>Paycheck progress</span>
               <span style={{ fontSize: '0.75rem', color: colors.textMuted }}>Day {dayOfPayPeriod} of {totalPeriodDays}</span>
@@ -440,14 +463,14 @@ export default function DashboardUltraContent() {
                 transition: 'width 0.3s ease',
               }} />
             </div>
-          </div>
+          </Card>
         )}
 
-        <div style={{ height: '1px', backgroundColor: colors.divider }} />
+        <div style={{ display: 'none', height: '1px', backgroundColor: colors.divider }} />
 
         {/* Top Spending Categories */}
         {allocations.length > 0 && (
-          <div>
+          <Card style={{ padding: '1.25rem' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: 600, color: colors.text, margin: '0 0 0.75rem 0' }}>Top spending</p>
             {allocations.slice(0, 5).map((cat, idx) => (
               <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: idx < Math.min(5, allocations.length) - 1 ? '0.5rem' : 0 }}>
@@ -456,7 +479,7 @@ export default function DashboardUltraContent() {
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: colors.text }}>{fmt(cat.amtMonthly)}</span>
               </div>
             ))}
-          </div>
+          </Card>
         )}
       </div>
     );
@@ -622,7 +645,7 @@ export default function DashboardUltraContent() {
             )}
 
             {/* Pending Confirmations Alert */}
-            {pendingConfirmationsCount > 0 && (
+            {false && pendingConfirmationsCount > 0 && (
               <a href="/app/banking/confirmations" style={{ textDecoration: 'none' }}>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '0.75rem',
