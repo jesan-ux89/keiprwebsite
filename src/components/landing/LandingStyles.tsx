@@ -540,13 +540,13 @@ export default function LandingStyles() {
         border-top: 1px solid var(--border);
       }
       .tierIntro {
-        margin: 0 auto 22px;
+        margin: 0 auto 24px;
         max-width: 720px;
         text-align: center;
-        font-size: 15px;
-        color: var(--quiet);
+        font-size: 16px;
+        color: #c9c0b5;
         font-weight: 700;
-        line-height: 1.5;
+        line-height: 1.55;
       }
       .tierIntro strong { color: var(--ink); font-weight: 900; }
       .tierGrid {
@@ -572,58 +572,60 @@ export default function LandingStyles() {
       .tierBadge {
         display: inline-flex;
         width: fit-content;
-        padding: 4px 10px;
+        padding: 5px 12px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,248,239,0.12);
-        color: #c9c0b5;
-        font-size: 11px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 248, 239, 0.18);
+        color: #ece2d4;
+        font-size: 12px;
         font-weight: 950;
-        letter-spacing: 0.13em;
+        letter-spacing: 0.11em;
         text-transform: uppercase;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
       }
       .tierBadge.featuredBadge {
-        background: rgba(53,195,245,0.15);
-        border-color: rgba(53,195,245,0.4);
-        color: #9be7ff;
+        background: rgba(53, 195, 245, 0.18);
+        border-color: rgba(53, 195, 245, 0.5);
+        color: #b8efff;
       }
       .tierName {
-        margin: 0 0 4px;
-        font-size: 22px;
+        margin: 0 0 6px;
+        font-size: 26px;
         font-weight: 900;
         letter-spacing: -0.025em;
+        color: #fff8ef;
       }
       .tierPrice {
-        margin: 0 0 14px;
-        color: var(--quiet);
+        margin: 0 0 16px;
+        color: #b4aba0;
         font-weight: 800;
-        font-size: 13px;
+        font-size: 15px;
+        line-height: 1.4;
       }
-      .tierPrice strong { color: var(--ink); font-size: 16px; }
+      .tierPrice strong { color: var(--ink); font-size: 19px; }
       .tierFeatures {
         list-style: none;
         margin: 0;
         padding: 0;
         display: grid;
-        gap: 8px;
+        gap: 10px;
       }
       .tierFeatures li {
         display: grid;
-        grid-template-columns: 14px 1fr;
-        gap: 10px;
-        color: #d6ccc1;
-        font-size: 13px;
-        line-height: 1.45;
+        grid-template-columns: 16px 1fr;
+        gap: 12px;
+        color: #ece2d4;
+        font-size: 15px;
+        line-height: 1.5;
         font-weight: 600;
       }
       .tierFeatures li::before {
         content: "";
-        margin-top: 6px;
-        width: 6px;
-        height: 6px;
+        margin-top: 7px;
+        width: 7px;
+        height: 7px;
         border-radius: 999px;
-        background: var(--quiet);
+        background: #b4aba0;
         grid-column: 1;
         align-self: start;
         justify-self: center;
