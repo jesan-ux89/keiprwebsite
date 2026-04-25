@@ -206,6 +206,25 @@ export default function LandingStyles() {
       .logoChip { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)), #14110e; border: 1px solid rgba(255,248,239,0.09); overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
       .logoChip img { width: 100%; height: 100%; object-fit: contain; padding: 7px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.28)); }
       .logoChip img.chaseLogo { width: 74%; height: 74%; padding: 0; object-fit: cover; max-width: none; border-radius: 6px; }
+      .netflixTile,
+      .spotifyTile {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        font-size: 26px;
+        line-height: 1;
+        font-weight: 950;
+      }
+      .netflixTile {
+        color: #e50914;
+        font-family: Arial Black, Arial, sans-serif;
+      }
+      .spotifyTile {
+        color: #1ed760;
+        font-size: 22px;
+        border-radius: 999px;
+      }
       .matchCopy { min-width: 0; color: var(--muted); font-size: 15px; line-height: 1.35; font-weight: 780; }
       .matchCopy strong { display: block; color: var(--ink); white-space: nowrap; overflow: visible; text-overflow: clip; }
       .matchCopy span { display: block; color: var(--quiet); font-size: 13px; margin-top: 2px; }
@@ -217,20 +236,19 @@ export default function LandingStyles() {
       .section { padding: 92px 0; }
       .howWorksPage {
         min-height: calc(100vh - 112px);
-        padding: 92px 0 120px;
+        padding: 78px 0 110px;
         border-top: 1px solid rgba(255, 248, 239, 0.08);
         background:
-          radial-gradient(circle at 10% 12%, rgba(53, 195, 245, 0.18), transparent 34rem),
-          radial-gradient(circle at 90% 4%, rgba(56, 217, 159, 0.12), transparent 31rem),
-          radial-gradient(circle at 70% 86%, rgba(255, 176, 24, 0.08), transparent 30rem),
-          linear-gradient(180deg, rgba(17, 22, 20, 0.9), rgba(15, 13, 11, 0.96));
+          radial-gradient(circle at 12% 8%, rgba(53, 195, 245, 0.13), transparent 31rem),
+          radial-gradient(circle at 88% 2%, rgba(56, 217, 159, 0.09), transparent 30rem),
+          linear-gradient(180deg, #101614 0%, #120f0c 48%, #0f0d0b 100%);
       }
       .howHero {
         display: grid;
-        grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.78fr);
-        gap: 56px;
+        grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.82fr);
+        gap: 44px;
         align-items: end;
-        margin: 20px 0 46px;
+        margin: 12px 0 38px;
       }
       .storyEyebrow {
         margin: 0 0 14px;
@@ -241,12 +259,12 @@ export default function LandingStyles() {
         text-transform: uppercase;
       }
       .howHero h1 {
-        max-width: 760px;
+        max-width: 660px;
         margin: 0;
-        font-size: clamp(46px, 5vw, 76px);
-        line-height: 0.96;
-        letter-spacing: -0.07em;
-        font-weight: 950;
+        font-size: clamp(34px, 3.45vw, 54px);
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+        font-weight: 900;
       }
       .howHero h1 span {
         display: block;
@@ -254,10 +272,10 @@ export default function LandingStyles() {
       }
       .howHero p {
         margin: 0;
-        color: var(--muted);
-        font-size: 18px;
-        line-height: 1.72;
-        font-weight: 650;
+        color: #d7cec4;
+        font-size: 17px;
+        line-height: 1.68;
+        font-weight: 560;
       }
       .howHero p strong {
         color: var(--blue);
@@ -266,17 +284,17 @@ export default function LandingStyles() {
       .journeyRail {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-        margin: 0 0 26px;
+        gap: 12px;
+        margin: 0 0 20px;
       }
       .journeyStep {
         position: relative;
-        min-height: 118px;
-        padding: 18px;
-        border-radius: 22px;
+        min-height: 106px;
+        padding: 16px;
+        border-radius: 18px;
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
-          rgba(20, 17, 14, 0.82);
+          linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.026)),
+          rgba(31, 27, 23, 0.88);
         border: 1px solid rgba(255, 248, 239, 0.1);
         box-shadow: 0 20px 70px rgba(0, 0, 0, 0.24);
       }
@@ -296,47 +314,47 @@ export default function LandingStyles() {
       .journeyStep.teal span { background: #61e2cf; }
       .journeyStep strong {
         display: block;
-        color: var(--ink);
-        font-size: 16px;
+        color: #fff5e8;
+        font-size: 15px;
         letter-spacing: -0.02em;
       }
       .journeyStep small {
         display: block;
         margin-top: 6px;
-        color: var(--quiet);
+        color: #bfb5aa;
         line-height: 1.35;
-        font-weight: 700;
+        font-weight: 620;
       }
       .walkthroughGrid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
       }
       .walkthroughCard {
-        min-height: 360px;
-        padding: 28px;
-        border-radius: 30px;
+        min-height: auto;
+        padding: 24px;
+        border-radius: 24px;
         background:
-          radial-gradient(circle at 18% 14%, rgba(53, 195, 245, 0.10), transparent 18rem),
-          linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
-          rgba(20, 17, 14, 0.92);
-        border: 1px solid rgba(255, 248, 239, 0.12);
-        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+          radial-gradient(circle at 18% 12%, rgba(53, 195, 245, 0.09), transparent 17rem),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.074), rgba(255, 255, 255, 0.03)),
+          rgba(29, 25, 21, 0.94);
+        border: 1px solid rgba(255, 248, 239, 0.14);
+        box-shadow: 0 22px 68px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.06);
       }
       .walkthroughCard.featureLarge,
       .walkthroughCard.featureWide {
-        grid-column: span 2;
+        grid-column: 1 / -1;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.78fr);
-        gap: 28px;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+        gap: 24px;
         align-items: center;
       }
       .walkthroughCard.featureWide {
         grid-column: 1 / -1;
-        grid-template-columns: minmax(0, 0.78fr) minmax(430px, 1fr);
+        grid-template-columns: minmax(0, 0.72fr) minmax(430px, 1fr);
       }
       .walkthroughCard.availableStory {
-        grid-row: span 2;
+        grid-row: auto;
       }
       .stepLabel {
         margin: 0 0 14px;
@@ -349,18 +367,18 @@ export default function LandingStyles() {
       .walkthroughCard h2 {
         max-width: 560px;
         margin: 0 0 12px;
-        color: var(--ink);
-        font-size: clamp(25px, 2.4vw, 38px);
-        line-height: 1.03;
-        letter-spacing: -0.055em;
-        font-weight: 950;
+        color: #fff4e7;
+        font-size: clamp(23px, 1.8vw, 31px);
+        line-height: 1.13;
+        letter-spacing: -0.035em;
+        font-weight: 850;
       }
       .walkthroughCard p:not(.stepLabel) {
         margin: 0;
-        color: var(--muted);
-        font-size: 16px;
-        line-height: 1.64;
-        font-weight: 650;
+        color: #d6ccc1;
+        font-size: 15px;
+        line-height: 1.65;
+        font-weight: 540;
       }
       .paycheckMock,
       .availableStoryCard,
@@ -387,7 +405,7 @@ export default function LandingStyles() {
       .mockDeposit {
         margin: 18px 0;
         color: var(--green);
-        font-size: 44px;
+        font-size: 40px;
         line-height: 1;
         font-weight: 950;
         letter-spacing: -0.06em;
@@ -397,8 +415,8 @@ export default function LandingStyles() {
         justify-content: space-between;
         gap: 18px;
         padding: 8px 0;
-        color: var(--muted);
-        font-weight: 800;
+        color: #d4cabe;
+        font-weight: 680;
       }
       .greenText {
         color: var(--green);
@@ -418,7 +436,7 @@ export default function LandingStyles() {
         color: var(--muted);
         background: rgba(255, 255, 255, 0.035);
         border: 1px solid rgba(255, 248, 239, 0.07);
-        font-weight: 800;
+        font-weight: 700;
       }
       .billStack strong {
         color: var(--ink);
@@ -499,15 +517,15 @@ export default function LandingStyles() {
       }
       .bankMatchLine strong {
         display: block;
-        color: var(--ink);
+        color: #fff4e7;
         font-size: 16px;
       }
       .bankMatchLine span {
         display: block;
         margin-top: 2px;
-        color: var(--quiet);
+        color: #bfb5aa;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 650;
       }
       .bankMatchLine em {
         color: var(--green);
@@ -522,7 +540,7 @@ export default function LandingStyles() {
       .storyMoney {
         margin: 12px 0 18px;
         color: var(--blue);
-        font-size: 52px;
+        font-size: 44px;
         line-height: 1;
         font-weight: 950;
         letter-spacing: -0.06em;
@@ -534,6 +552,7 @@ export default function LandingStyles() {
       }
       .aiList span {
         justify-content: flex-start;
+        color: #d7cec4;
       }
       .aiList span::before {
         content: "";

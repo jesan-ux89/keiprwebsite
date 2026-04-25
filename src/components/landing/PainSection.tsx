@@ -1,17 +1,29 @@
 'use client';
 
-const matchRows = [
+type MatchRow = {
+  name: string;
+  amount: string;
+  detail: string;
+  logo?: string;
+  logoText?: string;
+  logoClass?: string;
+  chase?: boolean;
+};
+
+const matchRows: MatchRow[] = [
   {
     name: 'Netflix',
     amount: '$24.99',
     detail: 'Matched to your Netflix bill',
-    logo: 'https://logo.clearbit.com/netflix.com',
+    logoText: 'N',
+    logoClass: 'netflixTile',
   },
   {
     name: 'Spotify',
     amount: '$10.99',
     detail: 'Matched to your Spotify bill',
-    logo: 'https://logo.clearbit.com/spotify.com',
+    logoText: 'S',
+    logoClass: 'spotifyTile',
   },
   {
     name: 'Mortgage',
@@ -30,14 +42,13 @@ export default function PainSection() {
           <div>
             <p className="storyEyebrow">How Keipr works</p>
             <h1>
-              Every paycheck gets its own budget.
-              <span>Not every month.</span>
+              See what each paycheck can actually cover.
+              <span>Then plan the month ahead.</span>
             </h1>
           </div>
           <p>
-            Most people get paid biweekly, weekly, or twice a month, but every budgeting tool
-            forces them into a calendar-month view. Bills do not line up. Money feels tight one
-            week, fine the next. Keipr flips the model: <strong>your budget starts when your paycheck lands.</strong>
+            Keipr keeps paycheck cycles and monthly overviews connected. Bills, splits, bank
+            matches, and future months all roll into one number: <strong>what is safe to spend now.</strong>
           </p>
         </div>
 
@@ -139,7 +150,11 @@ export default function PainSection() {
               {matchRows.map((row) => (
                 <div className="bankMatchLine" key={row.name}>
                   <div className="logoChip">
-                    <img className={row.chase ? 'chaseLogo' : ''} src={row.logo} alt="" />
+                    {row.logo ? (
+                      <img className={row.chase ? 'chaseLogo' : ''} src={row.logo} alt="" />
+                    ) : (
+                      <span className={row.logoClass}>{row.logoText}</span>
+                    )}
                   </div>
                   <div>
                     <strong>{row.name} {row.amount}</strong>
