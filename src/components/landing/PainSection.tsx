@@ -49,8 +49,9 @@ const STEPS: StepConfig[] = [
     title: 'Splits use real behavior.',
     body: (
       <>
-        Mortgage and loan patterns split using your actual transfer behavior. Real split staging
-        instead of fake equal halves.
+        Take any of your bills and split it for when the real bill hits. For example, your
+        mortgage is $2,000 a month. You set aside $1,500 from Paycheck 1 and $500 from Paycheck 2.
+        You then pay it and keep it all under control with Keipr.
       </>
     ),
   },
