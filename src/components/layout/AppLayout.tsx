@@ -146,6 +146,11 @@ export default function AppLayout({
     setThemeMode(isDark ? 'light' : 'dark');
   };
 
+  const sidebarDivider = isDark ? colors.divider : 'rgba(255,255,255,0.10)';
+  const sidebarText = isDark ? colors.text : '#FFFFFF';
+  const sidebarFaint = isDark ? colors.textFaint : 'rgba(255,255,255,0.42)';
+  const sidebarTierBg = isDark ? `${colors.electric}1F` : 'rgba(125,211,252,0.14)';
+
   // Group nav items by section
   const navItems = isUltra ? ULTRA_NAV : FREE_PRO_NAV;
   const sections = [...new Set(navItems.map(item => item.section))];
@@ -206,7 +211,7 @@ export default function AppLayout({
         style={{
           width: '240px',
           backgroundColor: colors.navBg,
-          borderRight: `1px solid ${colors.divider}`,
+          borderRight: `1px solid ${sidebarDivider}`,
           padding: '1.5rem 1rem',
           display: 'flex',
           flexDirection: 'column',
@@ -225,14 +230,14 @@ export default function AppLayout({
             style={{
               marginBottom: '1.5rem',
               paddingBottom: '1rem',
-              borderBottom: `1px solid ${colors.divider}`,
+              borderBottom: `1px solid ${sidebarDivider}`,
             }}
           >
             <h1
               style={{
                 fontSize: '1.35rem',
                 fontWeight: 700,
-                color: colors.text,
+                color: sidebarText,
                 margin: 0,
                 marginBottom: '0.5rem',
                 letterSpacing: '-0.03em',
@@ -245,7 +250,7 @@ export default function AppLayout({
               style={{
                 display: 'inline-block',
                 padding: '0.25rem 0.5rem',
-                backgroundColor: `${colors.electric}1F`,
+                backgroundColor: sidebarTierBg,
                 color: colors.electric,
                 borderRadius: '0.375rem',
                 fontSize: '0.65rem',
@@ -269,7 +274,7 @@ export default function AppLayout({
                     fontWeight: 600,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color: colors.textFaint,
+                    color: sidebarFaint,
                     marginBottom: '0.75rem',
                     paddingLeft: '0.5rem',
                   }}
@@ -338,7 +343,7 @@ export default function AppLayout({
         {/* Settings and AI section at bottom */}
         <div style={{
           paddingTop: '1rem',
-          borderTop: `1px solid ${colors.divider}`,
+          borderTop: `1px solid ${sidebarDivider}`,
           marginBottom: '1rem',
           display: 'flex',
           flexDirection: 'column',
@@ -395,7 +400,7 @@ export default function AppLayout({
         {isAdmin && (
           <div style={{
             paddingTop: '1rem',
-            borderTop: `1px solid ${colors.divider}`,
+            borderTop: `1px solid ${sidebarDivider}`,
             marginBottom: '1rem',
           }}>
             <div
@@ -404,7 +409,7 @@ export default function AppLayout({
                 fontWeight: 600,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: colors.textFaint,
+                color: sidebarFaint,
                 marginBottom: '0.75rem',
                 paddingLeft: '0.5rem',
               }}
@@ -481,7 +486,7 @@ export default function AppLayout({
           <div
             style={{
               paddingTop: '1rem',
-              borderTop: `1px solid ${colors.divider}`,
+              borderTop: `1px solid ${sidebarDivider}`,
               display: 'flex',
               flexDirection: 'column',
               gap: '0.75rem',
@@ -493,7 +498,7 @@ export default function AppLayout({
               alignItems: 'center',
               gap: '0.75rem',
               paddingBottom: '0.75rem',
-              borderBottom: `1px solid ${colors.divider}`,
+              borderBottom: `1px solid ${sidebarDivider}`,
             }}>
               <div
                 style={{
@@ -529,7 +534,7 @@ export default function AppLayout({
                 <p
                   style={{
                     fontSize: '0.8rem',
-                    color: colors.text,
+                    color: sidebarText,
                     margin: 0,
                     wordBreak: 'break-all',
                     overflow: 'hidden',

@@ -7,22 +7,22 @@
   --parchment: #D6D1C7;
 
   /* Dark Theme */
-  --bg-dark: #1A1814;
-  --bg-card-dark: #2A2724;
-  --text-primary-dark: #E8E5DC;
-  --text-secondary-dark: rgba(232, 229, 220, 0.85);
-  --text-muted-dark: rgba(232, 229, 220, 0.6);
-  --text-faint-dark: rgba(232, 229, 220, 0.4);
-  --border-dark: rgba(232, 229, 220, 0.1);
+  --bg-dark: #15130F;
+  --bg-card-dark: #221F1A;
+  --text-primary-dark: #EEE9DE;
+  --text-secondary-dark: rgba(238, 233, 222, 0.85);
+  --text-muted-dark: rgba(238, 233, 222, 0.62);
+  --text-faint-dark: rgba(238, 233, 222, 0.38);
+  --border-dark: rgba(236, 231, 219, 0.08);
 
   /* Light Theme */
-  --bg-light: #F5F3EF;
+  --bg-light: #EEF3F5;
   --bg-card-light: #FFFFFF;
-  --text-primary-light: #1A1814;
-  --text-secondary-light: rgba(26, 24, 20, 0.75);
-  --text-muted-light: rgba(26, 24, 20, 0.55);
-  --text-faint-light: rgba(26, 24, 20, 0.35);
-  --border-light: rgba(26, 24, 20, 0.08);
+  --text-primary-light: #10202B;
+  --text-secondary-light: rgba(16, 32, 43, 0.78);
+  --text-muted-light: rgba(16, 32, 43, 0.68);
+  --text-faint-light: rgba(16, 32, 43, 0.42);
+  --border-light: rgba(14, 35, 48, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
