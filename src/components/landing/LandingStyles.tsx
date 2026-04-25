@@ -753,6 +753,115 @@ export default function LandingStyles() {
       .planDivider { height: 1px; background: rgba(255,248,239,0.1); margin: 8px 0 20px; }
       .planPlus { color: var(--quiet); font-size: 11px; font-weight: 950; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }
       .planFooter { margin-top: auto; display: grid; gap: 22px; }
+      /* ============ FAQ page ============ */
+      .faqPage { padding: 78px 0 60px; border-top: 1px solid rgba(255,248,239,0.08); }
+      .faqPills {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin: 0 auto 48px;
+      }
+      .faqPill {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border: 1px solid rgba(255, 248, 239, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 999px;
+        color: #c9c0b5;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 850;
+        cursor: pointer;
+        transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+      }
+      .faqPill:hover { color: var(--ink); border-color: rgba(53, 195, 245, 0.4); }
+      .faqPill:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+      .faqPill.active {
+        background: rgba(53, 195, 245, 0.18);
+        border-color: rgba(53, 195, 245, 0.5);
+        color: #fff4e7;
+      }
+      .faqContent { max-width: 820px; margin: 0 auto; }
+      .faqSection { margin-bottom: 40px; scroll-margin-top: 90px; }
+      .faqSection:last-child { margin-bottom: 0; }
+      .faqSectionTitle {
+        margin: 0 0 16px;
+        font-size: 22px;
+        font-weight: 880;
+        letter-spacing: -0.025em;
+        color: #9be7ff;
+      }
+      .faqGroup {
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+          rgba(29, 25, 21, 0.94);
+        border: 1px solid rgba(255, 248, 239, 0.12);
+        box-shadow: 0 22px 68px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+      }
+      .faqItem { border-bottom: 1px solid rgba(255, 248, 239, 0.07); }
+      .faqItem:last-child { border-bottom: 0; }
+      .faqQ {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        width: 100%;
+        padding: 18px 22px;
+        border: 0;
+        background: transparent;
+        color: #fff4e7;
+        font: inherit;
+        font-size: 15.5px;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+        transition: background 160ms ease;
+      }
+      .faqQ:hover { background: rgba(255, 255, 255, 0.025); }
+      .faqQ:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+      .faqChevron {
+        flex-shrink: 0;
+        color: #9be7ff;
+        transition: transform 200ms ease;
+      }
+      .faqItem.open .faqChevron { transform: rotate(180deg); }
+      .faqA {
+        padding: 0 22px 18px;
+        color: #d6ccc1;
+        font-size: 14.5px;
+        line-height: 1.65;
+      }
+      .faqA p { margin: 0; }
+      .faqContact {
+        max-width: 640px;
+        margin: 56px auto 0;
+        padding: 36px 32px;
+        border-radius: 22px;
+        text-align: center;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(53, 195, 245, 0.12), transparent 22rem),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+          rgba(29, 25, 21, 0.94);
+        border: 1px solid rgba(255, 248, 239, 0.12);
+      }
+      .faqContact h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.025em;
+      }
+      .faqContact p {
+        margin: 0 auto 22px;
+        max-width: 480px;
+        color: #c9c0b5;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
       .landingFooter { border-top: 1px solid var(--border); color: var(--quiet); padding: 32px 0 48px; }
       .landingFooterInner { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 
