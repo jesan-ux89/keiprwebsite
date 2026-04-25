@@ -457,27 +457,25 @@ export default function BankingPage() {
           {!loading && accounts.length > 0 && (
             <div className="app-metric-grid" style={{ marginBottom: '1.5rem' }}>
               {/* Net Worth Card */}
-              <Card style={{ padding: '1.5rem' }}>
+              <Card style={{ padding: '1.5rem', minWidth: 0 }}>
                 <p style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.textMuted, margin: '0 0 0.75rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Net Worth
                 </p>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.text }}>
-                    {fmt(summaryTotals.totalCash - summaryTotals.totalDebt)}
-                  </span>
-                  {(summaryTotals.totalCash - summaryTotals.totalDebt) > 0 ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.875rem', color: '#0A7B6C', fontWeight: 600 }}>
+                <p style={{ fontSize: '1.875rem', fontWeight: 800, color: colors.text, margin: '0 0 0.65rem 0', letterSpacing: '0', whiteSpace: 'nowrap' }}>
+                  {fmt(summaryTotals.totalCash - summaryTotals.totalDebt)}
+                </p>
+                {(summaryTotals.totalCash - summaryTotals.totalDebt) > 0 ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', color: '#0A7B6C', fontWeight: 700, padding: '0.25rem 0.5rem', borderRadius: '999px', backgroundColor: isDark ? 'rgba(52,211,153,0.10)' : 'rgba(10,123,108,0.09)' }}>
                       <ArrowUp size={14} />
-                      {fmt(summaryTotals.totalCash - summaryTotals.totalDebt)}
+                      Assets ahead by {fmt(summaryTotals.totalCash - summaryTotals.totalDebt)}
                     </span>
                   ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.875rem', color: isDark ? '#F87171' : '#DC2626', fontWeight: 600 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', color: isDark ? '#F87171' : '#DC2626', fontWeight: 700, padding: '0.25rem 0.5rem', borderRadius: '999px', backgroundColor: isDark ? 'rgba(248,113,113,0.10)' : 'rgba(220,38,38,0.08)' }}>
                       <ArrowDown size={14} />
-                      {fmt(Math.abs(summaryTotals.totalCash - summaryTotals.totalDebt))}
+                      Debt ahead by {fmt(Math.abs(summaryTotals.totalCash - summaryTotals.totalDebt))}
                     </span>
                   )}
-                </div>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>This month</p>
+                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.75rem 0 0 0' }}>Assets minus credit cards and loans</p>
               </Card>
 
               {/* Cash Balance Card */}

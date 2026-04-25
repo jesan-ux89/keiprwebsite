@@ -655,27 +655,28 @@ function AllTransactionsPage() {
           </p>
         </Card>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           {dateGroups.map(group => (
             <div key={group.dateKey}>
-              {/* Date section header with background */}
+              {/* Date section header */}
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '0.6rem 0.75rem',
-                marginBottom: '0.5rem',
-                backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-                borderRadius: '0.5rem',
+                padding: '0.45rem 0.75rem',
+                marginBottom: '0.45rem',
+                backgroundColor: isDark ? 'rgba(56,189,248,0.045)' : 'rgba(12,74,110,0.045)',
+                border: `1px solid ${isDark ? 'rgba(56,189,248,0.08)' : 'rgba(12,74,110,0.08)'}`,
+                borderRadius: '0.65rem',
               }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: colors.text, letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: colors.text, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                   {group.label}
                 </span>
-                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: colors.textMuted }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>
                   {fmt(group.dailyTotal)}
                 </span>
               </div>
 
               {/* Transaction rows */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {group.transactions.map((txn) => {
                   const isMatched = txn.display_category === 'matched';
                   const isDeposit = txn.display_category === 'income' || txn.display_category === 'income_matched';
@@ -697,69 +698,79 @@ function AllTransactionsPage() {
 
                   // Get merchant initials for logo
                   const merchantName = cleanMerchantName(txn.merchant_name || txn.cleaned_name || '');
-                  const initials = merchantName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-
                   // Category color dot
                   const categoryDotColor = unmatchedReasonColor(txn, isDark);
+                  const txDate = txn.transaction_date || txn.date || '';
 
                   return (
                     <Card
                       key={txn.id}
                       style={{
-                        padding: '0.875rem',
+                        padding: '0.7rem 0.85rem',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
-                        backgroundColor: isExpanded ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)') : colors.card,
+                        borderRadius: '0.75rem',
+                        borderLeft: `3px solid ${categoryDotColor}`,
+                        background: isExpanded
+                          ? (isDark ? 'linear-gradient(90deg, rgba(56,189,248,0.08), rgba(255,255,255,0.035))' : 'linear-gradient(90deg, rgba(12,74,110,0.055), rgba(255,255,255,0.82))')
+                          : (isDark ? 'rgba(34,31,26,0.82)' : 'rgba(255,255,255,0.88)'),
+                        boxShadow: isExpanded ? (isDark ? '0 14px 34px rgba(0,0,0,0.24)' : '0 12px 30px rgba(16,32,43,0.10)') : 'none',
                       }}
                       onClick={() => setExpandedId(isExpanded ? null : txn.id)}
                       onMouseEnter={(e) => {
                         if (!isExpanded) {
                           (e.currentTarget as HTMLElement).style.borderColor = colors.electric;
-                          (e.currentTarget as HTMLElement).style.backgroundColor = isDark ? 'rgba(56,189,248,0.03)' : 'rgba(56,189,248,0.02)';
+                          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(56,189,248,0.055)' : 'rgba(12,74,110,0.045)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!isExpanded) {
                           (e.currentTarget as HTMLElement).style.borderColor = colors.divider;
-                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.card;
+                          (e.currentTarget as HTMLElement).style.borderLeftColor = categoryDotColor;
+                          (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(34,31,26,0.82)' : 'rgba(255,255,255,0.88)';
                         }
                       }}
                     >
                       {/* Main row: logo + merchant + category + amount */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '34px minmax(0, 1fr) auto', alignItems: 'center', gap: '0.8rem' }}>
                         {/* Merchant logo */}
                         <MerchantLogo
                           billName={merchantName}
                           category={txn.personal_finance_category_primary || txn.category || 'Other'}
-                          size={32}
+                          size={30}
                           isDark={isDark}
                         />
 
                         {/* Merchant name + category */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{
-                            fontSize: '0.82rem', fontWeight: 500, color: colors.text,
+                            fontSize: '0.86rem', fontWeight: 750, color: colors.text,
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                            marginBottom: '0.2rem',
+                            marginBottom: '0.22rem',
                           }}>
                             {merchantName}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
                             <div style={{
                               width: 6, height: 6, borderRadius: '50%',
                               backgroundColor: categoryDotColor, flexShrink: 0,
                             }} />
-                            <span style={{ fontSize: '0.7rem', color: categoryDotColor, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '0.72rem', color: categoryDotColor, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {categoryLabel}
+                            </span>
+                            <span style={{ color: colors.textFaint, fontSize: '0.68rem' }}>|</span>
+                            <span style={{ color: colors.textMuted, fontSize: '0.68rem', fontWeight: 650, whiteSpace: 'nowrap' }}>
+                              {txDate ? txDate.split('T')[0] : ''}
                             </span>
                           </div>
                         </div>
 
                         {/* Amount */}
                         <span style={{
-                          fontSize: '0.82rem', fontWeight: 600,
+                          fontSize: '0.95rem', fontWeight: 800,
                           color: amountColor,
                           flexShrink: 0, whiteSpace: 'nowrap',
+                          fontVariantNumeric: 'tabular-nums',
                         }}>
                           {(isDeposit || isCredit) ? '+' : ''}{fmt(Math.abs(txn.amount ?? 0))}
                         </span>
