@@ -674,9 +674,10 @@ export default function DashboardUltraContent() {
             {/* Command Center Hero */}
             <Card className="app-grid-pattern" style={{
               padding: '1.75rem',
+              border: `1px solid ${isDark ? 'rgba(56,189,248,0.18)' : 'rgba(12,74,110,0.16)'}`,
               background: isDark
-                ? 'linear-gradient(135deg, rgba(56,189,248,0.12), transparent 36%), linear-gradient(160deg, rgba(10,123,108,0.16), transparent 44%), #221F1A'
-                : 'linear-gradient(135deg, rgba(0,107,153,0.12), transparent 36%), linear-gradient(160deg, rgba(0,127,115,0.12), transparent 44%), #FFFFFF',
+                ? 'radial-gradient(circle at top left, rgba(56,189,248,0.20), transparent 34%), linear-gradient(135deg, rgba(19,84,89,0.42), rgba(34,31,26,0.92) 58%)'
+                : 'radial-gradient(circle at top left, rgba(56,189,248,0.24), transparent 36%), linear-gradient(135deg, #f8fcfd, #dbe9ee)',
             }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.05fr) minmax(260px, 0.95fr)', gap: '1.5rem', alignItems: 'end' }}>
                 <div>
