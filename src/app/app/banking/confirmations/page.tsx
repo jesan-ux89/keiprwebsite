@@ -81,6 +81,14 @@ export default function ConfirmationsPage() {
     return billAmount > 0 ? Math.round((Math.abs(conf.amount - billAmount) / billAmount) * 100) : 0;
   }, []);
 
+  const isPartialPayment = React.useCallback((conf: Confirmation, billAmount: number): boolean => {
+    return billAmount > 0 && conf.amount > 0 && conf.amount < billAmount && getVariancePct(conf, billAmount) >= 10;
+  }, [getVariancePct]);
+
+  const getPaidPct = React.useCallback((conf: Confirmation, billAmount: number): number => {
+    return billAmount > 0 ? Math.round((conf.amount / billAmount) * 100) : 0;
+  }, []);
+
   const isTransferLike = React.useCallback((conf: Confirmation, group?: BillGroup): boolean => {
     const text = `${conf.merchant_name} ${group?.billName || ''}`.toLowerCase();
     return text.includes('transfer') || text.includes('payment thank you') || text.includes('transaction#');
@@ -121,7 +129,7 @@ export default function ConfirmationsPage() {
       review: {
         key: 'review',
         title: 'Needs a closer look',
-        subtitle: 'Amount or date is different enough to verify.',
+        subtitle: 'Smaller payments may be partials toward the full bill.',
       },
       transfer: {
         key: 'transfer',
@@ -281,7 +289,7 @@ export default function ConfirmationsPage() {
             <p className="app-page-kicker">Bank match review</p>
             <h1 className="app-page-title">Confirm only what needs judgment.</h1>
             <p className="app-page-subtitle">
-              Keipr auto-confirms obvious matches. This queue is for amount changes, timing differences, and noisy merchants.
+              Confirm each bank transaction, including partial payments toward a bill.
             </p>
             <div className="app-metric-grid" style={{ marginTop: '1.35rem' }}>
               {[
@@ -381,7 +389,7 @@ export default function ConfirmationsPage() {
                 Matches to check
               </h3>
               <p style={{ margin: '0.25rem 0 0', color: colors.textMuted, fontSize: '0.9rem' }}>
-                Amount or date may be different enough to verify.
+                Smaller payments may be partials toward the full bill.
               </p>
             </div>
             {billGroups.map((group) => {
@@ -417,7 +425,7 @@ export default function ConfirmationsPage() {
                         {group.billName}
                       </p>
                       <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: colors.textMuted }}>
-                        {fmt(group.billAmount)}
+                        Expected total {fmt(group.billAmount)}
                         {group.dueDayOfMonth ? ` - Due day ${group.dueDayOfMonth}` : ''}
                       </p>
                     </div>
@@ -453,6 +461,9 @@ export default function ConfirmationsPage() {
                       const tier = reviewTierFor(conf, group);
                       const itemError = itemErrors[conf.id];
                       const isAnyActioning = confirming !== null || rejecting !== null || excluding !== null;
+                      const isPartial = isPartialPayment(conf, group.billAmount);
+                      const paidPct = getPaidPct(conf, group.billAmount);
+                      const remainingAmount = Math.max(group.billAmount - conf.amount, 0);
 
                       return (
                         <div
@@ -469,10 +480,16 @@ export default function ConfirmationsPage() {
                                 {conf.merchant_name}
                               </p>
                               <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                                Bank transaction: {fmt(conf.amount)}
+                                {' - '}
                                 {formatDate(conf.transaction_date)}
                                 {' - '}
                                 {confidencePct}% match
-                                {variancePct > 0 && (
+                                {isPartial ? (
+                                  <span style={{ color: colors.amber }}>
+                                    {' - '}{paidPct}% of expected total
+                                  </span>
+                                ) : variancePct > 0 && (
                                   <span style={{ color: variancePct > 5 ? colors.amber : colors.green }}>
                                     {' - '}{variancePct}% variance
                                   </span>
@@ -497,6 +514,26 @@ export default function ConfirmationsPage() {
                               {fmt(conf.amount)}
                             </p>
                           </div>
+
+                          {isPartial && (
+                            <div
+                              style={{
+                                backgroundColor: colors.cardBg,
+                                border: `1px solid ${colors.cardBorder}`,
+                                borderRadius: '0.5rem',
+                                padding: '0.65rem 0.75rem',
+                                marginBottom: '0.75rem',
+                              }}
+                            >
+                              <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', fontWeight: 700, color: colors.text }}>
+                                Partial payment
+                              </p>
+                              <p style={{ margin: 0, fontSize: '0.82rem', color: colors.textMuted }}>
+                                This applies {fmt(conf.amount)} toward {fmt(group.billAmount)}.
+                                {remainingAmount > 0 ? ` ${fmt(remainingAmount)} remains.` : ''}
+                              </p>
+                            </div>
+                          )}
 
                           {/* Inline error */}
                           {itemError && (
@@ -534,7 +571,7 @@ export default function ConfirmationsPage() {
                               disabled={isAnyActioning}
                               style={{ flex: 1 }}
                             >
-                              Confirm
+                              {isPartial ? 'Apply partial' : 'Confirm'}
                             </Button>
                           </div>
 
