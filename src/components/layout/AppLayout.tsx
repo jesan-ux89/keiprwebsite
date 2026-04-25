@@ -72,7 +72,7 @@ export default function AppLayout({
 }: AppLayoutProps) {
   const { colors, isDark, setThemeMode } = useTheme();
   const { user, loading, signOut } = useAuth();
-  const { incomeSources, incomeLoading, incomeFetchSucceeded, isUltra, isPro, detectedCount, initialDataLoaded } = useApp();
+  const { incomeSources, incomeLoading, incomeFetchSucceeded, isUltra, isPro, detectedCount, initialDataLoaded, budgetSetupStatus } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -86,16 +86,18 @@ export default function AppLayout({
     }
   }, [user, loading, router]);
 
-  // Redirect to onboarding if user has no income sources (not already on onboarding page)
-  // Wait for initialDataLoaded AND incomeFetchSucceeded to prevent false redirect
-  // when the API call fails (e.g., rate limiting, network error)
+  // Redirect to onboarding if user has no income sources (not already on onboarding page).
+  // Wait for initialDataLoaded AND incomeFetchSucceeded to prevent a false redirect when the
+  // API call fails (rate limiting, network error). Also skip if budget_setup_status === 'ready'
+  // — this defends against response-shape mismatches that would otherwise bounce a fully
+  // onboarded user back to /onboarding/pay-schedule. Mirrors mobile's onboarded-user check.
   useEffect(() => {
     if (!loading && initialDataLoaded && incomeFetchSucceeded && user && !pathname.startsWith('/onboarding')) {
-      if (incomeSources.length === 0) {
+      if (incomeSources.length === 0 && budgetSetupStatus !== 'ready') {
         router.push('/onboarding/pay-schedule');
       }
     }
-  }, [user, loading, initialDataLoaded, incomeFetchSucceeded, incomeSources, pathname, router]);
+  }, [user, loading, initialDataLoaded, incomeFetchSucceeded, incomeSources, budgetSetupStatus, pathname, router]);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
