@@ -26,6 +26,8 @@ import {
   Sparkles,
   Shield,
   Users,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -68,7 +70,7 @@ export default function AppLayout({
   showMonthNav = false,
   topBarActions,
 }: AppLayoutProps) {
-  const { colors } = useTheme();
+  const { colors, isDark, setThemeMode } = useTheme();
   const { user, loading, signOut } = useAuth();
   const { incomeSources, incomeLoading, incomeFetchSucceeded, isUltra, isPro, detectedCount, initialDataLoaded } = useApp();
   const pathname = usePathname();
@@ -139,6 +141,10 @@ export default function AppLayout({
   };
 
   const monthString = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const toggleTheme = () => {
+    setThemeMode(isDark ? 'light' : 'dark');
+  };
 
   // Group nav items by section
   const navItems = isUltra ? ULTRA_NAV : FREE_PRO_NAV;
@@ -670,6 +676,30 @@ export default function AppLayout({
 
           {/* Right: Action buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              style={{
+                height: '40px',
+                padding: '0 0.85rem',
+                borderRadius: '999px',
+                border: `1px solid ${colors.cardBorder}`,
+                background: colors.card,
+                color: colors.text,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                boxShadow: isDark ? 'none' : '0 8px 20px rgba(26,24,20,0.08)',
+              }}
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+              <span className="theme-toggle-label">{isDark ? 'Light' : 'Dark'}</span>
+            </button>
             {topBarActions}
           </div>
         </header>
@@ -712,6 +742,10 @@ export default function AppLayout({
 
           .app-right {
             margin-left: 0 !important;
+          }
+
+          .theme-toggle-label {
+            display: none;
           }
         }
       `}</style>
