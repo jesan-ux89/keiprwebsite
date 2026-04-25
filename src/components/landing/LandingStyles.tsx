@@ -682,15 +682,18 @@ export default function LandingStyles() {
 
       .pricingBand { padding: 90px 0 110px; background: radial-gradient(circle at 50% 18%, rgba(53, 195, 245, 0.12), transparent 30rem), linear-gradient(180deg, #0f0d0b 0%, #111820 100%); }
       .pricingPanel { max-width: 1180px; margin: 0 auto; }
-      .pricingPanelHeader { position: relative; margin: 0 0 54px; }
+      .pricingPanelHeader {
+        margin: 0 0 54px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+      }
       .pricingHeading { text-align: center; }
       .pricingPanel h2 { max-width: 760px; margin: 0 auto 10px; text-align: center; font-size: clamp(28px, 2.7vw, 42px); line-height: 1.08; letter-spacing: -0.04em; font-weight: 950; }
       .pricingPanelHeader .heroCopy { max-width: 640px; margin: 0 auto; text-align: center; font-size: 16px; color: var(--muted); }
-      /* Billing toggle (top-right of pricing panel header) */
+      /* Billing toggle (centered below heading) */
       .billingToggle {
-        position: absolute;
-        top: 0;
-        right: 0;
         display: inline-flex;
         align-items: center;
         gap: 4px;
@@ -735,11 +738,7 @@ export default function LandingStyles() {
         letter-spacing: 0.06em;
         text-transform: uppercase;
       }
-      @media (max-width: 720px) {
-        .pricingPanelHeader { padding-top: 0; }
-        .billingToggle { position: static; margin: 18px auto 0; display: inline-flex; }
-        .pricingPanelHeader { display: flex; flex-direction: column; align-items: center; }
-      }
+
       .priceGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; align-items: stretch; }
       .priceCard { position: relative; min-height: 660px; display: flex; flex-direction: column; border-radius: 10px; padding: 34px 32px 30px; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.022)), #161b1f; border: 1px solid rgba(255,248,239,0.12); box-shadow: 0 24px 80px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05); }
       .priceCard.featured { background: radial-gradient(circle at 80% 0%, rgba(53,195,245,0.12), transparent 18rem), linear-gradient(180deg, rgba(53,195,245,0.055), rgba(255,255,255,0.022)), #161b1f; border: 2px solid rgba(53,195,245,0.74); box-shadow: 0 28px 90px rgba(0,0,0,0.34), 0 0 0 1px rgba(53,195,245,0.08), inset 0 1px 0 rgba(255,255,255,0.07); }
