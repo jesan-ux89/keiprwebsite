@@ -31,6 +31,15 @@ interface BillGroup {
   items: Confirmation[];
 }
 
+type ReviewTier = 'obvious' | 'review' | 'transfer';
+
+interface ReviewSection {
+  key: ReviewTier;
+  title: string;
+  subtitle: string;
+  groups: BillGroup[];
+}
+
 export default function ConfirmationsPage() {
   const { colors } = useTheme();
   const { fmt, refreshPendingConfirmations } = useApp();
@@ -68,6 +77,69 @@ export default function ConfirmationsPage() {
     return groups;
   }, [confirmations]);
 
+  const getVariancePct = React.useCallback((conf: Confirmation, billAmount: number): number => {
+    return billAmount > 0 ? Math.round((Math.abs(conf.amount - billAmount) / billAmount) * 100) : 0;
+  }, []);
+
+  const isTransferLike = React.useCallback((conf: Confirmation, group?: BillGroup): boolean => {
+    const text = `${conf.merchant_name} ${group?.billName || ''}`.toLowerCase();
+    return text.includes('transfer') || text.includes('payment thank you') || text.includes('transaction#');
+  }, []);
+
+  const reviewTierFor = React.useCallback((conf: Confirmation, group: BillGroup): ReviewTier => {
+    const confidencePct = Math.round((conf.confidence_score || 0) * 100);
+    const variancePct = getVariancePct(conf, group.billAmount);
+
+    if (isTransferLike(conf, group)) return 'transfer';
+    if (confidencePct >= 90 && variancePct <= 5) return 'obvious';
+    return 'review';
+  }, [getVariancePct, isTransferLike]);
+
+  const reviewSections: ReviewSection[] = useMemo(() => {
+    const buckets: Record<ReviewTier, Map<string, BillGroup>> = {
+      obvious: new Map(),
+      review: new Map(),
+      transfer: new Map(),
+    };
+
+    for (const group of billGroups) {
+      for (const item of group.items) {
+        const tier = reviewTierFor(item, group);
+        if (!buckets[tier].has(group.billId)) {
+          buckets[tier].set(group.billId, { ...group, items: [] });
+        }
+        buckets[tier].get(group.billId)!.items.push(item);
+      }
+    }
+
+    const sectionMeta: Record<ReviewTier, Omit<ReviewSection, 'groups'>> = {
+      obvious: {
+        key: 'obvious',
+        title: 'Looks right',
+        subtitle: 'High-confidence matches with the expected amount.',
+      },
+      review: {
+        key: 'review',
+        title: 'Needs a closer look',
+        subtitle: 'Amount or date is different enough to verify.',
+      },
+      transfer: {
+        key: 'transfer',
+        title: 'Transfers and uncertain matches',
+        subtitle: 'Internal transfers can be noisy, so confirm carefully.',
+      },
+    };
+
+    return (['obvious', 'review', 'transfer'] as ReviewTier[])
+      .map((key) => ({ ...sectionMeta[key], groups: Array.from(buckets[key].values()) }))
+      .filter((section) => section.groups.length > 0);
+  }, [billGroups, reviewTierFor]);
+
+  const obviousCount = useMemo(
+    () => reviewSections.find((section) => section.key === 'obvious')?.groups.reduce((sum, group) => sum + group.items.length, 0) || 0,
+    [reviewSections]
+  );
+
   useEffect(() => {
     fetchConfirmations();
   }, []);
@@ -103,8 +175,42 @@ export default function ConfirmationsPage() {
     } catch (err: any) {
       const status = err.response?.status;
       const serverError = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm match';
-      const hint = status === 422 ? '\nSet up your pay schedule in Settings to resolve this.' : '';
+      const hint = status === 422 && !serverError.toLowerCase().includes('pay schedule')
+        ? '\nSet up your pay schedule in Settings to resolve this.'
+        : '';
       setItemErrors((prev) => ({ ...prev, [id]: serverError + hint }));
+    } finally {
+      setConfirming(null);
+    }
+  };
+
+  const handleConfirmObvious = async () => {
+    const obviousGroups = reviewSections.find((section) => section.key === 'obvious')?.groups || [];
+    const obviousItems = obviousGroups.flatMap((group) => group.items);
+    if (obviousItems.length === 0) return;
+
+    setConfirming('bulk-obvious');
+    setItemErrors({});
+    try {
+      const failed: Record<string, string> = {};
+      const confirmedIds: string[] = [];
+
+      for (const item of obviousItems) {
+        try {
+          await bankingAPI.confirmMatch(item.id);
+          confirmedIds.push(item.id);
+        } catch (err: any) {
+          failed[item.id] = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm match';
+        }
+      }
+
+      if (confirmedIds.length > 0) {
+        setConfirmations((prev) => prev.filter((c) => !confirmedIds.includes(c.id)));
+        refreshPendingConfirmations();
+      }
+      if (Object.keys(failed).length > 0) {
+        setItemErrors(failed);
+      }
     } finally {
       setConfirming(null);
     }
@@ -220,8 +326,37 @@ export default function ConfirmationsPage() {
             </p>
           </Card>
         ) : (
-          /* Bill groups */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <Card style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, color: colors.text, fontSize: '1.35rem', fontWeight: 800 }}>
+                  {confirmations.length} {confirmations.length === 1 ? 'match' : 'matches'} to review
+                </h2>
+                <p style={{ margin: '0.35rem 0 0', color: colors.textMuted }}>
+                  {obviousCount > 0 ? `${obviousCount} look ready to confirm.` : 'No obvious matches this time.'}
+                </p>
+              </div>
+              {obviousCount > 0 && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleConfirmObvious}
+                  loading={confirming === 'bulk-obvious'}
+                  disabled={confirming !== null || rejecting !== null || excluding !== null}
+                >
+                  Confirm obvious
+                </Button>
+              )}
+            </Card>
+
+            <div>
+              <h3 style={{ margin: 0, color: colors.text, fontSize: '0.95rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Matches to check
+              </h3>
+              <p style={{ margin: '0.25rem 0 0', color: colors.textMuted, fontSize: '0.9rem' }}>
+                Amount or date may be different enough to verify.
+              </p>
+            </div>
             {billGroups.map((group) => {
               const isCollapsed = collapsedGroups[group.billId] === true;
               const count = group.items.length;
@@ -256,7 +391,7 @@ export default function ConfirmationsPage() {
                       </p>
                       <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: colors.textMuted }}>
                         {fmt(group.billAmount)}
-                        {group.dueDayOfMonth ? ` · Due day ${group.dueDayOfMonth}` : ''}
+                        {group.dueDayOfMonth ? ` - Due day ${group.dueDayOfMonth}` : ''}
                       </p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -282,12 +417,13 @@ export default function ConfirmationsPage() {
 
                   {/* Transactions within group */}
                   {!isCollapsed &&
-                    group.items.map((conf, idx) => {
+                    group.items.map((conf) => {
                       const confidencePct = Math.round((conf.confidence_score || 0) * 100);
                       const variancePct =
                         group.billAmount > 0
                           ? Math.round((Math.abs(conf.amount - group.billAmount) / group.billAmount) * 100)
                           : 0;
+                      const tier = reviewTierFor(conf, group);
                       const itemError = itemErrors[conf.id];
                       const isAnyActioning = confirming !== null || rejecting !== null || excluding !== null;
 
@@ -307,14 +443,28 @@ export default function ConfirmationsPage() {
                               </p>
                               <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
                                 {formatDate(conf.transaction_date)}
-                                {' · '}
+                                {' - '}
                                 {confidencePct}% match
                                 {variancePct > 0 && (
                                   <span style={{ color: variancePct > 5 ? colors.amber : colors.green }}>
-                                    {' · '}{variancePct}% variance
+                                    {' - '}{variancePct}% variance
                                   </span>
                                 )}
                               </p>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  marginTop: '0.4rem',
+                                  padding: '0.15rem 0.45rem',
+                                  borderRadius: '999px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  color: tier === 'obvious' ? colors.green : tier === 'transfer' ? colors.textMuted : colors.amber,
+                                  backgroundColor: tier === 'obvious' ? `${colors.green}18` : tier === 'transfer' ? `${colors.textMuted}18` : `${colors.amber}18`,
+                                }}
+                              >
+                                {tier === 'obvious' ? 'Looks right' : tier === 'transfer' ? 'Transfer-like' : 'Needs review'}
+                              </span>
                             </div>
                             <p style={{ margin: 0, fontWeight: 700, color: colors.text, fontSize: '1rem' }}>
                               {fmt(conf.amount)}
@@ -377,7 +527,7 @@ export default function ConfirmationsPage() {
                               opacity: excluding === conf.id ? 0.5 : 1,
                             }}
                           >
-                            {excluding === conf.id ? 'Ignoring...' : `Don't ask again for "${conf.merchant_name}"`}
+                            {excluding === conf.id ? 'Ignoring...' : 'Ignore this merchant'}
                           </button>
                         </div>
                       );

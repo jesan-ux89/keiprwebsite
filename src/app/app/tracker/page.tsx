@@ -16,6 +16,7 @@ import EmptyState from '@/components/EmptyState';
 
 // Statuses the backend considers a valid bank match — single source of truth.
 const VALID_MATCH_STATUSES = ['active', 'confirmed', 'pending_confirmation'];
+const PAID_MATCH_STATUSES = ['active', 'confirmed'];
 
 /**
  * Payment Tracker — REDESIGNED with modern UI
@@ -54,7 +55,7 @@ export default function TrackerPage() {
    * - Non-split bills → keyed by bill_id
    * - Split-bill matches WITHOUT split_sort_order → skipped (invariant violation)
    */
-  function normalizeMatchData(rawMatches: any[]): Record<string, any> {
+  const normalizeMatchData = React.useCallback((rawMatches: any[]): Record<string, any> => {
     const keyed: Record<string, any> = {};
     for (const m of rawMatches) {
       if (!VALID_MATCH_STATUSES.includes(m.status)) continue;
@@ -77,7 +78,7 @@ export default function TrackerPage() {
       // The invariant check in /api/debug/user-state will surface these for cleanup.
     }
     return keyed;
-  }
+  }, [billsById]);
 
   // Load match history for bank-confirmed bills
   useEffect(() => {
@@ -87,7 +88,7 @@ export default function TrackerPage() {
         setMatchData(normalizeMatchData(res.data?.matches || []));
       })
       .catch(() => {});
-  }, [isUltra, billsById]);
+  }, [isUltra, billsById, normalizeMatchData]);
 
   useEffect(() => {
     aiAPI.getSettings().then(s => {
@@ -178,9 +179,39 @@ export default function TrackerPage() {
   // Resolves which billing month a non-split bill belongs to based on its due day
   // and the paycheck period's start/end dates.
   function billPeriodForPaycheck(b: Bill, pd: typeof currentPeriod): { month: number; year: number } {
+    if (b.isSplit) {
+      return { month: pd.start.getMonth() + 1, year: pd.start.getFullYear() };
+    }
+
+    const dueDay = b.dueDay || 1;
+    const startCandidate = new Date(
+      pd.start.getFullYear(),
+      pd.start.getMonth(),
+      Math.min(dueDay, new Date(pd.start.getFullYear(), pd.start.getMonth() + 1, 0).getDate())
+    );
+    const endCandidate = new Date(
+      pd.end.getFullYear(),
+      pd.end.getMonth(),
+      Math.min(dueDay, new Date(pd.end.getFullYear(), pd.end.getMonth() + 1, 0).getDate())
+    );
+    const startOfPeriod = new Date(pd.start.getFullYear(), pd.start.getMonth(), pd.start.getDate());
+    const endOfPeriod = new Date(pd.end.getFullYear(), pd.end.getMonth(), pd.end.getDate(), 23, 59, 59, 999);
+    const inPeriod = [startCandidate, endCandidate].find(d => d >= startOfPeriod && d <= endOfPeriod);
+    if (inPeriod) {
+      return { month: inPeriod.getMonth() + 1, year: inPeriod.getFullYear() };
+    }
+    if (
+      b.pinnedPaycheck === pd.paycheckNumber &&
+      startCandidate < startOfPeriod &&
+      startCandidate.getMonth() === pd.start.getMonth() &&
+      startCandidate.getFullYear() === pd.start.getFullYear()
+    ) {
+      return { month: startCandidate.getMonth() + 1, year: startCandidate.getFullYear() };
+    }
+
     const crossesMonth = pd.start.getMonth() !== pd.end.getMonth() ||
       pd.start.getFullYear() !== pd.end.getFullYear();
-    const billMonthDate = crossesMonth && (b.dueDay || 1) >= pd.start.getDate()
+    const billMonthDate = crossesMonth && dueDay >= pd.start.getDate()
       ? pd.start
       : pd.end;
     return { month: billMonthDate.getMonth() + 1, year: billMonthDate.getFullYear() };
@@ -195,13 +226,26 @@ export default function TrackerPage() {
   function isNonSplitPaidForPaycheck(b: Bill, pd: typeof currentPeriod): boolean {
     const { month, year } = billPeriodForPaycheck(b, pd);
     const autoChecked = b.isAutoPay && billDueDateForPaycheck(b, pd) <= now;
-    return isBillPaid(b.id, month, year) || autoChecked;
+    return isBillPaid(b.id, month, year) || autoChecked || !!matchForBillInPeriod(b, pd.paycheckNumber, pd, PAID_MATCH_STATUSES);
   }
 
   // Period-scoped split paid check: resolves billing month, then checks bill_payments
   function isSplitPaidForPaycheck(b: Bill, paycheckNum: number, pd: typeof currentPeriod): boolean {
     const { month, year } = billPeriodForPaycheck(b, pd);
-    return isSplitPaid(b.id, paycheckNum, month, year);
+    return isSplitPaid(b.id, paycheckNum, month, year) || !!matchForBillInPeriod(b, paycheckNum, pd, PAID_MATCH_STATUSES);
+  }
+
+  function matchForBillInPeriod(b: Bill, paycheckNum: number, pd: typeof currentPeriod, statuses = VALID_MATCH_STATUSES): any | null {
+    const { month: billPeriodMonth, year: billPeriodYear } = billPeriodForPaycheck(b, pd);
+    const matchKey = b.isSplit ? `${b.id}_p${paycheckNum}` : b.id;
+    const rawMatch = matchData[matchKey];
+    if (!rawMatch || !statuses.includes(rawMatch.status)) return null;
+    if (!rawMatch.transaction_date) return null;
+    const txDate = new Date(rawMatch.transaction_date);
+    const txMonth = txDate.getMonth() + 1;
+    const txYear = txDate.getFullYear();
+    if (txMonth !== billPeriodMonth || txYear !== billPeriodYear) return null;
+    return rawMatch;
   }
 
   // Count paid bills (scoped to paycheck period)
@@ -409,20 +453,8 @@ export default function TrackerPage() {
               const isPaid = bill.isSplit
                 ? isSplitPaidForPaycheck(bill, paycheckNumber, period)
                 : isNonSplitPaidForPaycheck(bill, period);
-              // Bank match badge — resolved at load time, period-filtered at render time.
-              // A match from April shouldn't badge a May row.
-              const matchKey = bill.isSplit ? `${bill.id}_p${paycheckNumber}` : bill.id;
-              const rawMatch = matchData[matchKey];
-              const matchInPeriod = (() => {
-                if (!rawMatch || !VALID_MATCH_STATUSES.includes(rawMatch.status)) return null;
-                // No transaction_date = can't prove it belongs to this period → no badge
-                if (!rawMatch.transaction_date) return null;
-                const txDate = new Date(rawMatch.transaction_date);
-                const txMonth = txDate.getMonth() + 1;
-                const txYear = txDate.getFullYear();
-                if (txMonth !== billPeriodMonth || txYear !== billPeriodYear) return null;
-                return rawMatch;
-              })();
+              // Bank match badge is resolved at load time and period-filtered at render time.
+              const matchInPeriod = matchForBillInPeriod(bill, paycheckNumber, period);
               const isBankMatched = isUltra && !!matchInPeriod;
               const isStaged = isBankMatched && matchInPeriod!.match_method === 'staged';
 
