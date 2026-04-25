@@ -662,13 +662,34 @@ export default function LandingStyles() {
       .progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--blue)); }
 
       .productStrip {
-        background: radial-gradient(circle at 50% 22%, rgba(53, 195, 245, 0.14), transparent 34rem), radial-gradient(circle at 18% 72%, rgba(44, 227, 166, 0.08), transparent 28rem), linear-gradient(180deg, #111820 0%, #10151b 48%, #0f0d0b 100%);
+        padding-bottom: 56px;
+        background:
+          radial-gradient(circle at 50% 22%, rgba(53, 195, 245, 0.14), transparent 34rem),
+          radial-gradient(circle at 18% 72%, rgba(44, 227, 166, 0.08), transparent 28rem);
+      }
+      .screenEyebrow {
+        margin: 0 0 14px;
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #9be7ff;
+      }
+      .screenEyebrow.blue  { color: #9be7ff; }
+      .screenEyebrow.gold  { color: #ffd684; }
+      .screenEyebrow.green { color: #6ee2b1; }
+      .productCta {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 44px;
+        flex-wrap: wrap;
       }
       .screenGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-      .screenCard { border-radius: 30px; padding: 24px; min-height: 560px; position: relative; overflow: hidden; background: radial-gradient(circle at 50% 64%, rgba(53, 195, 245, 0.13), transparent 12rem), linear-gradient(135deg, rgba(53,195,245,0.12), transparent 44%), linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)), #161b1f; border: 1px solid rgba(53, 195, 245, 0.18); box-shadow: 0 28px 90px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.06); }
+      .screenCard { border-radius: 30px; padding: 28px 26px 24px; position: relative; overflow: hidden; background: radial-gradient(circle at 50% 64%, rgba(53, 195, 245, 0.13), transparent 12rem), linear-gradient(135deg, rgba(53,195,245,0.12), transparent 44%), linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)), #161b1f; border: 1px solid rgba(53, 195, 245, 0.18); box-shadow: 0 28px 90px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.06); display: flex; flex-direction: column; }
       .screenCard::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent 34%); opacity: 0.55; }
-      .screenCard h3 { position: relative; z-index: 1; margin: 14px 0 8px; font-size: 24px; letter-spacing: -0.04em; font-weight: 900; }
-      .screenCard p { position: relative; z-index: 1; color: var(--muted); line-height: 1.55; margin: 0 0 18px; }
+      .screenCard h3 { position: relative; z-index: 1; margin: 0 0 10px; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; letter-spacing: -0.03em; font-weight: 880; color: #fff4e7; }
+      .screenCard p { position: relative; z-index: 1; color: #d6ccc1; font-size: 15px; line-height: 1.6; font-weight: 600; margin: 0 0 22px; }
       .screenShot { position: relative; z-index: 1; display: block; width: min(220px, 82%); margin: 0 auto; border-radius: 28px; border: 4px solid rgba(255,255,255,0.12); box-shadow: 0 0 44px rgba(53,195,245,0.12), 0 26px 58px rgba(0,0,0,0.46); cursor: zoom-in; }
 
       .pricingBand { padding: 90px 0 110px; background: radial-gradient(circle at 50% 18%, rgba(53, 195, 245, 0.12), transparent 30rem), linear-gradient(180deg, #0f0d0b 0%, #111820 100%); }

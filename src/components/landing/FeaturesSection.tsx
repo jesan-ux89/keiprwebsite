@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface FeaturesSectionProps {
   onScreenshotClick: (src: string) => void;
 }
@@ -14,7 +16,7 @@ export default function FeaturesSection({ onScreenshotClick }: FeaturesSectionPr
 
         <div className="screenGrid">
           <article className="screenCard">
-            <div className="label">Dashboard</div>
+            <p className="screenEyebrow blue">Dashboard</p>
             <h3>Safe-to-spend is the hero.</h3>
             <p>No hunting through categories. The first thing users see is what is left after the paycheck is spoken for.</p>
             <img
@@ -26,7 +28,7 @@ export default function FeaturesSection({ onScreenshotClick }: FeaturesSectionPr
           </article>
 
           <article className="screenCard">
-            <div className="label">Split bills</div>
+            <p className="screenEyebrow gold">Split bills</p>
             <h3>Big bills become staged.</h3>
             <p>Mortgage, loans, and transfers can be split by real paycheck behavior instead of neat but fake equal halves.</p>
             <img
@@ -38,7 +40,7 @@ export default function FeaturesSection({ onScreenshotClick }: FeaturesSectionPr
           </article>
 
           <article className="screenCard">
-            <div className="label">Tracker</div>
+            <p className="screenEyebrow green">Tracker</p>
             <h3>Payments verify themselves.</h3>
             <p>Bank-matched bills get clear status so the tracker feels reliable, not like another manual checklist.</p>
             <img
@@ -48,6 +50,11 @@ export default function FeaturesSection({ onScreenshotClick }: FeaturesSectionPr
               onClick={() => onScreenshotClick('/screen-tracker.png')}
             />
           </article>
+        </div>
+
+        <div className="productCta">
+          <Link className="ghostBtn" href="/how-it-works">See how the math works &rarr;</Link>
+          <Link className="solidBtn" href="/auth/signup">Start free &rarr;</Link>
         </div>
       </div>
     </section>
