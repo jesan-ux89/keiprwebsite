@@ -325,110 +325,122 @@ export default function LandingStyles() {
         line-height: 1.35;
         font-weight: 620;
       }
-      /* ============ Section headers (used between rail / core / tiers) ============ */
-      .sectionHeader {
-        display: grid;
-        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-        gap: 36px;
-        align-items: end;
-        margin: 0 0 28px;
-      }
-      .sectionHeader h2 {
-        max-width: 620px;
-        margin: 0;
-        font-size: clamp(28px, 2.8vw, 42px);
-        line-height: 1.05;
-        letter-spacing: -0.04em;
-        font-weight: 880;
-      }
-      .sectionHeader h2 em {
-        color: var(--blue);
-        font-style: normal;
-      }
-      .sectionHeader p {
-        margin: 0;
-        color: #c9c0b5;
-        font-size: 16px;
-        line-height: 1.65;
-        font-weight: 540;
-      }
-      .sectionHeader p strong {
-        color: var(--ink);
-        font-weight: 900;
-      }
-
-      /* ============ Core flow grid (4 uniform cards expanding the 1-4 rail) ============ */
-      .coreGrid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 20px;
-        margin: 0 0 80px;
-      }
-      .coreCard {
-        position: relative;
+      /* ============ Interactive core-flow demo ============ */
+      .demoWrap { margin: 0 0 60px; }
+      .demoPanel {
         padding: 28px;
-        border-radius: 24px;
+        border-radius: 26px;
         background:
-          radial-gradient(circle at 18% 12%, rgba(53, 195, 245, 0.07), transparent 17rem),
-          linear-gradient(180deg, rgba(255, 255, 255, 0.074), rgba(255, 255, 255, 0.03)),
+          radial-gradient(circle at 90% 6%, rgba(53,195,245,0.13), transparent 25rem),
+          linear-gradient(180deg, rgba(255,255,255,0.065), rgba(255,255,255,0.022)),
           rgba(29, 25, 21, 0.94);
-        border: 1px solid rgba(255, 248, 239, 0.14);
-        box-shadow: 0 22px 68px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.06);
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
+        border: 1px solid rgba(255,248,239,0.14);
+        box-shadow: 0 28px 90px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
       }
-      .stepBadge {
+      .demoTabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+      }
+      .demoTab {
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        padding: 6px 12px 6px 6px;
-        width: fit-content;
+        padding: 10px 16px 10px 10px;
         border-radius: 999px;
         background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,248,239,0.1);
-        font-size: 12px;
-        font-weight: 950;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
+        border: 1px solid rgba(255,248,239,0.12);
         color: #c9c0b5;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 850;
+        letter-spacing: 0.02em;
+        transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
       }
-      .stepBadge i {
+      .demoTab i {
         display: grid;
         place-items: center;
         width: 24px;
         height: 24px;
         border-radius: 999px;
-        color: #071019;
+        background: rgba(255,255,255,0.1);
         font-style: normal;
         font-weight: 950;
-        font-size: 13px;
+        font-size: 12px;
+        color: var(--ink);
       }
-      .stepBadge.green i { background: var(--green); }
-      .stepBadge.blue  i { background: var(--blue); }
-      .stepBadge.gold  i { background: var(--gold); }
-      .stepBadge.teal  i { background: #61e2cf; }
-      .coreCard h3 {
-        margin: 0;
+      .demoTab:hover { color: var(--ink); border-color: rgba(53,195,245,0.4); }
+      .demoTab.active {
+        background: rgba(53,195,245,0.15);
+        border-color: rgba(53,195,245,0.5);
+        color: var(--ink);
+      }
+      .demoTab.active.green i { background: var(--green); color: #071019; }
+      .demoTab.active.blue  i { background: var(--blue);  color: #071019; }
+      .demoTab.active.gold  i { background: var(--gold);  color: #071019; }
+      .demoTab.active.teal  i { background: #61e2cf;       color: #071019; }
+      .demoStage {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
+        gap: 28px;
+        align-items: center;
+      }
+      .demoCopy h3 {
+        margin: 0 0 12px;
+        font-size: clamp(22px, 2.2vw, 30px);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        font-weight: 880;
         color: #fff4e7;
-        font-size: clamp(22px, 1.7vw, 28px);
-        line-height: 1.13;
-        letter-spacing: -0.035em;
-        font-weight: 850;
       }
-      .coreCard p {
-        margin: 0;
+      .demoCopy p {
+        margin: 0 0 18px;
         color: #d6ccc1;
         font-size: 15px;
-        line-height: 1.65;
-        font-weight: 540;
+        line-height: 1.6;
       }
-      .coreCard p em {
+      .demoCopy p em {
         color: var(--ink);
         font-style: italic;
       }
+      .autoplayPill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        background: rgba(56,217,159,0.1);
+        border: 1px solid rgba(56,217,159,0.3);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .autoplayPill .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 12px rgba(56,217,159,0.7);
+        animation: keiprPulse 1.6s ease-in-out infinite;
+      }
+      @keyframes keiprPulse {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.4; }
+      }
+      .demoMockSlot { min-height: 240px; }
+      .demoMockSlot > .demoMock { display: none; }
+      .demoMockSlot > .demoMock.active {
+        display: block;
+        animation: keiprFade 280ms ease;
+      }
+      @keyframes keiprFade {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
 
-      /* ============ Mock surfaces (shared by core cards) ============ */
+      /* ============ Mock surfaces (shared by demo) ============ */
       .paycheckMock,
       .splitMock,
       .availableStoryCard {
@@ -555,17 +567,30 @@ export default function LandingStyles() {
         letter-spacing: -0.06em;
       }
 
-      /* ============ Tier strip (Free / Pro / Ultra) ============ */
+      /* ============ Tier strip (Free / Pro / Ultra — slim) ============ */
+      .tierBlock {
+        margin-top: 24px;
+        padding-top: 36px;
+        border-top: 1px solid var(--border);
+      }
+      .tierIntro {
+        margin: 0 auto 22px;
+        max-width: 720px;
+        text-align: center;
+        font-size: 15px;
+        color: var(--quiet);
+        font-weight: 700;
+        line-height: 1.5;
+      }
+      .tierIntro strong { color: var(--ink); font-weight: 900; }
       .tierGrid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-        margin-bottom: 60px;
+        gap: 16px;
       }
       .tierCard {
-        position: relative;
-        padding: 26px 24px 24px;
-        border-radius: 24px;
+        padding: 22px;
+        border-radius: 22px;
         background:
           linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
           rgba(29, 25, 21, 0.94);
@@ -580,19 +605,17 @@ export default function LandingStyles() {
       }
       .tierBadge {
         display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 5px 11px;
         width: fit-content;
+        padding: 4px 10px;
         border-radius: 999px;
         background: rgba(255,255,255,0.04);
         border: 1px solid rgba(255,248,239,0.12);
         color: #c9c0b5;
         font-size: 11px;
         font-weight: 950;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.13em;
         text-transform: uppercase;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
       }
       .tierBadge.featuredBadge {
         background: rgba(53,195,245,0.15);
@@ -601,182 +624,47 @@ export default function LandingStyles() {
       }
       .tierName {
         margin: 0 0 4px;
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 900;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.025em;
       }
       .tierPrice {
-        margin: 0 0 6px;
+        margin: 0 0 14px;
         color: var(--quiet);
         font-weight: 800;
-        font-size: 14px;
+        font-size: 13px;
       }
-      .tierPrice strong { color: var(--ink); font-size: 18px; }
-      .tierPriceMuted { opacity: 0.7; }
-      .tierTagline {
-        margin: 8px 0 18px;
-        color: #c9c0b5;
-        font-size: 14px;
-        line-height: 1.55;
-        font-weight: 560;
-      }
-      .tierBoundary {
-        margin: 0 0 14px;
-        border: 0;
-        border-top: 1px solid rgba(255,248,239,0.1);
-      }
+      .tierPrice strong { color: var(--ink); font-size: 16px; }
       .tierFeatures {
-        display: grid;
-        gap: 10px;
+        list-style: none;
         margin: 0;
         padding: 0;
-        list-style: none;
+        display: grid;
+        gap: 8px;
       }
       .tierFeatures li {
         display: grid;
-        grid-template-columns: 18px 1fr;
+        grid-template-columns: 14px 1fr;
         gap: 10px;
         color: #d6ccc1;
-        font-size: 14px;
-        line-height: 1.5;
+        font-size: 13px;
+        line-height: 1.45;
         font-weight: 600;
       }
       .tierFeatures li::before {
         content: "";
-        margin-top: 7px;
-        width: 7px;
-        height: 7px;
+        margin-top: 6px;
+        width: 6px;
+        height: 6px;
         border-radius: 999px;
         background: var(--quiet);
         grid-column: 1;
         align-self: start;
         justify-self: center;
       }
-      .tierCard.free .tierFeatures li::before { background: #b4aba0; }
-      .tierCard.pro .tierFeatures li::before {
-        background: var(--green);
-        box-shadow: 0 0 12px rgba(56,217,159,0.5);
-      }
-      .tierCard.ultra .tierFeatures li::before {
-        background: var(--blue);
-        box-shadow: 0 0 12px rgba(53,195,245,0.5);
-      }
-
-      /* mini-mocks inside tier cards */
-      .miniMock {
-        margin: 18px 0 4px;
-        padding: 14px;
-        border-radius: 16px;
-        border: 1px solid rgba(255,248,239,0.08);
-        background: rgba(255,255,255,0.03);
-      }
-      .miniLabel {
-        color: var(--quiet);
-        font-size: 11px;
-        font-weight: 950;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
-        margin: 0 0 10px;
-      }
-      .futureBars {
-        display: grid;
-        gap: 10px;
-      }
-      .futureBars .row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 4px 12px;
-        color: var(--muted);
-        font-weight: 800;
-        font-size: 13px;
-      }
-      .futureBars strong { color: var(--green); }
-      .futureBars i {
-        grid-column: 1 / -1;
-        display: block;
-        height: 6px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, var(--blue), var(--green));
-      }
-      .ultraMatch {
-        display: grid;
-        gap: 6px;
-      }
-      .ultraMatchRow {
-        display: grid;
-        grid-template-columns: 26px 1fr auto;
-        gap: 10px;
-        align-items: center;
-        padding: 7px 8px;
-        border-radius: 10px;
-        background: rgba(255,255,255,0.025);
-        font-size: 12.5px;
-      }
-      .ultraMatchRow .chip {
-        width: 26px;
-        height: 26px;
-        border-radius: 7px;
-        display: grid;
-        place-items: center;
-        font-size: 12px;
-        font-weight: 950;
-        color: #fff;
-      }
-      .ultraMatchRow .chip.netflix { background: #E50914; }
-      .ultraMatchRow .chip.spotify { background: #1DB954; color: #051c0d; }
-      .ultraMatchRow .chip.chase   { background: #117ACA; }
-      .ultraMatchRow .name {
-        color: #fff4e7;
-        font-weight: 800;
-        font-size: 13px;
-      }
-      .ultraMatchRow .verified {
-        color: var(--green);
-        font-weight: 950;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-      }
-
-      /* ============ Privacy callout ============ */
-      .privacyStrip {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 24px;
-        align-items: center;
-        padding: 26px 28px;
-        border-radius: 22px;
-        border: 1px solid rgba(255,248,239,0.12);
-        background:
-          radial-gradient(circle at 95% 30%, rgba(56,217,159,0.08), transparent 22rem),
-          linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
-          rgba(29, 25, 21, 0.92);
-      }
-      .privacyStrip h4 {
-        margin: 0 0 6px;
-        font-size: 19px;
-        font-weight: 880;
-        letter-spacing: -0.025em;
-      }
-      .privacyStrip p {
-        margin: 0;
-        color: #c9c0b5;
-        font-size: 14.5px;
-        line-height: 1.55;
-        max-width: 720px;
-      }
-      .privacyStrip .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 16px;
-        border-radius: 999px;
-        background: rgba(53,195,245,0.12);
-        color: #9be7ff;
-        border: 1px solid rgba(53,195,245,0.3);
-        font-weight: 900;
-        font-size: 13px;
-        white-space: nowrap;
-      }
+      .tierCard.free  .tierFeatures li::before { background: #b4aba0; }
+      .tierCard.pro   .tierFeatures li::before { background: var(--green); box-shadow: 0 0 10px rgba(56,217,159,0.5); }
+      .tierCard.ultra .tierFeatures li::before { background: var(--blue);  box-shadow: 0 0 10px rgba(53,195,245,0.5); }
       .paycheckStory {
         border-top: 1px solid rgba(255, 248, 239, 0.08);
         border-bottom: 1px solid rgba(255, 248, 239, 0.08);
@@ -868,8 +756,9 @@ export default function LandingStyles() {
         .matchRow { grid-template-columns: 42px minmax(0, 1fr); }
         .matchStatus { grid-column: 2; text-align: left; }
         .splitStatus { grid-column: 2; }
-        .flowGrid, .screenGrid, .priceGrid, .journeyRail, .coreGrid, .tierGrid { grid-template-columns: 1fr; }
-        .sectionHeader, .privacyStrip { grid-template-columns: 1fr; gap: 18px; }
+        .flowGrid, .screenGrid, .priceGrid, .journeyRail, .tierGrid { grid-template-columns: 1fr; }
+        .demoStage { grid-template-columns: 1fr; gap: 22px; }
+        .demoMockSlot { min-height: 0; }
         .priceCard { min-height: auto; }
       }
 
@@ -885,10 +774,11 @@ export default function LandingStyles() {
         .howHero h1 { font-size: clamp(38px, 12vw, 52px); }
         .howHero p { font-size: 16px; }
         .journeyStep { min-height: auto; }
-        .coreCard { padding: 22px; border-radius: 22px; }
-        .coreCard h3 { font-size: 24px; }
-        .tierCard { padding: 22px; }
-        .privacyStrip { padding: 20px 22px; }
+        .demoPanel { padding: 20px; border-radius: 22px; }
+        .demoCopy h3 { font-size: 22px; }
+        .demoTabs { gap: 6px; }
+        .demoTab { padding: 8px 12px 8px 8px; font-size: 12px; }
+        .tierCard { padding: 20px; }
         .splitPills { grid-template-columns: 1fr; }
         .storyMoney { font-size: 40px; }
         .productStage { padding: 14px; border-radius: 28px; }
