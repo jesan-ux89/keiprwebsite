@@ -569,40 +569,37 @@ export default function LandingStyles() {
         border-color: rgba(53,195,245,0.4);
         box-shadow: 0 26px 80px rgba(53,195,245,0.16), 0 22px 68px rgba(0,0,0,0.28);
       }
+      /* Eyebrow style — matches .storyEyebrow at top of page */
       .tierBadge {
-        display: inline-flex;
-        width: fit-content;
-        padding: 5px 12px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.07);
-        border: 1px solid rgba(255, 248, 239, 0.18);
-        color: #ece2d4;
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #9be7ff;
         font-size: 12px;
         font-weight: 950;
-        letter-spacing: 0.11em;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        margin-bottom: 12px;
       }
-      .tierBadge.featuredBadge {
-        background: rgba(53, 195, 245, 0.18);
-        border-color: rgba(53, 195, 245, 0.5);
-        color: #b8efff;
-      }
+      .tierCard.free  .tierBadge { color: #bfb5aa; }
+      .tierCard.pro   .tierBadge { color: #6ee2b1; }
+      .tierCard.ultra .tierBadge { color: #9be7ff; }
+      /* tierName matches .demoCopy h3 above */
       .tierName {
-        margin: 0 0 6px;
-        font-size: 26px;
-        font-weight: 900;
-        letter-spacing: -0.025em;
-        color: #fff8ef;
+        margin: 0 0 8px;
+        font-size: clamp(22px, 2.2vw, 30px);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        font-weight: 880;
+        color: #fff4e7;
       }
+      /* tierPrice + tierFeatures li match .demoCopy p above */
       .tierPrice {
-        margin: 0 0 16px;
-        color: #b4aba0;
-        font-weight: 800;
+        margin: 0 0 18px;
+        color: #d6ccc1;
         font-size: 15px;
-        line-height: 1.4;
+        line-height: 1.6;
+        font-weight: 600;
       }
-      .tierPrice strong { color: var(--ink); font-size: 19px; }
+      .tierPrice strong { color: #fff4e7; font-weight: 900; }
       .tierFeatures {
         list-style: none;
         margin: 0;
@@ -614,9 +611,9 @@ export default function LandingStyles() {
         display: grid;
         grid-template-columns: 16px 1fr;
         gap: 12px;
-        color: #ece2d4;
+        color: #d6ccc1;
         font-size: 15px;
-        line-height: 1.5;
+        line-height: 1.6;
         font-weight: 600;
       }
       .tierFeatures li::before {
