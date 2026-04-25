@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 
 type StepId = '1' | '2' | '3' | '4';
 type StepColor = 'green' | 'blue' | 'gold' | 'teal';
@@ -8,7 +8,8 @@ type StepColor = 'green' | 'blue' | 'gold' | 'teal';
 type StepConfig = {
   id: StepId;
   color: StepColor;
-  label: string;
+  railTitle: string;
+  railSub: string;
   title: string;
   body: ReactNode;
 };
@@ -17,7 +18,8 @@ const STEPS: StepConfig[] = [
   {
     id: '1',
     color: 'green',
-    label: 'Paycheck cycle',
+    railTitle: 'Paycheck lands',
+    railSub: 'Keipr opens the right cycle',
     title: 'Your money starts here.',
     body: (
       <>
@@ -29,7 +31,8 @@ const STEPS: StepConfig[] = [
   {
     id: '2',
     color: 'blue',
-    label: 'Bills claim share',
+    railTitle: 'Bills claim their share',
+    railSub: 'This check and next check stay separate',
     title: 'Each bill, the right paycheck.',
     body: (
       <>
@@ -41,7 +44,8 @@ const STEPS: StepConfig[] = [
   {
     id: '3',
     color: 'gold',
-    label: 'Big bills staged',
+    railTitle: 'Big bills get staged',
+    railSub: 'Real split behavior replaces guesswork',
     title: 'Splits use real behavior.',
     body: (
       <>
@@ -53,7 +57,8 @@ const STEPS: StepConfig[] = [
   {
     id: '4',
     color: 'teal',
-    label: 'Available number',
+    railTitle: 'What is left is safe',
+    railSub: 'Your Available number updates',
     title: 'One number, after everything.',
     body: (
       <>
@@ -66,99 +71,89 @@ const STEPS: StepConfig[] = [
 
 function CoreFlowDemo() {
   const [activeId, setActiveId] = useState<StepId>('1');
-  const [autoplay, setAutoplay] = useState(true);
 
-  useEffect(() => {
-    if (!autoplay) return;
-    const interval = setInterval(() => {
-      setActiveId((prev) => {
-        const next = (Number(prev) % 4) + 1;
-        return String(next) as StepId;
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [autoplay]);
-
-  const handleTabClick = useCallback((id: StepId) => {
-    setAutoplay(false);
+  const handleStepClick = useCallback((id: StepId) => {
     setActiveId(id);
   }, []);
 
   const activeStep = STEPS.find((s) => s.id === activeId) ?? STEPS[0];
 
   return (
-    <div className="demoPanel">
-      <div className="demoTabs" role="tablist">
+    <div className="demoWrap">
+      {/* JOURNEY RAIL — now the interactive tabs */}
+      <div className="journeyRail" role="tablist" aria-label="Keipr paycheck budgeting flow">
         {STEPS.map((step) => {
           const isActive = step.id === activeId;
+          // Step 2 has no color modifier (default blue); all others get their color class
+          const colorClass = step.color === 'blue' ? '' : ` ${step.color}`;
           return (
             <button
               key={step.id}
               type="button"
               role="tab"
               aria-selected={isActive}
-              className={`demoTab ${step.color}${isActive ? ' active' : ''}`}
-              onClick={() => handleTabClick(step.id)}
+              className={`journeyStep${colorClass}${isActive ? ' active' : ''}`}
+              onClick={() => handleStepClick(step.id)}
             >
-              <i>{step.id}</i> {step.label}
+              <span>{step.id}</span>
+              <strong>{step.railTitle}</strong>
+              <small>{step.railSub}</small>
             </button>
           );
         })}
       </div>
 
-      <div className="demoStage">
-        <div className="demoCopy">
-          <h3>{activeStep.title}</h3>
-          <p>{activeStep.body}</p>
-          {autoplay && (
-            <span className="autoplayPill" aria-live="polite">
-              <span className="dot" /> Auto-cycling &middot; click a tab to pause
-            </span>
-          )}
-        </div>
-
-        <div className="demoMockSlot">
-          <div className={`demoMock${activeId === '1' ? ' active' : ''}`} aria-hidden={activeId !== '1'}>
-            <div className="paycheckMock">
-              <div className="mockTop">
-                <span>Paycheck 2</span>
-                <strong>Apr 18 &ndash; May 1</strong>
-              </div>
-              <div className="mockDeposit">+$2,847</div>
-              <div className="mockSplitLine"><span>Before deposit</span><strong>$1,243</strong></div>
-              <div className="mockSplitLine"><span>After deposit</span><strong className="greenText">$4,090</strong></div>
-            </div>
+      {/* DEMO PANEL — driven by the rail above */}
+      <div className="demoPanel">
+        <div className="demoStage">
+          <div className="demoCopy">
+            <h3>{activeStep.title}</h3>
+            <p>{activeStep.body}</p>
           </div>
 
-          <div className={`demoMock${activeId === '2' ? ' active' : ''}`} aria-hidden={activeId !== '2'}>
-            <div className="billStack">
-              <div><span>Capital One Auto</span><strong>$545.54</strong></div>
-              <div><span>OpenAI</span><strong>$21.31</strong></div>
-              <div><span>FirstEnergy</span><strong>$145.20</strong></div>
-              <div className="nextCheck"><span>Next check already reserved</span><strong>$340</strong></div>
-            </div>
-          </div>
-
-          <div className={`demoMock${activeId === '3' ? ' active' : ''}`} aria-hidden={activeId !== '3'}>
-            <div className="splitMock">
-              <div className="splitHeader">
-                <span>Mortgage</span>
-                <strong>$2,000</strong>
+          <div className="demoMockSlot">
+            <div className={`demoMock${activeId === '1' ? ' active' : ''}`} aria-hidden={activeId !== '1'}>
+              <div className="paycheckMock">
+                <div className="mockTop">
+                  <span>Paycheck 2</span>
+                  <strong>Apr 18 &ndash; May 1</strong>
+                </div>
+                <div className="mockDeposit">+$2,847</div>
+                <div className="mockSplitLine"><span>Before deposit</span><strong>$1,243</strong></div>
+                <div className="mockSplitLine"><span>After deposit</span><strong className="greenText">$4,090</strong></div>
               </div>
-              <div className="splitPills">
-                <div><strong>$1,500</strong><span>Paycheck 1</span></div>
-                <div><strong>$500</strong><span>Paycheck 2</span></div>
-              </div>
-              <div className="splitBar"><i /></div>
             </div>
-          </div>
 
-          <div className={`demoMock${activeId === '4' ? ' active' : ''}`} aria-hidden={activeId !== '4'}>
-            <div className="availableStoryCard">
-              <div className="label">Available to spend</div>
-              <div className="storyMoney">$1,327.90</div>
-              <div className="mockSplitLine"><span>This check after bills</span><strong className="greenText">$582.48</strong></div>
-              <div className="mockSplitLine"><span>Next check after bills</span><strong>$340</strong></div>
+            <div className={`demoMock${activeId === '2' ? ' active' : ''}`} aria-hidden={activeId !== '2'}>
+              <div className="billStack">
+                <div><span>Capital One Auto</span><strong>$545.54</strong></div>
+                <div><span>OpenAI</span><strong>$21.31</strong></div>
+                <div><span>FirstEnergy</span><strong>$145.20</strong></div>
+                <div className="nextCheck"><span>Next check already reserved</span><strong>$340</strong></div>
+              </div>
+            </div>
+
+            <div className={`demoMock${activeId === '3' ? ' active' : ''}`} aria-hidden={activeId !== '3'}>
+              <div className="splitMock">
+                <div className="splitHeader">
+                  <span>Mortgage</span>
+                  <strong>$2,000</strong>
+                </div>
+                <div className="splitPills">
+                  <div><strong>$1,500</strong><span>Paycheck 1</span></div>
+                  <div><strong>$500</strong><span>Paycheck 2</span></div>
+                </div>
+                <div className="splitBar"><i /></div>
+              </div>
+            </div>
+
+            <div className={`demoMock${activeId === '4' ? ' active' : ''}`} aria-hidden={activeId !== '4'}>
+              <div className="availableStoryCard">
+                <div className="label">Available to spend</div>
+                <div className="storyMoney">$1,327.90</div>
+                <div className="mockSplitLine"><span>This check after bills</span><strong className="greenText">$582.48</strong></div>
+                <div className="mockSplitLine"><span>Next check after bills</span><strong>$340</strong></div>
+              </div>
             </div>
           </div>
         </div>
@@ -187,34 +182,8 @@ export default function PainSection() {
           </p>
         </div>
 
-        {/* JOURNEY RAIL 1-4 */}
-        <div className="journeyRail" aria-label="Keipr paycheck budgeting flow">
-          <div className="journeyStep green">
-            <span>1</span>
-            <strong>Paycheck lands</strong>
-            <small>Keipr opens the right cycle</small>
-          </div>
-          <div className="journeyStep">
-            <span>2</span>
-            <strong>Bills claim their share</strong>
-            <small>This check and next check stay separate</small>
-          </div>
-          <div className="journeyStep gold">
-            <span>3</span>
-            <strong>Big bills get staged</strong>
-            <small>Real split behavior replaces guesswork</small>
-          </div>
-          <div className="journeyStep teal">
-            <span>4</span>
-            <strong>What is left is safe</strong>
-            <small>Your Available number updates</small>
-          </div>
-        </div>
-
-        {/* INTERACTIVE DEMO */}
-        <div className="demoWrap">
-          <CoreFlowDemo />
-        </div>
+        {/* INTERACTIVE DEMO (rail tabs + mock) */}
+        <CoreFlowDemo />
 
         {/* TIER STRIP (slim) */}
         <div className="tierBlock">

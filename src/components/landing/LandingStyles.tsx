@@ -285,7 +285,7 @@ export default function LandingStyles() {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 12px;
-        margin: 0 0 20px;
+        margin: 0 0 16px;
       }
       .journeyStep {
         position: relative;
@@ -297,6 +297,40 @@ export default function LandingStyles() {
           rgba(31, 27, 23, 0.88);
         border: 1px solid rgba(255, 248, 239, 0.1);
         box-shadow: 0 20px 70px rgba(0, 0, 0, 0.24);
+        /* Make button-styled steps blend in cleanly */
+        display: block;
+        width: 100%;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+      }
+      .journeyStep:hover {
+        border-color: rgba(53, 195, 245, 0.32);
+        transform: translateY(-2px);
+      }
+      .journeyStep:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 3px;
+      }
+      .journeyStep.active {
+        border-color: rgba(53, 195, 245, 0.6);
+        box-shadow: 0 26px 80px rgba(53, 195, 245, 0.22), 0 20px 70px rgba(0, 0, 0, 0.24);
+      }
+      .journeyStep.green.active {
+        border-color: rgba(56, 217, 159, 0.6);
+        box-shadow: 0 26px 80px rgba(56, 217, 159, 0.20), 0 20px 70px rgba(0, 0, 0, 0.24);
+      }
+      .journeyStep.gold.active {
+        border-color: rgba(255, 176, 24, 0.6);
+        box-shadow: 0 26px 80px rgba(255, 176, 24, 0.20), 0 20px 70px rgba(0, 0, 0, 0.24);
+      }
+      .journeyStep.teal.active {
+        border-color: rgba(97, 226, 207, 0.6);
+        box-shadow: 0 26px 80px rgba(97, 226, 207, 0.18), 0 20px 70px rgba(0, 0, 0, 0.24);
       }
       .journeyStep span {
         display: grid;
@@ -310,8 +344,8 @@ export default function LandingStyles() {
         font-weight: 950;
       }
       .journeyStep.green span { background: var(--green); }
-      .journeyStep.gold span { background: var(--gold); }
-      .journeyStep.teal span { background: #61e2cf; }
+      .journeyStep.gold  span { background: var(--gold); }
+      .journeyStep.teal  span { background: #61e2cf; }
       .journeyStep strong {
         display: block;
         color: #fff5e8;
@@ -337,50 +371,6 @@ export default function LandingStyles() {
         border: 1px solid rgba(255,248,239,0.14);
         box-shadow: 0 28px 90px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
       }
-      .demoTabs {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 22px;
-      }
-      .demoTab {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 16px 10px 10px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,248,239,0.12);
-        color: #c9c0b5;
-        cursor: pointer;
-        font: inherit;
-        font-size: 13px;
-        font-weight: 850;
-        letter-spacing: 0.02em;
-        transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
-      }
-      .demoTab i {
-        display: grid;
-        place-items: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.1);
-        font-style: normal;
-        font-weight: 950;
-        font-size: 12px;
-        color: var(--ink);
-      }
-      .demoTab:hover { color: var(--ink); border-color: rgba(53,195,245,0.4); }
-      .demoTab.active {
-        background: rgba(53,195,245,0.15);
-        border-color: rgba(53,195,245,0.5);
-        color: var(--ink);
-      }
-      .demoTab.active.green i { background: var(--green); color: #071019; }
-      .demoTab.active.blue  i { background: var(--blue);  color: #071019; }
-      .demoTab.active.gold  i { background: var(--gold);  color: #071019; }
-      .demoTab.active.teal  i { background: #61e2cf;       color: #071019; }
       .demoStage {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
@@ -404,30 +394,6 @@ export default function LandingStyles() {
       .demoCopy p em {
         color: var(--ink);
         font-style: italic;
-      }
-      .autoplayPill {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 7px 14px;
-        border-radius: 999px;
-        background: rgba(56,217,159,0.1);
-        border: 1px solid rgba(56,217,159,0.3);
-        color: var(--green);
-        font-size: 12px;
-        font-weight: 900;
-      }
-      .autoplayPill .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--green);
-        box-shadow: 0 0 12px rgba(56,217,159,0.7);
-        animation: keiprPulse 1.6s ease-in-out infinite;
-      }
-      @keyframes keiprPulse {
-        0%, 100% { opacity: 1; }
-        50%      { opacity: 0.4; }
       }
       .demoMockSlot { min-height: 240px; }
       .demoMockSlot > .demoMock { display: none; }
@@ -776,8 +742,7 @@ export default function LandingStyles() {
         .journeyStep { min-height: auto; }
         .demoPanel { padding: 20px; border-radius: 22px; }
         .demoCopy h3 { font-size: 22px; }
-        .demoTabs { gap: 6px; }
-        .demoTab { padding: 8px 12px 8px 8px; font-size: 12px; }
+        .journeyStep { min-height: auto; padding: 14px; }
         .tierCard { padding: 20px; }
         .splitPills { grid-template-columns: 1fr; }
         .storyMoney { font-size: 40px; }
