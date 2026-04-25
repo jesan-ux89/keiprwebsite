@@ -244,14 +244,13 @@ export default function LandingStyles() {
           linear-gradient(180deg, #101614 0%, #120f0c 48%, #0f0d0b 100%);
       }
       .howHero {
-        display: grid;
-        grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.82fr);
-        gap: 44px;
-        align-items: end;
-        margin: 12px 0 38px;
+        display: block;
+        max-width: 760px;
+        margin: 12px auto 32px;
+        text-align: center;
       }
       .storyEyebrow {
-        margin: 0 0 14px;
+        margin: 0 0 12px;
         color: #9be7ff;
         font-size: 12px;
         font-weight: 950;
@@ -259,27 +258,16 @@ export default function LandingStyles() {
         text-transform: uppercase;
       }
       .howHero h1 {
-        max-width: 660px;
-        margin: 0;
-        font-size: clamp(34px, 3.45vw, 54px);
-        line-height: 1.02;
-        letter-spacing: -0.045em;
+        margin: 0 auto;
+        max-width: 700px;
+        font-size: clamp(28px, 2.6vw, 42px);
+        line-height: 1.1;
+        letter-spacing: -0.035em;
         font-weight: 900;
       }
       .howHero h1 span {
         display: block;
         color: var(--blue);
-      }
-      .howHero p {
-        margin: 0;
-        color: #d7cec4;
-        font-size: 17px;
-        line-height: 1.68;
-        font-weight: 560;
-      }
-      .howHero p strong {
-        color: var(--blue);
-        font-weight: 950;
       }
       .journeyRail {
         display: grid;
@@ -737,7 +725,7 @@ export default function LandingStyles() {
           background: rgba(15, 13, 11, 0.96);
           box-shadow: 0 24px 70px rgba(0,0,0,0.36);
         }
-        .hero, .sectionHead, .pricingPanel, .howHero { grid-template-columns: 1fr; }
+        .hero, .sectionHead, .pricingPanel { grid-template-columns: 1fr; }
         .floatingMatch { grid-template-columns: 1fr; text-align: left; }
         .matchRow { grid-template-columns: 42px minmax(0, 1fr); }
         .matchStatus { grid-column: 2; text-align: left; }
@@ -756,9 +744,8 @@ export default function LandingStyles() {
         .hero h1 { font-size: clamp(44px, 14vw, 60px); }
         .heroCopy { font-size: 17px; }
         .howWorksPage { padding: 64px 0 82px; }
-        .howHero { gap: 20px; margin-top: 8px; }
-        .howHero h1 { font-size: clamp(38px, 12vw, 52px); }
-        .howHero p { font-size: 16px; }
+        .howHero { margin-top: 8px; }
+        .howHero h1 { font-size: clamp(28px, 8vw, 38px); }
         .journeyStep { min-height: auto; }
         .demoPanel { padding: 20px; border-radius: 22px; }
         .demoCopy h3 { font-size: 22px; }

@@ -170,17 +170,11 @@ export default function PainSection() {
 
         {/* HERO */}
         <div className="howHero">
-          <div>
-            <p className="storyEyebrow">How Keipr works</p>
-            <h1>
-              See what each paycheck can actually cover.
-              <span>Then plan the month ahead.</span>
-            </h1>
-          </div>
-          <p>
-            Keipr keeps paycheck cycles and monthly overviews connected. Bills, splits, and future
-            months all roll into one number: <strong>what is safe to spend now.</strong>
-          </p>
+          <p className="storyEyebrow">How Keipr works</p>
+          <h1>
+            See what each paycheck can actually cover.
+            <span>Then plan the month ahead.</span>
+          </h1>
         </div>
 
         {/* INTERACTIVE DEMO (rail tabs + mock) */}
