@@ -31,7 +31,11 @@ export default function Home() {
   }, [lightboxSrc, closeLightbox]);
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#EDF6FC', color: '#0C1E2C' }}>
+    <div className="flex flex-col min-h-screen" style={{
+      background:
+        'radial-gradient(circle at 18% 10%, rgba(53,195,245,0.18), transparent 34rem), radial-gradient(circle at 82% 84%, rgba(13,148,136,0.14), transparent 30rem), linear-gradient(135deg, #0f0d0b 0%, #17120f 54%, #11100d 100%)',
+      color: '#FFF8EF'
+    }}>
       {/* ── BAR 1: Top Announcement Bar (Indigo Midnight) ── */}
       <div style={{ backgroundColor: '#0F3460' }} className="w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-center gap-2">
@@ -156,14 +160,15 @@ export default function Home() {
       <HowItWorks />
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
+      <section id="features" className="py-20 md:py-28 px-4 border-t" style={{ borderColor: 'rgba(255,248,239,0.1)', backgroundColor: '#12100D' }}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Built Around How You Actually Get Paid</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#FFF8EF' }}>Built Around How You Actually Get Paid</h2>
             <p className="text-xl" style={{ color: 'rgba(12,30,44,0.6)' }}>Budget by paycheck, by month, or months ahead — your money, your way</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <style>{`#features .text-center > p{color:rgba(255,248,239,0.58)!important}#features .featureLongGrid > div:nth-child(n+4){display:none}`}</style>
+          <div className="featureLongGrid grid md:grid-cols-3 gap-6 mb-8">
             {/* Feature 1 */}
             <FeatureCard icon={Calendar} title="Paycheck-Forward Budgeting" description="Budget by your pay cycles, not calendar months. Align your bills with your paychecks for stress-free planning." screenshot="/screen-dashboard.png" onScreenshotClick={setLightboxSrc} />
 
@@ -188,17 +193,26 @@ export default function Home() {
             {/* Feature 8 */}
             <FeatureCard icon={Brain} title="AI Budget Intelligence" description="An AI Accountant that auto-classifies transactions, merges duplicates, assigns bills to the right paycheck, and detects savings patterns — so your budget stays accurate without the manual work." screenshot="/screen-ai.png" onScreenshotClick={setLightboxSrc} />
           </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <CompactFeature icon={TrendingUp} title="Forward Planning" description="See future paychecks before they arrive." />
+            <CompactFeature icon={Landmark} title="Connected Banking" description="Auto-match transactions with Plaid." />
+            <CompactFeature icon={Wallet} title="One-Time Funds" description="Track bonuses, refunds, and payouts separately." />
+            <CompactFeature icon={Globe} title="Multi-Currency" description="Use Keipr across seven supported currencies." />
+            <CompactFeature icon={Brain} title="AI Assistant" description="Optional cleanup for duplicates, matches, and patterns." />
+          </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-32 px-4 border-t" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#EDF6FC' }}>
+      <section id="pricing" className="py-20 md:py-28 px-4 border-t" style={{ borderColor: 'rgba(255,248,239,0.1)', backgroundColor: '#17120F' }}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#0C1E2C' }}>Simple, Transparent Pricing</h2>
-            <p className="text-xl" style={{ color: 'rgba(12,30,44,0.5)' }}>No hidden fees. Cancel anytime.</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#FFF8EF' }}>Simple, Transparent Pricing</h2>
+            <p className="text-xl" style={{ color: 'rgba(255,248,239,0.55)' }}>No hidden fees. Cancel anytime.</p>
           </div>
 
+          <style>{`#pricing li span:first-child{color:#38BDF8!important}`}</style>
           <div className="grid md:grid-cols-3 gap-7">
             {/* Free Tier */}
             <PricingCard
@@ -242,17 +256,17 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 px-4 mt-auto" style={{ borderColor: 'rgba(12,74,110,0.1)', backgroundColor: '#E0F4FC' }}>
+      <footer className="border-t py-8 px-4 mt-auto" style={{ borderColor: 'rgba(255,248,239,0.1)', backgroundColor: '#0F0D0B' }}>
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p style={{ color: 'rgba(12,30,44,0.45)', fontSize: '0.85rem' }}>
+            <p style={{ color: 'rgba(255,248,239,0.45)', fontSize: '0.85rem' }}>
               &copy; 2026 Keipr. Paycheck-forward budgeting for everyone.
             </p>
             <div className="flex gap-6">
-              <Link href="/faq" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>FAQ</Link>
-              <Link href="/terms" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>Terms of Service</Link>
-              <Link href="/privacy" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>Privacy Policy</Link>
-              <a href="mailto:contact@keipr.app" className="text-sm hover:underline" style={{ color: 'rgba(12,30,44,0.5)' }}>Contact</a>
+              <Link href="/faq" className="text-sm hover:underline" style={{ color: 'rgba(255,248,239,0.55)' }}>FAQ</Link>
+              <Link href="/terms" className="text-sm hover:underline" style={{ color: 'rgba(255,248,239,0.55)' }}>Terms of Service</Link>
+              <Link href="/privacy" className="text-sm hover:underline" style={{ color: 'rgba(255,248,239,0.55)' }}>Privacy Policy</Link>
+              <a href="mailto:contact@keipr.app" className="text-sm hover:underline" style={{ color: 'rgba(255,248,239,0.55)' }}>Contact</a>
             </div>
           </div>
         </div>
@@ -373,6 +387,28 @@ function FeatureCard({ icon: Icon, title, description, screenshot, onScreenshotC
   );
 }
 
+function CompactFeature({ icon: Icon, title, description }: Omit<FeatureCardProps, 'screenshot' | 'onScreenshotClick'>) {
+  return (
+    <div
+      className="rounded-xl border p-5"
+      style={{
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025))',
+        borderColor: 'rgba(255,248,239,0.1)',
+      }}
+    >
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
+        style={{ backgroundColor: 'rgba(56,189,248,0.12)', border: '1px solid rgba(56,189,248,0.18)' }}
+      >
+        <Icon size={20} color="#38BDF8" />
+      </div>
+      <h3 className="text-base font-semibold mb-2" style={{ color: '#FFF8EF' }}>{title}</h3>
+      <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,248,239,0.55)' }}>{description}</p>
+    </div>
+  );
+}
+
 interface PricingCardProps {
   name: string;
   price: string;
@@ -392,41 +428,43 @@ function PricingCard({ name, price, annualNote, subtitle, features, separator, m
     <div
       className="p-8 flex flex-col rounded-xl border"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderColor: highlighted ? '#0C4A6E' : 'rgba(12,74,110,0.1)',
+        background: highlighted
+          ? 'linear-gradient(180deg, rgba(53,195,245,0.11), rgba(255,255,255,0.035)), #1F1B16'
+          : 'linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)), #1F1B16',
+        borderColor: highlighted ? 'rgba(53,195,245,0.55)' : 'rgba(255,248,239,0.11)',
         borderWidth: highlighted ? '2px' : '1px',
       }}
     >
       {badge && (
-        <div className="inline-block text-sm font-semibold px-3 py-1 rounded-full mb-4 w-fit" style={{ backgroundColor: '#0C4A6E', color: '#E8E5DC' }}>
+        <div className="inline-block text-sm font-semibold px-3 py-1 rounded-full mb-4 w-fit" style={{ backgroundColor: 'rgba(56,189,248,0.14)', color: '#9BE7FF' }}>
           {badge}
         </div>
       )}
-      <h3 className="text-2xl font-bold mb-2" style={{ color: '#0C1E2C' }}>{name}</h3>
-      <p className="mb-6" style={{ color: 'rgba(12,30,44,0.6)' }}>{subtitle}</p>
+      <h3 className="text-2xl font-bold mb-2" style={{ color: '#FFF8EF' }}>{name}</h3>
+      <p className="mb-6" style={{ color: 'rgba(255,248,239,0.58)' }}>{subtitle}</p>
       <div className="mb-1">
-        <span className="text-4xl font-bold" style={{ color: '#0C1E2C' }}>{price}</span>
-        {price !== '$0' && <span style={{ color: 'rgba(12,30,44,0.45)' }}>/month</span>}
+        <span className="text-4xl font-bold" style={{ color: highlighted ? '#38BDF8' : '#FFF8EF' }}>{price}</span>
+        {price !== '$0' && <span style={{ color: 'rgba(255,248,239,0.45)' }}>/month</span>}
       </div>
       {annualNote && (
-        <p className="mb-6" style={{ color: 'rgba(12,30,44,0.35)', fontSize: '0.8rem' }}>{annualNote}</p>
+        <p className="mb-6" style={{ color: 'rgba(255,248,239,0.42)', fontSize: '0.8rem' }}>{annualNote}</p>
       )}
       {!annualNote && <div className="mb-6" />}
       <ul className="space-y-3 mb-4 flex-1">
         {features.map((feature) => (
-          <li key={feature} className="flex items-start gap-3" style={{ color: 'rgba(12,30,44,0.6)' }}>
+          <li key={feature} className="flex items-start gap-3" style={{ color: 'rgba(255,248,239,0.62)' }}>
             <span style={{ color: '#0C4A6E' }} className="mt-1">•</span>
             <span>{feature}</span>
           </li>
         ))}
       </ul>
       {separator && (
-        <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(12,74,110,0.08)' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(12,30,44,0.3)' }}>{separator}</span>
+        <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(255,248,239,0.1)' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,248,239,0.36)' }}>{separator}</span>
         </div>
       )}
       {manualNote && (
-        <p className="mb-6" style={{ color: 'rgba(12,30,44,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>Requires manual expense entry</p>
+        <p className="mb-6" style={{ color: 'rgba(255,248,239,0.36)', fontSize: '0.75rem', fontStyle: 'italic' }}>Requires manual expense entry</p>
       )}
       {!manualNote && !separator && <div className="mb-4" />}
       <Link
@@ -434,8 +472,8 @@ function PricingCard({ name, price, annualNote, subtitle, features, separator, m
         className="w-full py-2.5 rounded-lg font-semibold transition text-center inline-block hover:opacity-90"
         style={
           highlighted
-            ? { backgroundColor: '#0C4A6E', color: '#E8E5DC' }
-            : { border: '1px solid rgba(12,74,110,0.2)', color: '#0C1E2C' }
+            ? { backgroundColor: '#38BDF8', color: '#071019' }
+            : { border: '1px solid rgba(255,248,239,0.16)', color: '#FFF8EF' }
         }
       >
         {buttonLabel}
@@ -466,18 +504,18 @@ function PainSection() {
   const progressTrack: React.CSSProperties = { width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: '6px' };
 
   return (
-    <section className="border-t px-4" style={{ backgroundColor: '#F5F3EF', borderColor: 'rgba(12,74,110,0.08)', padding: '80px 24px 72px' }}>
+    <section className="border-t px-4" style={{ backgroundColor: '#17120F', borderColor: 'rgba(255,248,239,0.1)', padding: '80px 24px 72px' }}>
       <div className="max-w-7xl mx-auto">
         {/* Headline */}
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#0C1E2C', lineHeight: 1.3 }}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#FFF8EF', lineHeight: 1.3 }}>
             Every budgeting app assumes you get paid on the 1st.<br />
             <span style={{ color: '#38BDF8' }}>You probably don&apos;t.</span>
           </h2>
-          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(12,30,44,0.6)', lineHeight: 1.8 }}>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(255,248,239,0.58)', lineHeight: 1.8 }}>
             Most people get paid biweekly, weekly, or twice a month — but every budgeting tool forces you into a calendar-month view.
             Bills don&apos;t line up. Money feels tight one week, fine the next. You&apos;re always guessing.
-            Keipr flips the model: <strong style={{ color: '#0C1E2C' }}>your budget starts when your paycheck lands.</strong>
+            Keipr flips the model: <strong style={{ color: '#FFF8EF' }}>your budget starts when your paycheck lands.</strong>
           </p>
         </div>
 
@@ -579,16 +617,16 @@ function HowItWorks() {
     { num: '3', title: 'See What\'s Left', desc: 'Your dashboard shows exactly how much you can spend after every payday. Track payments, plan months ahead, and split big bills across paychecks.' },
   ];
   return (
-    <section id="how-it-works" className="border-t px-4 py-20 md:py-28" style={{ backgroundColor: '#EDF6FC', borderColor: 'rgba(12,74,110,0.08)' }}>
+    <section id="how-it-works" className="border-t px-4 py-20 md:py-28" style={{ backgroundColor: '#12100D', borderColor: 'rgba(255,248,239,0.1)' }}>
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: '#0C1E2C' }}>How Keipr Works</h2>
-        <p className="text-lg text-center mb-14" style={{ color: 'rgba(12,30,44,0.5)' }}>Three steps to paycheck clarity</p>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: '#FFF8EF' }}>How Keipr Works</h2>
+        <p className="text-lg text-center mb-14" style={{ color: 'rgba(255,248,239,0.55)' }}>Three steps to paycheck clarity</p>
         <div className="grid md:grid-cols-3 gap-10">
           {steps.map((s) => (
             <div key={s.num} className="text-center">
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-5" style={{ backgroundColor: '#0C4A6E' }}>{s.num}</div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: '#0C1E2C' }}>{s.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(12,30,44,0.6)' }}>{s.desc}</p>
+              <h3 className="text-lg font-bold mb-3" style={{ color: '#FFF8EF' }}>{s.title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,248,239,0.58)' }}>{s.desc}</p>
             </div>
           ))}
         </div>
