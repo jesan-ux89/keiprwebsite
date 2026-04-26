@@ -202,6 +202,23 @@ function AdminAIRunDetailPageInner() {
                 {run.model || 'Unknown'}
               </p>
             </div>
+            <div>
+              <p style={{ margin: '0 0 0.5rem 0', color: colors.textFaint, fontSize: '0.85rem', fontWeight: 600 }}>
+                Provider
+              </p>
+              <p style={{ margin: 0, color: colors.text, fontSize: '0.9rem', textTransform: 'capitalize' }}>
+                {run.provider || (String(run.model || '').startsWith('gpt-') ? 'openai' : 'anthropic')}
+                {run.fallback_used ? ' (fallback)' : ''}
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: '0 0 0.5rem 0', color: colors.textFaint, fontSize: '0.85rem', fontWeight: 600 }}>
+                Router
+              </p>
+              <p style={{ margin: 0, color: colors.text, fontSize: '0.9rem' }}>
+                {run.router_mode ? `${run.router_tier || 'routed'} / ${run.router_reason || run.router_mode}` : 'Manual model'}
+              </p>
+            </div>
           </div>
 
           {/* Summary stats */}

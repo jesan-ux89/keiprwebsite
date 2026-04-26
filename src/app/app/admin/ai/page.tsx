@@ -4,13 +4,36 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { aiAPI } from '@/lib/api';
-import { AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import Link from 'next/link';
+
+const MODEL_OPTIONS = [
+  { value: 'gpt-router-recommended', label: 'GPT Router (recommended primary)', provider: 'OpenAI' },
+  { value: 'gpt-5.5', label: 'GPT-5.5 (highest quality)', provider: 'OpenAI' },
+  { value: 'gpt-5.4', label: 'GPT-5.4 (strong)', provider: 'OpenAI' },
+  { value: 'gpt-5.4-mini', label: 'GPT-5.4 Mini (fast + low cost)', provider: 'OpenAI' },
+  { value: 'gpt-5.4-nano', label: 'GPT-5.4 Nano (cheapest)', provider: 'OpenAI' },
+  { value: 'claude-opus-4-6', label: 'Claude Opus 4.6 (higher quality)', provider: 'Anthropic' },
+  { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (balanced fallback)', provider: 'Anthropic' },
+  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (cheap fallback)', provider: 'Anthropic' },
+];
+
+const FALLBACK_MODEL_OPTIONS = MODEL_OPTIONS.filter((option) => option.value !== 'gpt-router-recommended');
+
+function shortModelName(model: string | null | undefined) {
+  if (!model) return 'None';
+  if (model === 'gpt-router-recommended') return 'GPT Router';
+  if (model.startsWith('gpt-')) return model.toUpperCase();
+  if (model.includes('sonnet')) return 'Sonnet';
+  if (model.includes('haiku')) return 'Haiku';
+  if (model.includes('opus')) return 'Opus';
+  return model;
+}
 
 export default function AdminAIDashboardPage() {
   const { colors } = useTheme();
@@ -23,13 +46,13 @@ export default function AdminAIDashboardPage() {
   const [requiresConfirm, setRequiresConfirm] = useState<string | null>(null);
   const [confirmInput, setConfirmInput] = useState('');
   const [pendingChange, setPendingChange] = useState<{ field: string; value: any; previousValue: any } | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh] = useState(true);
 
   // Local state for control bar
   const [localSettings, setLocalSettings] = useState({
     ai_enabled: true,
-    primary_model: 'claude-opus-4-6',
-    fallback_model: null,
+    primary_model: 'gpt-router-recommended',
+    fallback_model: 'claude-sonnet-4-6',
     max_cost_per_user_monthly: 5,
     max_cost_system_monthly: 500,
     data_retention_days: 90,
@@ -61,8 +84,8 @@ export default function AdminAIDashboardPage() {
       setDashboardData(dashRes?.data || null);
       setLocalSettings({
         ai_enabled: settingsRes.data.ai_enabled ?? true,
-        primary_model: settingsRes.data.primary_model || 'claude-opus-4-6',
-        fallback_model: settingsRes.data.fallback_model,
+        primary_model: settingsRes.data.primary_model || 'gpt-router-recommended',
+        fallback_model: settingsRes.data.fallback_model || 'claude-sonnet-4-6',
         max_cost_per_user_monthly: settingsRes.data.max_cost_per_user_monthly || 5,
         max_cost_system_monthly: settingsRes.data.max_cost_system_monthly || 500,
         data_retention_days: settingsRes.data.data_retention_days || 90,
@@ -128,7 +151,42 @@ export default function AdminAIDashboardPage() {
     setRequiresConfirm(null);
     setConfirmInput('');
     setPendingChange(null);
+    if (field === 'model_preset') {
+      await updateSettingsPatch(value, 'confirm');
+      return;
+    }
     await updateSetting(field, value);
+  };
+
+  const applyModelPreset = (primaryModel: string, fallbackModel: string) => {
+    const nextSettings = {
+      primary_model: primaryModel,
+      fallback_model: fallbackModel,
+    };
+    setLocalSettings({ ...localSettings, ...nextSettings });
+    setPendingChange({ field: 'model_preset', value: nextSettings, previousValue: { ...localSettings } });
+    setRequiresConfirm('confirm');
+    setConfirmInput('');
+  };
+
+  const updateSettingsPatch = async (patch: Record<string, any>, confirmWord?: string) => {
+    const payload = { ...patch, ...(confirmWord ? { confirm: confirmWord } : {}) };
+
+    try {
+      setUpdating(true);
+      await aiAPI.adminUpdateSettings(payload);
+      setLocalSettings((prev) => ({ ...prev, ...patch }));
+      setError(null);
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.detail || err?.response?.data?.error || err?.message;
+      const status = err?.response?.status;
+      setError(
+        `Failed to update model preset${status ? ` (HTTP ${status})` : ''}${backendMsg ? `: ${backendMsg}` : ''}`,
+      );
+      console.error('[admin/ai] updateSettingsPatch error:', 'payload:', payload, 'status:', status, 'body:', err?.response?.data, err);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const updateSetting = async (field: string, value: any, confirmWord?: string) => {
@@ -232,14 +290,7 @@ export default function AdminAIDashboardPage() {
     );
   }
 
-  const MODEL_OPTIONS = [
-    { value: 'claude-opus-4-6', label: 'Claude Opus 4.6 (higher quality)' },
-    { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (balanced)' },
-    { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (cheapest)' },
-  ];
-
-  const stats = dashboardData?.stats || {};
-  const costs_7d = dashboardData?.costs_7d || { total: 0, by_model: {} };
+  const costs_7d = dashboardData?.costs_7d || { total: 0, by_model: {}, by_provider: {} };
   const corrections_7d = dashboardData?.corrections_7d || 0;
   const override_rate_7d = dashboardData?.override_rate_7d || 0;
   const users_opted_in = dashboardData?.users_opted_in || { enabled: 0, total: 0 };
@@ -273,6 +324,41 @@ export default function AdminAIDashboardPage() {
           <h2 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 600, color: colors.text }}>
             System Controls
           </h2>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              alignItems: 'center',
+              marginBottom: '1.25rem',
+              padding: '0.75rem',
+              border: `1px solid ${colors.divider}`,
+              borderRadius: '0.75rem',
+              backgroundColor: colors.cardBg,
+            }}
+          >
+            <div style={{ flex: '1 1 260px' }}>
+              <div style={{ color: colors.text, fontWeight: 600, fontSize: '0.9rem' }}>
+                Recommended mode: GPT router primary, Anthropic fallback
+              </div>
+              <div style={{ color: colors.textFaint, fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                Costs still log by user, provider, model, tokens, and fallback usage.
+              </div>
+            </div>
+            <Button
+              onClick={() => applyModelPreset('gpt-router-recommended', 'claude-sonnet-4-6')}
+              disabled={updating}
+            >
+              Use GPT Router
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => applyModelPreset('claude-sonnet-4-6', 'claude-haiku-4-5-20251001')}
+              disabled={updating}
+            >
+              Use Anthropic Manual
+            </Button>
+          </div>
           <div
             style={{
               display: 'grid',
@@ -358,7 +444,7 @@ export default function AdminAIDashboardPage() {
                 }}
               >
                 <option value="">None</option>
-                {MODEL_OPTIONS.map((opt) => (
+                {FALLBACK_MODEL_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -441,14 +527,10 @@ export default function AdminAIDashboardPage() {
           <Card style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.85rem', color: colors.textFaint, marginBottom: '0.5rem' }}>Active Model</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>
-              {(() => {
-                const parts = (localSettings.primary_model || 'claude-opus-4-6').split('-');
-                const tier = parts[1] || 'opus';
-                return tier.charAt(0).toUpperCase() + tier.slice(1);
-              })()}
+              {shortModelName(localSettings.primary_model)}
             </div>
             <div style={{ fontSize: '0.75rem', color: colors.textFaint }}>
-              (Last 30 days)
+              Fallback: {shortModelName(localSettings.fallback_model)}
             </div>
           </Card>
 
@@ -460,6 +542,13 @@ export default function AdminAIDashboardPage() {
             <div style={{ fontSize: '0.75rem', color: colors.textFaint, marginTop: '0.5rem' }}>
               {costs_7d.run_count || 0} runs
             </div>
+            {costs_7d.by_provider && Object.keys(costs_7d.by_provider).length > 0 && (
+              <div style={{ fontSize: '0.7rem', color: colors.textFaint, marginTop: '0.35rem' }}>
+                {Object.entries(costs_7d.by_provider)
+                  .map(([provider, cost]: [string, any]) => `${provider}: $${Number(cost || 0).toFixed(2)}`)
+                  .join(' / ')}
+              </div>
+            )}
           </Card>
 
           <Card style={{ padding: '1rem' }}>
@@ -577,6 +666,8 @@ export default function AdminAIDashboardPage() {
                   <tr style={{ borderBottom: `1px solid ${colors.divider}` }}>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Email</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Trigger</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Provider</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Model</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Started</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Duration</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Cost</th>
@@ -585,7 +676,7 @@ export default function AdminAIDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {activity_log.slice(0, 50).map((run: any, idx: number) => (
+                  {activity_log.slice(0, 50).map((run: any) => (
                     <tr key={run.id} style={{ borderBottom: `1px solid ${colors.divider}` }}>
                       <td style={{ padding: '0.75rem', color: colors.text }}>
                         <Link
@@ -599,6 +690,13 @@ export default function AdminAIDashboardPage() {
                       </td>
                       <td style={{ padding: '0.75rem', color: colors.textFaint, textTransform: 'capitalize' }}>
                         {run.trigger_type || 'auto'}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.textFaint, textTransform: 'capitalize' }}>
+                        {run.provider || (String(run.model || '').startsWith('gpt-') ? 'openai' : 'anthropic')}
+                        {run.fallback_used ? ' fallback' : ''}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.textFaint, fontSize: '0.75rem' }}>
+                        {run.router_mode ? `${shortModelName(run.router_mode)} -> ${shortModelName(run.model)}` : shortModelName(run.model)}
                       </td>
                       <td style={{ padding: '0.75rem', color: colors.textFaint, fontSize: '0.75rem' }}>
                         {new Date(run.started_at).toLocaleString()}
@@ -818,7 +916,11 @@ export default function AdminAIDashboardPage() {
             <Button variant="secondary" onClick={() => {
               // Revert dropdown to previous value if cancelled
               if (pendingChange && pendingChange.previousValue !== undefined) {
-                setLocalSettings(prev => ({ ...prev, [pendingChange.field]: pendingChange.previousValue }));
+                if (pendingChange.field === 'model_preset') {
+                  setLocalSettings(pendingChange.previousValue);
+                } else {
+                  setLocalSettings(prev => ({ ...prev, [pendingChange.field]: pendingChange.previousValue }));
+                }
               }
               setRequiresConfirm(null);
               setPendingChange(null);
