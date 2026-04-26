@@ -78,164 +78,33 @@ export default function LoginPage() {
 
           .loginShell {
             min-height: calc(100vh - 132px);
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(430px, 520px);
-            gap: 52px;
+            display: flex;
+            justify-content: center;
             align-items: center;
             width: min(1180px, calc(100% - 40px));
             margin: 0 auto;
             padding: 36px 0 56px;
           }
+          .loginCard { width: 100%; max-width: 480px; }
 
-          .story {
-            max-width: 650px;
-          }
 
-          .story h1 {
-            margin: 0;
-            max-width: 640px;
-            font-size: clamp(28px, 3vw, 42px);
-            line-height: 1.08;
-            letter-spacing: -0.04em;
-            font-weight: 900;
-          }
 
-          .storyCopy {
-            margin: 16px 0 28px;
-            max-width: 580px;
-            color: #b4aba0;
-            font-size: 17px;
-            line-height: 1.55;
-          }
 
-          .preview {
-            max-width: 620px;
-            border-radius: 30px;
-            padding: 22px;
-            background:
-              linear-gradient(135deg, rgba(53, 195, 245, 0.1), transparent 44%),
-              #17130f;
-            color: #fff8ef;
-            box-shadow: 0 32px 90px rgba(0, 0, 0, 0.38);
-            border: 1px solid rgba(255, 248, 239, 0.11);
-          }
 
-          .previewTop {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 22px;
-          }
 
-          .previewTitle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 900;
-          }
 
-          .miniLogo {
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            background: rgba(53, 195, 245, 0.14);
-            display: grid;
-            place-items: center;
-            color: #9be7ff;
-            font-weight: 950;
-          }
 
-          .updated {
-            color: #8f867c;
-            font-size: 14px;
-            font-weight: 750;
-          }
 
-          .previewGrid {
-            display: grid;
-            grid-template-columns: 1fr 0.9fr;
-            gap: 16px;
-          }
 
-          .availableCard {
-            min-height: 214px;
-            border-radius: 24px;
-            padding: 24px;
-            background:
-              linear-gradient(135deg, rgba(53, 195, 245, 0.19), transparent 52%),
-              rgba(255, 255, 255, 0.045);
-            border: 1px solid rgba(255, 248, 239, 0.11);
-          }
 
-          .label {
-            color: #8f867c;
-            font-size: 12px;
-            font-weight: 950;
-            letter-spacing: 0.13em;
-            text-transform: uppercase;
-          }
 
-          .bigMoney {
-            margin: 10px 0 18px;
-            color: #44c7f4;
-            font-size: 58px;
-            line-height: 1;
-            font-weight: 950;
-            letter-spacing: -0.06em;
-          }
 
-          .smallLine {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            padding: 12px 0;
-            border-top: 1px solid rgba(255, 248, 239, 0.11);
-            color: #b4aba0;
-            font-weight: 750;
-          }
 
-          .smallLine strong {
-            color: #fff8ef;
-          }
 
-          .tracker {
-            display: grid;
-            gap: 10px;
-          }
 
-          .trackerRow {
-            display: grid;
-            grid-template-columns: 34px 1fr auto;
-            gap: 10px;
-            align-items: center;
-            border-radius: 18px;
-            padding: 13px;
-            background: rgba(255, 255, 255, 0.045);
-            border: 1px solid rgba(255, 248, 239, 0.11);
-          }
 
-          .check {
-            width: 34px;
-            height: 34px;
-            border-radius: 99px;
-            display: grid;
-            place-items: center;
-            background: rgba(52, 211, 153, 0.15);
-            color: #34d399;
-            font-weight: 950;
-          }
 
-          .trackerRow b {
-            display: block;
-            color: #fff8ef;
-            line-height: 1.2;
-          }
 
-          .trackerRow small {
-            display: block;
-            color: #8f867c;
-            margin-top: 3px;
-          }
 
           .loginCard {
             position: relative;
@@ -462,28 +331,14 @@ export default function LoginPage() {
 
           @media (max-width: 980px) {
             .loginShell {
-              grid-template-columns: 1fr;
-              gap: 32px;
               padding: 24px 0 44px;
               min-height: 0;
-            }
-
-            .story {
-              max-width: none;
             }
           }
 
           @media (max-width: 640px) {
             .loginShell {
               width: min(100% - 28px, 1180px);
-            }
-
-            .preview {
-              display: none;
-            }
-
-            .storyCopy {
-              font-size: 16px;
             }
 
             .loginCard {
@@ -511,64 +366,6 @@ export default function LoginPage() {
         `}</style>
 
         <div className="loginShell">
-          <section className="story" aria-label="Keipr sign in overview">
-            <h1>Pick up right where your paycheck left off.</h1>
-            <p className="storyCopy">
-              Sign in to see what is safe to spend, which bills are already verified,
-              and what still needs attention before payday.
-            </p>
-
-            <div className="preview" aria-label="Keipr dashboard preview">
-              <div className="previewTop">
-                <div className="previewTitle">
-                  <span className="miniLogo">k</span>
-                  Ultra Dashboard
-                </div>
-                <div className="updated">Updated just now</div>
-              </div>
-              <div className="previewGrid">
-                <div className="availableCard">
-                  <div className="label">Available to spend</div>
-                  <div className="bigMoney">$1,164.92</div>
-                  <div className="smallLine">
-                    <span>Checking balance</span>
-                    <strong>$1,164.92</strong>
-                  </div>
-                  <div className="smallLine">
-                    <span>This check</span>
-                    <strong>$66.82</strong>
-                  </div>
-                </div>
-                <div className="tracker">
-                  <div className="trackerRow">
-                    <div className="check">OK</div>
-                    <div>
-                      <b>Loancare</b>
-                      <small>Split verified</small>
-                    </div>
-                    <strong>$1,624</strong>
-                  </div>
-                  <div className="trackerRow">
-                    <div className="check">OK</div>
-                    <div>
-                      <b>Netflix</b>
-                      <small>Bank matched</small>
-                    </div>
-                    <strong>$28</strong>
-                  </div>
-                  <div className="trackerRow">
-                    <div className="check">OK</div>
-                    <div>
-                      <b>OpenAI</b>
-                      <small>Due this check</small>
-                    </div>
-                    <strong>$21</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
           <section className="loginCard" aria-label="Sign in form">
             <div className="loginHead">
               <div>
