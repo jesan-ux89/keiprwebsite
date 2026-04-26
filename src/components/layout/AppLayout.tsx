@@ -279,13 +279,13 @@ export default function AppLayout({
                 />
               </span>
             </h1>
-            {/* Tier Badge */}
+            {/* Tier Badge — locked to dark-mode cyan for consistent branding */}
             <div
               style={{
                 display: 'inline-block',
                 padding: '0.25rem 0.5rem',
-                backgroundColor: sidebarTierBg,
-                color: colors.electric,
+                backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                color: '#38BDF8',
                 borderRadius: '0.375rem',
                 fontSize: '0.65rem',
                 fontWeight: 600,
