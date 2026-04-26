@@ -263,7 +263,7 @@ export default function AppLayout({
                   color: sidebarText,
                 }}
               >
-                <span style={{ color: colors.electric, letterSpacing: '-0.12em' }}>K</span>eipr
+                <span style={{ color: '#38BDF8', letterSpacing: '-0.12em' }}>K</span>eipr
                 <span
                   aria-hidden="true"
                   style={{
@@ -273,8 +273,8 @@ export default function AppLayout({
                     bottom: 0,
                     height: '3px',
                     borderRadius: '999px',
-                    backgroundColor: colors.electric,
-                    boxShadow: `0 0 18px ${colors.electric}40`,
+                    backgroundColor: '#38BDF8',
+                    boxShadow: '0 0 18px rgba(56, 189, 248, 0.25)',
                   }}
                 />
               </span>
