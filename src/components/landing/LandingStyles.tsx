@@ -683,7 +683,7 @@ export default function LandingStyles() {
       .pricingBand { padding: 90px 0 110px; background: radial-gradient(circle at 50% 18%, rgba(53, 195, 245, 0.12), transparent 30rem), linear-gradient(180deg, #0f0d0b 0%, #111820 100%); }
       .pricingPanel { max-width: 1180px; margin: 0 auto; }
       .pricingPanelHeader {
-        margin: 0 0 72px;
+        margin: 0 0 36px;
         display: flex;
         flex-direction: column;
         align-items: center;
