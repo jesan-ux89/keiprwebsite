@@ -246,15 +246,38 @@ export default function AppLayout({
           >
             <h1
               style={{
-                fontSize: '1.35rem',
-                fontWeight: 700,
-                color: sidebarText,
                 margin: 0,
                 marginBottom: '0.5rem',
-                letterSpacing: '-0.03em',
+                lineHeight: 1,
               }}
             >
-              keipr
+              <span
+                style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  paddingRight: '4px',
+                  paddingBottom: '5px',
+                  fontSize: '1.6rem',
+                  fontWeight: 950,
+                  letterSpacing: '-0.07em',
+                  color: sidebarText,
+                }}
+              >
+                <span style={{ color: colors.electric, letterSpacing: '-0.12em' }}>K</span>eipr
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: '0.95em',
+                    right: '0.05em',
+                    bottom: 0,
+                    height: '3px',
+                    borderRadius: '999px',
+                    backgroundColor: colors.electric,
+                    boxShadow: `0 0 18px ${colors.electric}40`,
+                  }}
+                />
+              </span>
             </h1>
             {/* Tier Badge */}
             <div
