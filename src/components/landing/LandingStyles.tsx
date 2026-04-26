@@ -687,7 +687,7 @@ export default function LandingStyles() {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 22px;
+        gap: 64px;
       }
       .pricingHeading { text-align: center; }
       .pricingPanel h2 { max-width: 760px; margin: 0 auto 10px; text-align: center; font-size: clamp(28px, 2.7vw, 42px); line-height: 1.08; letter-spacing: -0.04em; font-weight: 950; }
