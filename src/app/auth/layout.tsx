@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const { colors, isDark } = useTheme();
   const pathname = usePathname();
 
-  if (pathname === '/auth/login') {
+  if (pathname === '/auth/login' || pathname === '/auth/signup') {
     return <>{children}</>;
   }
 
