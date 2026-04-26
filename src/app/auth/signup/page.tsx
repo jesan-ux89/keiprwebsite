@@ -214,13 +214,13 @@ export default function SignupPage() {
             letter-spacing: -0.04em;
           }
           .loginHead p { margin: 0; color: #b4aba0; line-height: 1.45; }
-          .freePill {
+          .securePill {
             flex: 0 0 auto;
             border-radius: 999px;
             padding: 9px 12px;
-            background: rgba(53,195,245,0.12);
-            color: #9be7ff;
-            border: 1px solid rgba(53,195,245,0.32);
+            background: rgba(52, 211, 153, 0.1);
+            color: #8df2c4;
+            border: 1px solid rgba(52, 211, 153, 0.18);
             font-weight: 900;
             font-size: 12px;
             letter-spacing: 0.05em;
@@ -364,7 +364,7 @@ export default function SignupPage() {
             .loginCard { padding: 24px; border-radius: 24px; }
             .loginCard::before { border-radius: 24px; }
             .loginHead { display: block; }
-            .freePill { display: inline-flex; margin-top: 14px; }
+            .securePill { display: inline-flex; margin-top: 14px; }
             .perksGrid { grid-template-columns: 1fr; }
           }
         `}</style>
@@ -373,17 +373,17 @@ export default function SignupPage() {
           <section className="story" aria-label="Why join Keipr">
             <h1>Start your <em>paycheck-first</em> budget in minutes.</h1>
             <p className="storyCopy">
-              No credit card. No bank connection required. Just a clear picture of what each
-              paycheck can actually cover.
+              Three tiers, one engine. Pick manual budgeting, forward planning, or bank-connected
+              automation &mdash; whichever fits how you want to budget.
             </p>
 
             <div className="preview" aria-label="What you get with Keipr">
               <div className="previewTop">
                 <div className="previewTitle">
                   <span className="miniLogo">k</span>
-                  Keipr starter
+                  How Keipr works
                 </div>
-                <div className="updated">Free forever</div>
+                <div className="updated">Same on every tier</div>
               </div>
               <div className="perksGrid">
                 <div className="perkCard">
@@ -414,9 +414,9 @@ export default function SignupPage() {
             <div className="loginHead">
               <div>
                 <h2>Create your account</h2>
-                <p>Free forever. Upgrade anytime if you want forward planning or bank automation.</p>
+                <p>Pick your tier after sign up &mdash; manual entry, forward planning, or bank-connected automation.</p>
               </div>
-              <div className="freePill">Free</div>
+              <div className="securePill">Secure</div>
             </div>
 
             {error && <div className="errorMessage">{error}</div>}
