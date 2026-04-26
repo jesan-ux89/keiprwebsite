@@ -432,27 +432,27 @@ function AllTransactionsPage() {
       pageTitle={searchParams?.get('accountName') || 'Transactions'}
     >
       <div style={{ maxWidth: '900px' }}>
-        <section className="app-page-hero" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+        <section className="app-page-hero" style={{ padding: '1.4rem 1.5rem', marginBottom: '1.25rem' }}>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p className="app-page-kicker">Transactions</p>
-            <h1 className="app-page-title">Bank activity, cleaned up.</h1>
-            <p className="app-page-subtitle">
+            <p className="app-page-kicker" style={{ marginBottom: '0.4rem' }}>Transactions</p>
+            <h1 className="app-page-title" style={{ fontSize: 'clamp(1.6rem, 2.6vw, 2.4rem)', lineHeight: 1.15 }}>Bank activity, cleaned up.</h1>
+            <p className="app-page-subtitle" style={{ marginTop: '0.5rem', fontSize: '0.92rem', lineHeight: 1.5 }}>
               Review what synced, what matched bills, and what stayed as everyday spending.
             </p>
-            <div className="app-metric-grid" style={{ marginTop: '1.35rem' }}>
+            <div className="app-metric-grid" style={{ marginTop: '0.95rem' }}>
               {[
                 { label: 'All', value: allCount, detail: 'synced items', color: colors.text },
                 { label: 'Bill matches', value: matchedCount, detail: 'linked to expenses', color: colors.green },
                 { label: 'Spending', value: unmatchedCount, detail: 'not bill-matched', color: colors.amber },
               ].map((item) => (
-                <div key={item.label} className="app-soft-panel" style={{ padding: '0.95rem' }}>
-                  <p style={{ margin: '0 0 0.4rem', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                <div key={item.label} className="app-soft-panel" style={{ padding: '0.75rem 0.85rem' }}>
+                  <p style={{ margin: '0 0 0.3rem', fontSize: '0.66rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
                     {item.label}
                   </p>
-                  <p style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: item.color }}>
+                  <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: item.color }}>
                     {item.value}
                   </p>
-                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: colors.textMuted }}>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.74rem', color: colors.textMuted }}>
                     {item.detail}
                   </p>
                 </div>
