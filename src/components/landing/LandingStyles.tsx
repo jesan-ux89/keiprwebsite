@@ -683,11 +683,11 @@ export default function LandingStyles() {
       .pricingBand { padding: 90px 0 110px; background: radial-gradient(circle at 50% 18%, rgba(53, 195, 245, 0.12), transparent 30rem), linear-gradient(180deg, #0f0d0b 0%, #111820 100%); }
       .pricingPanel { max-width: 1180px; margin: 0 auto; }
       .pricingPanelHeader {
-        margin: 0 0 54px;
+        margin: 0 0 72px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 64px;
+        gap: 16px;
       }
       .pricingHeading { text-align: center; }
       .pricingPanel h2 { max-width: 760px; margin: 0 auto 10px; text-align: center; font-size: clamp(28px, 2.7vw, 42px); line-height: 1.08; letter-spacing: -0.04em; font-weight: 950; }
