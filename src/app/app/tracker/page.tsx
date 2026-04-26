@@ -361,17 +361,17 @@ export default function TrackerPage() {
         <section
           className="app-page-hero"
           style={{
-            padding: '2rem',
-            marginBottom: '1.5rem',
+            padding: '1.4rem 1.5rem',
+            marginBottom: '1.25rem',
           }}
         >
           <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 0.45fr)', gap: '1.5rem', alignItems: 'end' }}>
             <div>
-              <p className="app-page-kicker">Expense tracker</p>
-              <h1 className="app-page-title">
+              <p className="app-page-kicker" style={{ marginBottom: '0.4rem' }}>Expense tracker</p>
+              <h1 className="app-page-title" style={{ fontSize: 'clamp(1.6rem, 2.6vw, 2.4rem)', lineHeight: 1.15 }}>
                 {showNext ? 'Next paycheck' : 'This paycheck'} at a glance.
               </h1>
-              <p className="app-page-subtitle">
+              <p className="app-page-subtitle" style={{ marginTop: '0.5rem', fontSize: '0.92rem', lineHeight: 1.5 }}>
                 Bank-verified payments get checked automatically. Manual checks stay scoped to this exact pay period.
               </p>
             </div>

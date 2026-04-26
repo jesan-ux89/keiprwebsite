@@ -210,27 +210,27 @@ export default function ReportsPage() {
           />
         }
       >
-        <section className="app-page-hero" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+        <section className="app-page-hero" style={{ padding: '1.4rem 1.5rem', marginBottom: '1.25rem' }}>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p className="app-page-kicker">Insights</p>
-            <h1 className="app-page-title">Spending trends without the noise.</h1>
-            <p className="app-page-subtitle">
+            <p className="app-page-kicker" style={{ marginBottom: '0.4rem' }}>Insights</p>
+            <h1 className="app-page-title" style={{ fontSize: 'clamp(1.6rem, 2.6vw, 2.4rem)', lineHeight: 1.15 }}>Spending trends without the noise.</h1>
+            <p className="app-page-subtitle" style={{ marginTop: '0.5rem', fontSize: '0.92rem', lineHeight: 1.5 }}>
               See the categories and monthly movement that actually matter for your paycheck plan.
             </p>
-            <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
+            <div className="app-metric-grid" style={{ marginTop: '0.95rem' }}>
               {[
                 { label: 'Last 6 months', value: fmt(centsToDollars(totalSpent)), detail: 'categorized spending', color: colors.text },
                 { label: 'Top categories', value: catsWithColor.length, detail: 'with transactions', color: colors.green },
                 { label: 'Month over month', value: momPct == null ? '—' : `${momPct > 0 ? '+' : ''}${momPct.toFixed(0)}%`, detail: 'latest trend', color: momPct != null && momPct > 0 ? colors.amber : colors.green },
               ].map((item) => (
-                <div key={item.label} className="app-soft-panel" style={{ padding: '1rem' }}>
-                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                <div key={item.label} className="app-soft-panel" style={{ padding: '0.75rem 0.85rem' }}>
+                  <p style={{ margin: '0 0 0.3rem', fontSize: '0.66rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
                     {item.label}
                   </p>
-                  <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
+                  <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: item.color }}>
                     {item.value}
                   </p>
-                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.74rem', color: colors.textMuted }}>
                     {item.detail}
                   </p>
                 </div>

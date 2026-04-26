@@ -426,15 +426,15 @@ export default function BankingPage() {
             <section
               className="app-page-hero"
               style={{
-                padding: '2rem',
-                marginBottom: '1.5rem',
+                padding: '1.4rem 1.5rem',
+                marginBottom: '1.25rem',
               }}
             >
               <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 0.45fr)', gap: '1.5rem', alignItems: 'end' }}>
                 <div>
-                  <p className="app-page-kicker">Connected accounts</p>
-                  <h1 className="app-page-title">Your money map.</h1>
-                  <p className="app-page-subtitle">
+                  <p className="app-page-kicker" style={{ marginBottom: '0.4rem' }}>Connected accounts</p>
+                  <h1 className="app-page-title" style={{ fontSize: 'clamp(1.6rem, 2.6vw, 2.4rem)', lineHeight: 1.15 }}>Your money map.</h1>
+                  <p className="app-page-subtitle" style={{ marginTop: '0.5rem', fontSize: '0.92rem', lineHeight: 1.5 }}>
                     Keep balances, account health, and payment accounts in one place without turning the page into a spreadsheet.
                   </p>
                 </div>
