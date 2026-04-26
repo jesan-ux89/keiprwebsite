@@ -365,32 +365,26 @@ export default function TrackerPage() {
             marginBottom: '1.5rem',
           }}
         >
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <p className="app-page-kicker">Expense tracker</p>
-            <h1 className="app-page-title">
-              {showNext ? 'Next paycheck' : 'This paycheck'} at a glance.
-            </h1>
-            <p className="app-page-subtitle">
-              Bank-verified payments get checked automatically. Manual checks stay scoped to this exact pay period.
-            </p>
-            <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
-              {[
-                { label: 'Paid', value: `${paidCount} of ${totalCount}`, detail: `${Math.round(progressPercent)}% covered`, color: colors.green },
-                { label: 'Pending', value: `${totalCount - paidCount}`, detail: 'still open', color: colors.amber },
-                { label: 'Total due', value: fmt(totalBillsThisCheck), detail: period.label, color: colors.text },
-              ].map((item) => (
-                <div key={item.label} className="app-soft-panel" style={{ padding: '1rem' }}>
-                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
-                    {item.label}
-                  </p>
-                  <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
-                    {item.value}
-                  </p>
-                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
-                    {item.detail}
-                  </p>
-                </div>
-              ))}
+          <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 0.45fr)', gap: '1.5rem', alignItems: 'end' }}>
+            <div>
+              <p className="app-page-kicker">Expense tracker</p>
+              <h1 className="app-page-title">
+                {showNext ? 'Next paycheck' : 'This paycheck'} at a glance.
+              </h1>
+              <p className="app-page-subtitle">
+                Bank-verified payments get checked automatically. Manual checks stay scoped to this exact pay period.
+              </p>
+            </div>
+            <div className="app-soft-panel" style={{ padding: '1rem' }}>
+              <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                Coverage
+              </p>
+              <p style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: colors.green }}>
+                {Math.round(progressPercent)}%
+              </p>
+              <p style={{ margin: '0.35rem 0 0', color: colors.textMuted, fontSize: '0.82rem' }}>
+                {paidCount} of {totalCount} paid &middot; {fmt(totalBillsThisCheck)} due
+              </p>
             </div>
           </div>
         </section>
