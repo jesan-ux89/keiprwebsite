@@ -357,17 +357,17 @@ export default function BillsUltraContent() {
         <section
           className="app-page-hero"
           style={{
-            padding: '1.4rem 1.5rem',
-            marginBottom: '1.25rem',
+            padding: '2rem',
+            marginBottom: '1.5rem',
           }}
         >
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p className="app-page-kicker" style={{ marginBottom: '0.4rem' }}>Paycheck budget</p>
-            <h1 className="app-page-title" style={{ fontSize: 'clamp(1.4rem, 2.2vw, 2rem)', lineHeight: 1.2 }}>Every expense, by paycheck.</h1>
-            <p className="app-page-subtitle" style={{ marginTop: '0.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
+            <p className="app-page-kicker">Paycheck budget</p>
+            <h1 className="app-page-title">Every expense, by paycheck.</h1>
+            <p className="app-page-subtitle">
               Review what is fixed, flexible, upcoming, and split before it affects your available number.
             </p>
-            <div className="app-metric-grid" style={{ marginTop: '1rem' }}>
+            <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
               {[
                 { label: 'Total expenses', value: fmt(totalExpenses), detail: `${filteredBills.length} active expenses`, color: colors.text },
                 { label: 'Fixed', value: fmt(fixedTotal), detail: `${fixedBills.length} predictable`, color: colors.green },
@@ -377,18 +377,18 @@ export default function BillsUltraContent() {
                   key={item.label}
                   className="app-soft-panel"
                   style={{
-                    padding: '0.75rem 0.85rem',
+                    padding: '1rem',
                     position: 'relative',
                     zIndex: 1,
                   }}
                 >
-                  <p style={{ margin: '0 0 0.3rem', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
                     {item.label}
                   </p>
-                  <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: item.color }}>
+                  <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
                     {item.value}
                   </p>
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: colors.textMuted }}>
+                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
                     {item.detail}
                   </p>
                 </div>

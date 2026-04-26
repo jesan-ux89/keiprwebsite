@@ -361,32 +361,32 @@ export default function TrackerPage() {
         <section
           className="app-page-hero"
           style={{
-            padding: '1.4rem 1.5rem',
-            marginBottom: '1.25rem',
+            padding: '2rem',
+            marginBottom: '1.5rem',
           }}
         >
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p className="app-page-kicker" style={{ marginBottom: '0.4rem' }}>Expense tracker</p>
-            <h1 className="app-page-title" style={{ fontSize: 'clamp(1.4rem, 2.2vw, 2rem)', lineHeight: 1.2 }}>
+            <p className="app-page-kicker">Expense tracker</p>
+            <h1 className="app-page-title">
               {showNext ? 'Next paycheck' : 'This paycheck'} at a glance.
             </h1>
-            <p className="app-page-subtitle" style={{ marginTop: '0.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
+            <p className="app-page-subtitle">
               Bank-verified payments get checked automatically. Manual checks stay scoped to this exact pay period.
             </p>
-            <div className="app-metric-grid" style={{ marginTop: '1rem' }}>
+            <div className="app-metric-grid" style={{ marginTop: '1.5rem' }}>
               {[
                 { label: 'Paid', value: `${paidCount} of ${totalCount}`, detail: `${Math.round(progressPercent)}% covered`, color: colors.green },
                 { label: 'Pending', value: `${totalCount - paidCount}`, detail: 'still open', color: colors.amber },
                 { label: 'Total due', value: fmt(totalBillsThisCheck), detail: period.label, color: colors.text },
               ].map((item) => (
-                <div key={item.label} className="app-soft-panel" style={{ padding: '0.75rem 0.85rem' }}>
-                  <p style={{ margin: '0 0 0.3rem', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
+                <div key={item.label} className="app-soft-panel" style={{ padding: '1rem' }}>
+                  <p style={{ margin: '0 0 0.45rem', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: colors.textMuted }}>
                     {item.label}
                   </p>
-                  <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: item.color }}>
+                  <p style={{ margin: 0, fontSize: '1.55rem', fontWeight: 800, color: item.color }}>
                     {item.value}
                   </p>
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: colors.textMuted }}>
+                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: colors.textMuted }}>
                     {item.detail}
                   </p>
                 </div>
