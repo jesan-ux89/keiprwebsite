@@ -706,14 +706,40 @@ export default function DashboardUltraContent() {
                     <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>Checking balance</span>
                     <strong style={{ color: colors.text }}>{availableBreakdown?.checkingBalance != null ? fmt(availableBreakdown.checkingBalance) : fmt(availableNumber !== null ? availableNumber : remaining)}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${colors.cardBorder}` }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewMode('paycheck');
+                      if (typeof document !== 'undefined') {
+                        document.getElementById('dashboard-view-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                    aria-label="View this paycheck details"
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${viewMode === 'paycheck' ? colors.electric : colors.cardBorder}`, cursor: 'pointer', font: 'inherit', textAlign: 'left', width: '100%', transition: 'border-color 160ms ease, background-color 160ms ease' }}
+                  >
                     <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>This check</span>
-                    <strong style={{ color: colors.green }}>{fmt(remaining > 0 ? remaining : 0)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${colors.cardBorder}` }}>
+                    <strong style={{ color: colors.green, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {fmt(remaining > 0 ? remaining : 0)}
+                      <span aria-hidden="true" style={{ color: colors.textMuted, fontWeight: 400 }}>›</span>
+                    </strong>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewMode('nextcheck');
+                      if (typeof document !== 'undefined') {
+                        document.getElementById('dashboard-view-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                    aria-label="View next paycheck details"
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', padding: '0.75rem 0.85rem', borderRadius: '0.75rem', backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : '#F5F8FA', border: `1px solid ${viewMode === 'nextcheck' ? colors.electric : colors.cardBorder}`, cursor: 'pointer', font: 'inherit', textAlign: 'left', width: '100%', transition: 'border-color 160ms ease, background-color 160ms ease' }}
+                  >
                     <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>Next check</span>
-                    <strong style={{ color: colors.text }}>{fmt(nextRemaining > 0 ? nextRemaining : 0)}</strong>
-                  </div>
+                    <strong style={{ color: colors.text, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {fmt(nextRemaining > 0 ? nextRemaining : 0)}
+                      <span aria-hidden="true" style={{ color: colors.textMuted, fontWeight: 400 }}>›</span>
+                    </strong>
+                  </button>
                 </div>
               </div>
             </Card>
@@ -970,11 +996,12 @@ export default function DashboardUltraContent() {
             )}
 
             {/* View Tabs */}
-            <div style={{
+            <div id="dashboard-view-tabs" style={{
               display: 'flex',
               gap: '0.5rem',
               marginTop: '1rem',
               flexWrap: 'wrap',
+              scrollMarginTop: '90px',
             }}>
               {(['overview', 'paycheck', 'nextcheck'] as ViewMode[]).map((mode) => (
                 <button
