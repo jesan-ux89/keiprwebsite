@@ -15,6 +15,7 @@ import { CATEGORY_COLORS } from '@/lib/categoryIcons';
 import { DashboardSkeleton } from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
 import AppLayout, { TwoColumnLayout } from '@/components/layout/AppLayout';
+import { clearPendingBankOnboarding, hasPendingBankOnboarding } from '@/lib/bankOnboardingPrompt';
 
 /**
  * DashboardUltraContent — Ultra tier dashboard
@@ -44,6 +45,7 @@ export default function DashboardUltraContent() {
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedSide, setExpandedSide] = useState<Record<string, boolean>>({});
+  const [showIncompleteBankOnboarding, setShowIncompleteBankOnboarding] = useState(false);
 
   // Quick expense modal state
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
@@ -81,6 +83,15 @@ export default function DashboardUltraContent() {
       .catch(() => {});
     fetchBankAccounts();
   }, [fetchBankAccounts]);
+
+  useEffect(() => {
+    if (bankAccounts.length > 0) {
+      clearPendingBankOnboarding();
+      setShowIncompleteBankOnboarding(false);
+      return;
+    }
+    setShowIncompleteBankOnboarding(hasPendingBankOnboarding());
+  }, [bankAccounts.length]);
 
   // ── Freshness indicator helper ────────────────────────────
   function formatRelativeTime(isoString: string | null): string | null {
@@ -493,7 +504,7 @@ export default function DashboardUltraContent() {
         <TwoColumnLayout sidebar={<SummaryPanel />}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Incomplete Onboarding Banner */}
-            {!bankAccountsLoading && bankAccounts.length === 0 && (
+            {showIncompleteBankOnboarding && !bankAccountsLoading && bankAccounts.length === 0 && (
               <a href="/app/banking" style={{
                 display: 'flex', alignItems: 'center', gap: '1rem',
                 backgroundColor: isDark ? 'rgba(56,189,248,0.08)' : 'rgba(12,74,110,0.06)',

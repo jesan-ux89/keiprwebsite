@@ -8,6 +8,7 @@ import { useApp } from '@/context/AppContext';
 import { subscriptionsAPI, bankingAPI } from '@/lib/api';
 import { usePlaidLink } from 'react-plaid-link';
 import { AlertCircle, Loader } from 'lucide-react';
+import { clearPendingBankOnboarding, markPendingBankOnboarding } from '@/lib/bankOnboardingPrompt';
 
 type Step = 'trial' | 'connecting' | 'syncing' | 'success';
 
@@ -44,6 +45,7 @@ function BankImportContent() {
         return;
       }
       // Open Lemon Squeezy checkout in new tab
+      markPendingBankOnboarding();
       window.open(checkoutUrl, '_blank');
       // Poll for subscription status
       pollForSubscription();
@@ -66,6 +68,7 @@ function BankImportContent() {
         if (status === 'trialing' || status === 'active' || plan === 'ultra' || plan === 'pro') {
           // Trial activated! Refresh app state and move to Plaid
           await refreshBills();
+          markPendingBankOnboarding();
           setLoading(false);
           setStep('connecting');
           return;
@@ -129,6 +132,7 @@ function BankImportContent() {
           })),
         });
 
+        clearPendingBankOnboarding();
         setConnectedBank(institution?.name || 'Your bank');
         setStep('success');
 
@@ -172,6 +176,7 @@ function BankImportContent() {
   };
 
   const handleSkipTrial = () => {
+    markPendingBankOnboarding();
     setStep('connecting');
     initPlaidLink();
   };
