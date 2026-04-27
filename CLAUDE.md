@@ -43,7 +43,7 @@ These decisions were debated, tested, and finalized by Jesse. Do NOT change, "im
 
 5. **Mobile app is source of truth.** All data logic, calculations, and shared components must match mobile. Do not invent website-only logic without checking mobile first.
 
-6. **AI Accountant onboarding runs ONCE.** Backend enforces this — the first AI run uses `'onboarding'` trigger, all subsequent 48h-window runs downgrade to `'bank_sync'`. Website just displays results. Do not add AI trigger logic to the website.
+6. **AI Accountant onboarding owns the first setup pass.** Backend protects the true first `'onboarding'` run after rule-based import. Plain `'bank_sync'` / `'bank_sync_history'` runs must not consume that slot. Website just displays results and diagnostics. Do not add AI trigger logic to the website.
 
 7. **SyncingIndicator: running spinner ONLY, no completion banners.** `src/components/ai/SyncingIndicator.tsx` shows "✨ Refining your ledger…" during active AI runs and hides SILENTLY on completion. Do NOT add "Budget updated with X changes — View budget" or "all good" banners. Completion triggers `onComplete` callback for silent data refresh. Mirrors mobile `AISyncingIndicator.tsx` exactly.
 
@@ -289,12 +289,12 @@ All rules for recurring-expense detection (when a transaction becomes a bill, ho
 2. The bug is in the backend; verify with `npm test` in `_keipr-complete-backend`
 3. Fix goes in `detectionEngine.js`
 
-Current policy: recurring promotion requires 2+ occurrences plus a plausible recurring interval. Weak/single bill-like outflows remain categorized spend/Quick Spend. Recurring CC payoffs and ATM withdrawals still detect. Detected vendor bills charged to a credit-card account may include `paidWith`, and the website should preserve/display that value during review.
+Current policy: recurring promotion requires 2+ occurrences plus a plausible recurring interval. During fresh onboarding, strong recurring findings are inserted as regular active expenses immediately; AI is a polish/correction pass, not the gatekeeper for the first usable budget. Weak/single bill-like outflows remain categorized spend/Quick Spend. Recurring CC payoffs and ATM withdrawals still detect. Detected vendor bills charged to a credit-card account may include `paidWith`, and the website should preserve/display that value during review.
 
 ## Split Bill Clean Rule
 Backend enforces a strict rule: split bill + unresolvable paycheck = abort all writes. The website Tracker's `normalizeMatchData()` mirrors this — match_log rows for split bills without `split_sort_order` are skipped (invariant violations, not legitimate data). No legacy inference or "first unpaid" guessing. The debug endpoint's invariant 7 (`split_bill_match_no_sort_order`) catches these.
 
-**Backend hardening pass:** Onboarding duplicate-optimization (upgrades webhook-created bills instead of skipping), AI Accountant deferred rerun (blocked triggers queued, not dropped), auto-split PFC guard (only bill-like categories get auto-split), and split diagnostic logs. All backend-only — no website changes needed.
+**Backend hardening pass:** Onboarding duplicate-optimization (upgrades webhook-created bills instead of skipping), AI Accountant deferred rerun (blocked triggers queued, not dropped), onboarding AI slot guard (`bank_sync` / `bank_sync_history` cannot consume the first onboarding optimization pass), auto-split PFC guard (only bill-like categories get auto-split), and split diagnostic logs. All backend-only — no website trigger logic needed.
 
 ## Debug Endpoint (for diagnosing web bugs)
 Backend exposes `GET /api/debug/user-state` — tier-aware JSON dump of everything needed to diagnose a user's issue (bills, income, payments, connections, transactions, match log, exclusions). Use this FIRST before speculating about state.
@@ -304,8 +304,8 @@ Backend exposes `GET /api/debug/user-state` — tier-aware JSON dump of everythi
 
 `DEBUG_ADMIN_KEY` is set on Railway. Supports `?email=` or `?uid=` to look up any user.
 
-## AI Features — REMOVED
-All AI-related pages and features were removed: `/app/settings/ai`, `/app/settings/ai-admin`, `AISuggestionCard`, `aiAPI` in `src/lib/api.ts`. Categorization and detection run entirely through the backend's rule-based engines. Do NOT re-introduce AI pages without explicit user request.
+## Legacy AI Suggestions — REMOVED
+Legacy AI suggestion UI was removed. Current AI Accountant routes are feature-flagged and listed below; categorization and detection still run through the backend's rule-based engines. Do NOT add website-owned detection or trigger logic.
 
 ## Unified Expenses (IMPORTANT)
 All user-facing text uses "expenses" instead of "bills" or "spending budgets." The spending budgets DB table still exists but:

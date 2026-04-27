@@ -3,6 +3,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Keipr Website Notes
 
 - The website mirrors mobile budget/bills behavior; recurring-expense detection rules live in the backend.
+- Fresh onboarding should receive regular active recurring expenses from backend onboarding-import; AI is a polish pass, not required to make the budget usable.
+- Admin AI dashboard shows proposed/applied/flagged/blocked/reason so zero-apply runs are diagnosable.
 - Detected expense review should preserve/display `paidWith` when a vendor bill was charged to a credit-card account.
 - Weak one-off bank outflows should surface through categorized spend/Quick Spend, not as recurring expenses.
 

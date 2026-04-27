@@ -8,3 +8,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - Detection bugs are backend-owned; the website mirrors mobile display and confirmation behavior.
 - Preserve `paidWith` on detected confirmations so card-paid vendor bills keep their credit-card mapping.
+- Fresh onboarding should already have regular active recurring expenses from backend import; AI is a polish pass, and sync/history runs must not steal the first onboarding AI slot.

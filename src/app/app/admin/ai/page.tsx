@@ -672,7 +672,11 @@ export default function AdminAIDashboardPage() {
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Duration</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Cost</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Status</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Proposed</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Applied</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Flagged</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Blocked</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', color: colors.textFaint, fontWeight: 600 }}>Reason</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -728,8 +732,20 @@ export default function AdminAIDashboardPage() {
                           {run.status}
                         </span>
                       </td>
+                      <td style={{ padding: '0.75rem', color: colors.text, fontWeight: 600 }}>
+                        {run.corrections_proposed || 0}
+                      </td>
                       <td style={{ padding: '0.75rem', color: '#059669', fontWeight: 600 }}>
                         {run.corrections_applied || 0}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.text, fontWeight: 600 }}>
+                        {run.corrections_flagged || 0}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: run.corrections_blocked ? '#DC2626' : colors.text, fontWeight: 600 }}>
+                        {run.corrections_blocked || 0}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: colors.textFaint, maxWidth: '18rem', fontSize: '0.75rem' }}>
+                        {run.abort_reason ? String(run.abort_reason).slice(0, 160) : '—'}
                       </td>
                     </tr>
                   ))}
