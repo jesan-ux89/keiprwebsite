@@ -1362,7 +1362,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [isUltra, user]);
 
   const confirmDetectedBill = async (billId: string, overrides?: Record<string, unknown>) => {
-    setBills(prev => prev.map(b => b.id === billId ? { ...b, status: 'confirmed' } : b));
+    setBills(prev => prev.map(b => b.id === billId ? {
+      ...b,
+      status: 'confirmed',
+      paidWith: Object.prototype.hasOwnProperty.call(overrides || {}, 'paidWith')
+        ? (overrides?.paidWith as string | null)
+        : b.paidWith,
+    } : b));
     try {
       await billsAPI.confirmDetected(billId, overrides || {});
       if (user) cacheInvalidateGroups(user.uid, ['budget', 'available', 'review']);

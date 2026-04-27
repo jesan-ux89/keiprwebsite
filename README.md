@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Keipr Website Notes
+
+- The website mirrors mobile budget/bills behavior; recurring-expense detection rules live in the backend.
+- Detected expense review should preserve/display `paidWith` when a vendor bill was charged to a credit-card account.
+- Weak one-off bank outflows should surface through categorized spend/Quick Spend, not as recurring expenses.
+
 ## Getting Started
 
 First, run the development server:

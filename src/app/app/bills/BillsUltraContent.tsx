@@ -542,6 +542,11 @@ export default function BillsUltraContent() {
                       <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.25rem 0 0 0' }}>
                         {bill.category}
                       </p>
+                      {bill.paidWith ? (
+                        <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: '0.2rem 0 0 0' }}>
+                          Paid with {bill.paidWith}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

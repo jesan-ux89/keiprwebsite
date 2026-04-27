@@ -289,6 +289,8 @@ All rules for recurring-expense detection (when a transaction becomes a bill, ho
 2. The bug is in the backend; verify with `npm test` in `_keipr-complete-backend`
 3. Fix goes in `detectionEngine.js`
 
+Current policy: recurring promotion requires 2+ occurrences plus a plausible recurring interval. Weak/single bill-like outflows remain categorized spend/Quick Spend. Recurring CC payoffs and ATM withdrawals still detect. Detected vendor bills charged to a credit-card account may include `paidWith`, and the website should preserve/display that value during review.
+
 ## Split Bill Clean Rule
 Backend enforces a strict rule: split bill + unresolvable paycheck = abort all writes. The website Tracker's `normalizeMatchData()` mirrors this — match_log rows for split bills without `split_sort_order` are skipped (invariant violations, not legitimate data). No legacy inference or "first unpaid" guessing. The debug endpoint's invariant 7 (`split_bill_match_no_sort_order`) catches these.
 
