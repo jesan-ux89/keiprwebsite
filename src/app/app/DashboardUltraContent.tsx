@@ -762,11 +762,13 @@ export default function DashboardUltraContent() {
                 <p style={{ fontSize: '1.75rem', fontWeight: 800, color: colors.text, margin: '0 0 0.25rem 0' }}>{thisPaycheckBills.length}</p>
                 <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{directBillsThisCheck.length} direct · {ccBillsThisCheck.length} on cards</p>
               </Card>
-              <Card style={{ padding: '1.25rem' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
-                <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: '0 0 0.25rem 0' }}>{fmt(availableBreakdown?.depositsThisPeriod ? availableBreakdown.depositsThisPeriod : totalPaycheck)}</p>
-                <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{availableBreakdown?.depositsThisPeriod ? 'Bank deposits this period' : `${paycheckCount} paycheck${paycheckCount > 1 ? 's' : ''} this month`}</p>
-              </Card>
+              <a href="/app/income" style={{ textDecoration: 'none', display: 'block' }}>
+                <Card style={{ padding: '1.25rem', cursor: 'pointer' }}>
+                  <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Income</p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.green, margin: '0 0 0.25rem 0' }}>{fmt(availableBreakdown?.depositsThisPeriod ? availableBreakdown.depositsThisPeriod : totalPaycheck)}</p>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, margin: 0 }}>{availableBreakdown?.depositsThisPeriod ? 'Bank deposits this period' : `${paycheckCount} paycheck${paycheckCount > 1 ? 's' : ''} this month`}</p>
+                </Card>
+              </a>
               <Card style={{ padding: '1.25rem' }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 0.5rem 0' }}>Expenses</p>
                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: colors.amber, margin: '0 0 0.25rem 0' }}>{fmt(totalBillsThisCheck)}</p>
