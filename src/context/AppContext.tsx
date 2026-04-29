@@ -53,6 +53,7 @@ export interface Bill {
   isInternalTransfer?: boolean; // True for savings transfers, internal account moves
   expenseType?: string; // 'fixed' (default) or 'flexible'
   pinnedPaycheck?: number | null; // Manual paycheck assignment override (1 or 2, null = auto)
+  forecastAssignedPaycheck?: number | null; // System/AI inferred paycheck assignment
   endsOn?: string | null; // ISO date string — last month this bill applies (e.g. car loan payoff)
   // Detection explanation metadata — why this bill was auto-detected
   detectionReason?: string | null;
@@ -437,6 +438,7 @@ function mapApiBill(raw: Record<string, unknown>): Bill {
     isInternalTransfer: raw.is_internal_transfer === true,
     expenseType: (raw.expense_type as string) || 'fixed',
     pinnedPaycheck: raw.pinned_paycheck != null ? Number(raw.pinned_paycheck) : null,
+    forecastAssignedPaycheck: raw.forecast_assigned_paycheck != null ? Number(raw.forecast_assigned_paycheck) : null,
     endsOn: raw.ends_on ? String(raw.ends_on) : null,
     // Detection explanation metadata
     detectionReason: raw.detection_reason ? String(raw.detection_reason) : null,

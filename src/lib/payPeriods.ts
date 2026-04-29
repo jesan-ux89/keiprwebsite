@@ -435,13 +435,17 @@ export function isBillInPeriod(billDueDay: number, period: PayPeriod): boolean {
  * Add/Edit Bill screens.
  */
 export function billBelongsToPaycheck(
-  bill: { dueDay: number; pinnedPaycheck?: number | null; isSplit?: boolean },
+  bill: { dueDay: number; pinnedPaycheck?: number | null; forecastAssignedPaycheck?: number | null; isSplit?: boolean },
   period: PayPeriod
 ): boolean {
   if (bill.isSplit) return true;
 
   if (bill.pinnedPaycheck != null && bill.pinnedPaycheck > 0) {
     return bill.pinnedPaycheck === period.paycheckNumber;
+  }
+
+  if (bill.forecastAssignedPaycheck != null && bill.forecastAssignedPaycheck > 0) {
+    return bill.forecastAssignedPaycheck === period.paycheckNumber;
   }
 
   return isBillInPeriod(bill.dueDay, period);
