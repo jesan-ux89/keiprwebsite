@@ -129,7 +129,7 @@ export default function SyncingIndicator({ enabled = true, onComplete }: Syncing
         }
       `}</style>
       <span>✨</span>
-      <span>Refining your ledger…</span>
+      <span>Refining details - your budget may update in a moment.</span>
     </div>
   );
 }

@@ -259,6 +259,7 @@ interface AppContextType {
 
   // Onboarding budget setup status
   budgetSetupStatus: string | null;
+  setBudgetSetupStatus: (status: string | null) => void;
 
   // Initial load flag (prevents premature onboarding redirect)
   initialDataLoaded: boolean;
@@ -365,6 +366,7 @@ const AppContext = createContext<AppContextType>({
   transactionsSyncedAt: null,
 
   budgetSetupStatus: null,
+  setBudgetSetupStatus: () => {},
 
   // Initial load flag
   initialDataLoaded: false,
@@ -1081,12 +1083,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user, fetchBills, fetchIncomeSources, fetchCategories, fetchPayments, fetchRollover, fetchSideIncome]);
 
   // ── Poll budget_setup_status while importing/analyzing ─────
-  // Checks /auth/me every 10s until status flips to 'ready' or 10 min elapses.
+  // Checks /auth/me every 3s until status flips to 'ready' or 10 min elapses.
   useEffect(() => {
     if (!user) return;
     if (budgetSetupStatus !== 'importing' && budgetSetupStatus !== 'analyzing') return;
 
-    const POLL_INTERVAL = 10_000;  // 10 seconds
+    const POLL_INTERVAL = 3_000;
     const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
     const startedAt = Date.now();
 
@@ -1555,6 +1557,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         transactionsSyncedAt,
 
         budgetSetupStatus,
+        setBudgetSetupStatus,
 
         initialDataLoaded,
       }}

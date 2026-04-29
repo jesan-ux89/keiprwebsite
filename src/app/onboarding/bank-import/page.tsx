@@ -16,7 +16,7 @@ function BankImportContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { colors } = useTheme();
-  const { refreshBills, refreshIncomeSources } = useApp();
+  const { refreshBills, refreshIncomeSources, setBudgetSetupStatus } = useApp();
 
   // Url params from previous step
   const schedule = searchParams.get('schedule') || 'biweekly';
@@ -137,18 +137,21 @@ function BankImportContent() {
         setStep('success');
 
         // Background: auto-import bills, income, budgets from transaction history
-        setImportStatus('Scanning your transactions...');
+        setBudgetSetupStatus('importing');
+        setImportStatus('Syncing bank history...');
         try {
           const importRes = await bankingAPI.onboardingImport();
           const data = importRes.data || {};
           if (data.billsCreated > 0) await refreshBills();
           if (data.incomeDetected > 0) await refreshIncomeSources();
+          setBudgetSetupStatus(data.waitingForTransactions || data.skipped === 'already_running' ? 'importing' : 'ready');
           setImportStatus(
             data.billsCreated > 0
               ? `Found ${data.billsCreated} expense${data.billsCreated > 1 ? 's' : ''}${data.incomeDetected > 0 ? ' and your income' : ''}`
               : 'Connected — expenses will be detected automatically'
           );
         } catch (_) {
+          setBudgetSetupStatus(null);
           setImportStatus(null);
         }
       } catch (err: any) {
@@ -589,7 +592,7 @@ function BankImportContent() {
           <div style={styles.topBar}>
             <span style={styles.stepLabel}>{getStepLabel()}</span>
           </div>
-          <h1 style={styles.title}>Finding your bills…</h1>
+          <h1 style={styles.title}>Syncing your bank history...</h1>
           <div style={styles.progressBar}>
             <div style={styles.progressFill} />
           </div>
@@ -598,9 +601,9 @@ function BankImportContent() {
         <div style={styles.content}>
           <div style={styles.loadingContainer}>
             <Loader size={48} style={{ color: colors.electric, animation: 'spin 2s linear infinite' }} />
-            <p style={styles.loadingText}>Syncing transactions</p>
+            <p style={styles.loadingText}>Syncing bank history</p>
             <p style={{ fontSize: '13px', color: colors.textMuted, marginTop: '8px' }}>
-              This may take a moment
+              Your dashboard will show progress while we build the first budget.
             </p>
           </div>
         </div>

@@ -537,8 +537,8 @@ export default function DashboardUltraContent() {
                 <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>&#10024;</span>
                 <p style={{ margin: 0, fontSize: '0.875rem', color: colors.text }}>
                   {budgetSetupStatus === 'importing'
-                    ? 'Setting up your budget...'
-                    : 'Analyzing your transactions...'}
+                    ? 'Syncing bank history...'
+                    : 'Building your budget...'}
                 </p>
               </div>
             )}
