@@ -100,6 +100,7 @@ export const usersAPI = {
   updateProfile:       (data: Record<string, unknown>) => api.patch('/users/me', data),
   updateNotifications: (data: Record<string, unknown>) => api.patch('/users/me/notifications', data),
   getIncomeSources:    () => api.get('/users/me/income-sources'),
+  getIncomeDeposits:   (params?: Record<string, unknown>) => api.get('/users/me/income-deposits', { params }),
   addIncomeSource:     (data: Record<string, unknown>) => api.post('/users/me/income-sources', data),
   updateIncomeSource:  (id: string, data: Record<string, unknown>) => api.patch(`/users/me/income-sources/${id}`, data),
   deleteIncomeSource:  (id: string) => api.delete(`/users/me/income-sources/${id}`),

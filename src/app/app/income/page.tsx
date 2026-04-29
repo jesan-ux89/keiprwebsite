@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { bankingAPI, usersAPI } from '@/lib/api';
+import { usersAPI } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import MerchantLogo from '@/components/MerchantLogo';
 import AppLayout from '@/components/layout/AppLayout';
@@ -23,9 +23,6 @@ export default function IncomePage() {
   const oneTimeSources = incomeSources.filter((s: any) => s.isOneTime);
   const totalPaycheck = regularSources.reduce((sum: number, s: any) => sum + (s.typicalAmount || 0), 0);
 
-  // Income source names to exclude paychecks (already shown in Income Sources section)
-  const incomeSourceNames = incomeSources.map((s: any) => (s.name || '').toUpperCase()).filter(Boolean);
-
   // Helper: check if a deposit is already tracked as a one-time fund
   const isAlreadyTracked = (txn: any) => {
     const amt = Math.abs(txn.amount);
@@ -36,30 +33,10 @@ export default function IncomePage() {
     const loadDeposits = async () => {
       if (!isUltra) { setLoading(false); return; }
       try {
-        // Fetch ALL deposits in one call — backend filters by Plaid's INCOME/TRANSFER_IN categories
-        // This catches everything: tax refunds, bonuses, Venmo, check deposits, etc.
-        const res = await bankingAPI.getAllTransactions({ category: 'deposits', days: 90, limit: 200 });
-        const allDeposits = ((res as any).data?.transactions || []) as any[];
-
-        // Filter out paychecks, internal transfers, and tiny amounts
-        const filtered = allDeposits
-          .filter((t: any) => {
-            // Minimum $5 threshold — filters out savings interest pennies, rounding credits, etc.
-            if (Math.abs(t.amount) < 5) return false;
-            // Exclude internal transfers (checking ↔ savings)
-            if (t.is_internal_transfer) return false;
-            const txnName = (t.cleaned_name || t.merchant_name || t.name || '').toUpperCase();
-            if (txnName.includes('TRANSFER') && (txnName.includes('SAV') || txnName.includes('CHK') || txnName.includes('CHECKING') || txnName.includes('SAVING'))) return false;
-            if (txnName.startsWith('ONLINE TRANSFER FROM')) return false;
-            // Exclude transactions already matched to an income source (paycheck)
-            if (t.matched_income_source_id) return false;
-            // Exclude transactions whose name matches a known income source
-            const name = (t.cleaned_name || t.merchant_name || t.name || '').toUpperCase();
-            if (incomeSourceNames.some((srcName: string) => srcName && name.includes(srcName))) return false;
-            return true;
-          })
+        const res = await usersAPI.getIncomeDeposits({ days: 180, limit: 100 });
+        const sorted = (((res as any).data?.deposits || []) as any[])
           .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
-        setDeposits(filtered);
+        setDeposits(sorted);
       } catch (err) {
         console.log('Error loading deposits:', err);
       } finally {
@@ -238,6 +215,10 @@ export default function IncomePage() {
                       transition: 'background-color 0.2s',
                     }}
                     onClick={() => {
+                      if (txn.matched_income_source_id || txn.matchedIncomeSourceId) {
+                        alert(`This deposit is linked to ${txn.source_name || txn.sourceName || 'an income source'}.`);
+                        return;
+                      }
                       if (isAlreadyTracked(txn)) {
                         alert('This deposit is already saved as a One-Time Fund.');
                         return;
@@ -260,6 +241,7 @@ export default function IncomePage() {
                         </p>
                         <p style={{ fontSize: '0.6875rem', color: colors.textSub, margin: '0.125rem 0 0 0' }}>
                           {formatDate(txn.transaction_date)}
+                          {(txn.source_name || txn.sourceName) ? ` - ${txn.source_name || txn.sourceName}` : ''}
                         </p>
                       </div>
                       <p style={{ fontSize: '1rem', fontWeight: 700, color: '#0A7B6C', margin: 0 }}>
