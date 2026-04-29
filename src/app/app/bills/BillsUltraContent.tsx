@@ -17,6 +17,7 @@ import EmptyState from '@/components/EmptyState';
 import { Plus, Search, ChevronDown, ChevronUp, Calendar, ChevronRight, Lock, Waves, Wallet } from 'lucide-react';
 import MerchantLogo from '@/components/MerchantLogo';
 import CategoryIcon from '@/components/CategoryIcon';
+import { getPayPeriods } from '@/lib/payPeriods';
 
 type SortBy = 'name' | 'dueDate' | 'amount';
 
@@ -26,7 +27,7 @@ interface ExpandedBills {
 
 export default function BillsUltraContent() {
   const { colors, isDark } = useTheme();
-  const { bills, billsLoading, fmt, isUltra, spendingSummary, spendingBudgets, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards, incomeSources, addIncomeSource } = useApp();
+  const { bills, billsLoading, fmt, isUltra, spendingSummary, spendingBudgets, detectedBills, detectedCount, confirmDetectedBill, confirmAsOneTime, dismissDetectedBill, linkDuplicateBill, creditCards, incomeSources, addIncomeSource, addBill, refreshBills } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -34,6 +35,10 @@ export default function BillsUltraContent() {
   const [expandedTypes, setExpandedTypes] = useState<{ fixed: boolean; flexible: boolean }>({ fixed: false, flexible: false });
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [matchedBillIds, setMatchedBillIds] = useState<Set<string>>(new Set());
+  const [spendingTxns, setSpendingTxns] = useState<any[]>([]);
+  const [quickSpendActionTxn, setQuickSpendActionTxn] = useState<any | null>(null);
+  const [quickSpendLinkTxn, setQuickSpendLinkTxn] = useState<any | null>(null);
+  const [quickSpendActioning, setQuickSpendActioning] = useState<string | null>(null);
 
   // One-time funds
   const oneTimeFunds = incomeSources.filter(s => s.isOneTime);
@@ -82,6 +87,25 @@ export default function BillsUltraContent() {
       .catch(() => {});
   }, [bills]);
 
+  useEffect(() => {
+    async function loadSpendingTxns() {
+      try {
+        const res = await bankingAPI.getAllTransactions({ category: 'spending', days: 30, limit: 200 });
+        const txns = res.data?.transactions || [];
+        const income = incomeSources.find(s => s.isPrimary) || (incomeSources.length > 0 ? incomeSources[0] : null);
+        const period = getPayPeriods(income?.nextPayDate, income?.frequency || '').current;
+        const filtered = txns.filter((txn: any) => {
+          const txDate = parseTransactionDate(txn.transaction_date);
+          return txDate >= period.start && txDate <= period.end;
+        });
+        setSpendingTxns(filtered);
+      } catch {
+        // Quick Spend is non-critical on the Budget page.
+      }
+    }
+    loadSpendingTxns();
+  }, [bills.length, incomeSources]);
+
   // AI Corrections state
   const [aiSettingsAvailable, setAiSettingsAvailable] = useState(false);
   const [aiCorrectionsByBill, setAiCorrectionsByBill] = useState<Record<string, any[]>>({});
@@ -112,6 +136,92 @@ export default function BillsUltraContent() {
       // deleteAllBills();
     }
   };
+
+  function quickSpendTxnName(txn: any) {
+    return txn?.cleaned_name || txn?.merchant_name || txn?.name || 'Quick Spend';
+  }
+
+  function quickSpendTxnAmount(txn: any) {
+    return Math.abs(Number(txn?.amount || 0));
+  }
+
+  function parseTransactionDate(dateValue: string | undefined) {
+    if (!dateValue) return new Date();
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateValue)
+      ? new Date(`${dateValue}T00:00:00`)
+      : new Date(dateValue);
+  }
+
+  function quickSpendTxnDueDay(txn: any) {
+    const parsed = parseTransactionDate(txn?.transaction_date);
+    return Number.isFinite(parsed.getTime()) ? parsed.getDate() : new Date().getDate();
+  }
+
+  function categoryForQuickSpendName(name: string, txn: any) {
+    const text = `${name} ${txn?.personal_finance_category || ''} ${txn?.personal_finance_subcategory || ''}`.toUpperCase();
+    if (/(KLARNA|AFFIRM|AFTERPAY|BREADPAY|LOAN_PAYMENTS)/.test(text)) return 'Loans';
+    return 'Other';
+  }
+
+  async function handleMakeQuickSpendRecurring(txn: any) {
+    const defaultName = quickSpendTxnName(txn);
+    const name = window.prompt('Name this recurring expense', defaultName);
+    if (!name || !name.trim()) return;
+
+    setQuickSpendActioning(txn.id);
+    try {
+      const bill = await addBill({
+        name: name.trim(),
+        category: categoryForQuickSpendName(name, txn),
+        dueDay: quickSpendTxnDueDay(txn),
+        total: quickSpendTxnAmount(txn),
+        isRecurring: true,
+        isAutoPay: false,
+        isSplit: false,
+        expenseType: 'fixed',
+      });
+      if (bill?.id) {
+        await bankingAPI.transactionAction(txn.id, { action: 'link_bill', bill_id: bill.id });
+      }
+      setSpendingTxns(prev => prev.filter(t => t.id !== txn.id));
+      setQuickSpendActionTxn(null);
+      refreshBills?.();
+    } catch {
+      window.alert('Could not create recurring expense. Please try again.');
+    } finally {
+      setQuickSpendActioning(null);
+    }
+  }
+
+  async function handleQuickSpendBillSelected(billId: string) {
+    if (!quickSpendLinkTxn) return;
+    setQuickSpendActioning(quickSpendLinkTxn.id);
+    try {
+      await bankingAPI.transactionAction(quickSpendLinkTxn.id, { action: 'link_bill', bill_id: billId });
+      setSpendingTxns(prev => prev.filter(t => t.id !== quickSpendLinkTxn.id));
+      setQuickSpendLinkTxn(null);
+      refreshBills?.();
+    } catch {
+      window.alert('Could not link transaction. Please try again.');
+    } finally {
+      setQuickSpendActioning(null);
+    }
+  }
+
+  async function handleHideQuickSpendMerchant(txn: any) {
+    const name = quickSpendTxnName(txn);
+    if (!window.confirm(`Hide future "${name}" transactions from Quick Spend?`)) return;
+    setQuickSpendActioning(txn.id);
+    try {
+      await bankingAPI.transactionAction(txn.id, { action: 'ignore_always', rule_value: name });
+      setSpendingTxns(prev => prev.filter(t => t.id !== txn.id));
+      setQuickSpendActionTxn(null);
+    } catch {
+      window.alert('Could not hide merchant. Please try again.');
+    } finally {
+      setQuickSpendActioning(null);
+    }
+  }
 
   // Group bills by category
   const billsByCategory = useMemo(() => {
@@ -610,7 +720,7 @@ export default function BillsUltraContent() {
         {/* Bills List / Budget Table */}
         {billsLoading ? (
           <BillsSkeleton />
-        ) : filteredBills.length === 0 ? (
+        ) : filteredBills.length === 0 && spendingTxns.length === 0 ? (
           <EmptyState
             icon="bills"
             title="No expenses yet"
@@ -681,7 +791,77 @@ export default function BillsUltraContent() {
             </div>
           )}
 
+          {/* Quick Spend bank transactions for the current pay period */}
+          {spendingTxns.length > 0 && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: colors.text,
+                margin: '0 0 1rem 0',
+                paddingBottom: '0.75rem',
+                borderBottom: `1px solid ${colors.divider}`,
+              }}>
+                Quick Spend
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {spendingTxns.map((txn: any) => {
+                  const txnName = quickSpendTxnName(txn);
+                  const txnAmount = quickSpendTxnAmount(txn);
+                  const txnDate = parseTransactionDate(txn.transaction_date);
+                  const dateLabel = Number.isFinite(txnDate.getTime())
+                    ? txnDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    : 'Bank';
+                  return (
+                    <Card
+                      key={txn.id}
+                      onClick={() => setQuickSpendActionTxn(txn)}
+                      style={{
+                        cursor: 'pointer',
+                        borderColor: isDark ? 'rgba(251,191,36,0.15)' : 'rgba(217,119,6,0.18)',
+                        backgroundColor: isDark ? 'rgba(251,191,36,0.06)' : '#FFF8EA',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                          <MerchantLogo billName={txnName} category="Other" size={32} isDark={isDark} />
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontSize: '0.95rem', fontWeight: 600, color: colors.text, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {txnName}
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.45rem',
+                                borderRadius: '999px',
+                                backgroundColor: isDark ? 'rgba(52,211,153,0.15)' : 'rgba(4,120,87,0.1)',
+                                color: isDark ? '#34D399' : '#047857',
+                              }}>Bank</span>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                padding: '0.125rem 0.45rem',
+                                borderRadius: '999px',
+                                backgroundColor: isDark ? 'rgba(214,209,199,0.12)' : 'rgba(12,74,110,0.08)',
+                                color: colors.textMuted,
+                              }}>{dateLabel}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p style={{ fontSize: '1rem', fontWeight: 700, color: isDark ? '#FBBF24' : '#D97706', margin: 0, flexShrink: 0 }}>
+                          {fmt(txnAmount)}
+                        </p>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Monarch-style Budget Table */}
+          {filteredBills.length > 0 && (
           <Card>
             {/* Column Headers */}
             <div
@@ -1008,6 +1188,7 @@ export default function BillsUltraContent() {
               })}
             </div>
           </Card>
+          )}
 
           {/* One-Time Funds Section */}
           <Card style={{ marginTop: '2rem' }}>
@@ -1198,6 +1379,180 @@ export default function BillsUltraContent() {
           </div>
         )}
       </TwoColumnLayout>
+
+      {/* Quick Spend Actions */}
+      {quickSpendActionTxn && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setQuickSpendActionTxn(null)}
+        >
+          <div
+            style={{
+              backgroundColor: colors.background,
+              borderRadius: '14px',
+              width: '100%',
+              maxWidth: '420px',
+              border: `1px solid ${colors.divider}`,
+              padding: '1rem',
+              boxShadow: '0 24px 70px rgba(0,0,0,0.32)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {quickSpendTxnName(quickSpendActionTxn)}
+            </h3>
+            <p style={{ margin: '0.25rem 0 1rem', fontSize: '0.8rem', color: colors.textMuted }}>
+              {fmt(quickSpendTxnAmount(quickSpendActionTxn))} bank transaction
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button
+                disabled={quickSpendActioning === quickSpendActionTxn.id}
+                onClick={() => handleMakeQuickSpendRecurring(quickSpendActionTxn)}
+                style={{
+                  border: `1px solid ${isDark ? 'rgba(56,189,248,0.22)' : 'rgba(3,105,161,0.18)'}`,
+                  borderRadius: '10px',
+                  background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(12,74,110,0.08)',
+                  color: colors.electric,
+                  padding: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                Make Recurring
+              </button>
+              <button
+                disabled={quickSpendActioning === quickSpendActionTxn.id}
+                onClick={() => { setQuickSpendLinkTxn(quickSpendActionTxn); setQuickSpendActionTxn(null); }}
+                style={{
+                  border: `1px solid ${isDark ? 'rgba(56,189,248,0.22)' : 'rgba(3,105,161,0.18)'}`,
+                  borderRadius: '10px',
+                  background: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(12,74,110,0.08)',
+                  color: colors.electric,
+                  padding: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                Link to Existing
+              </button>
+              <button
+                disabled={quickSpendActioning === quickSpendActionTxn.id}
+                onClick={() => handleHideQuickSpendMerchant(quickSpendActionTxn)}
+                style={{
+                  border: `1px solid ${isDark ? 'rgba(248,113,113,0.22)' : 'rgba(220,38,38,0.18)'}`,
+                  borderRadius: '10px',
+                  background: isDark ? 'rgba(248,113,113,0.10)' : 'rgba(220,38,38,0.08)',
+                  color: isDark ? '#FCA5A5' : '#B91C1C',
+                  padding: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                Hide Merchant
+              </button>
+              <button
+                onClick={() => setQuickSpendActionTxn(null)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: colors.textMuted,
+                  padding: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Spend Link Picker */}
+      {quickSpendLinkTxn && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setQuickSpendLinkTxn(null)}
+        >
+          <div
+            style={{
+              backgroundColor: colors.background,
+              borderRadius: '14px',
+              width: '100%',
+              maxWidth: '500px',
+              maxHeight: '70vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              border: `1px solid ${colors.divider}`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: '1rem', borderBottom: `1px solid ${colors.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: colors.text }}>Link to Bill</h3>
+              <button onClick={() => setQuickSpendLinkTxn(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: colors.textMuted }}>x</button>
+            </div>
+            <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${colors.divider}` }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: colors.textMuted }}>
+                Linking: <strong style={{ color: colors.text }}>{quickSpendTxnName(quickSpendLinkTxn)}</strong> - {fmt(quickSpendTxnAmount(quickSpendLinkTxn))}
+              </p>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {bills.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  <p style={{ color: colors.textMuted }}>No bills found. Add a bill first.</p>
+                </div>
+              ) : (
+                [...bills]
+                  .sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
+                  .map((bill: any) => (
+                    <div
+                      key={bill.id}
+                      onClick={() => handleQuickSpendBillSelected(bill.id)}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        cursor: quickSpendActioning === quickSpendLinkTxn.id ? 'wait' : 'pointer',
+                        borderBottom: `1px solid ${colors.divider}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text }}>{bill.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>{bill.category || 'Other'}</div>
+                      </div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#38BDF8' : '#0369A1' }}>
+                        {fmt(bill.total)}
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Expense Modal */}
       <AddBillModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
